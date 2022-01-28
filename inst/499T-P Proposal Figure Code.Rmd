@@ -1,0 +1,67 @@
+---
+title: "499 T/P Proposal Figures"
+author: "Li Shandross"
+date: "1/21/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load packages, include=FALSE}
+library("thief")
+library("MAPA")
+library("hts")
+library("fable")
+
+library(forecast)
+
+library(lubridate)
+library(tidyverse); library(ggplot2)
+library(zoltr)
+library(covidHubUtils)
+library(rlist)
+library(cowplot)
+```
+
+## Truth Data 
+```{r}
+hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         temporal_resolution="weekly",
+                         data_location = "remote_hub_repo")
+
+hosp_truth_processed <- hosp_truth %>%
+  filter(location == "US", 
+         target_end_date >= as.Date("2020-07-27"), target_end_date <= as.Date("2021-12-01"))
+#covidHubUtils::hub_locations
+```
+
+## Phases Plot
+```{r}
+ggplot(data = hosp_truth_processed, aes(x = target_end_date, y = value)) + geom_line() + 
+  geom_vline(xintercept = as.Date("2020-07-27"), linetype="dashed", color = "blue") +
+  geom_vline(xintercept = as.Date("2020-12-07"), linetype="dashed", color = "blue") +
+  geom_vline(xintercept = as.Date("2021-07-05"), linetype="dashed", color = "purple") +
+  geom_vline(xintercept = as.Date("2021-11-01"), linetype="dashed", color = "red") +
+  # geom_rect(xmin = as.Date("2020-07-27"), xmax = as.Date("2021-07-05"), 
+           # ymin = -2500, ymax = 22500, fill = 'blue', alpha = 0.5) +
+  annotate(geom = "text", x = as.Date("2021-01-01"), y = 2000, 
+           label = "Training Phase", size = 7, color = "blue") + 
+  annotate(geom = "text", x = as.Date("2021-03-18"), y = 100, 
+           label = "Training Forecasts", size = 4, color = "light blue") + # change color
+  annotate(geom = "text", x = as.Date("2021-09-04"), y = 2000, 
+           label = "Testing", size = 7, color = "red") + 
+    scale_x_date(name=NULL, date_breaks = "2 month", minor_breaks = "1 month",
+                 date_labels = "%b '%y") + 
+    ylim(c(0, NA)) +
+    theme(axis.ticks.length.x = unit(0.25, "cm"),  
+          axis.text.x = element_text(vjust = 1, hjust = 0.5),
+          legend.position = "none") + 
+  labs(title = "COVID-19 US National Hospitalizations",
+       x = "date", y = "inc hosp (daily)")
+
+# 600 x 300 pixels 
+```
+

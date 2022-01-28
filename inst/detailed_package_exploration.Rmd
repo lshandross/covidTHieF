@@ -1,0 +1,309 @@
+---
+title: "Detailed Package Exploration (focus on THieF)"
+author: "Li Shandross"
+date: "10/23/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r install and load packages, include=FALSE, message=FALSE}
+library("thief")
+library("MAPA")
+library("hts")
+library("fable")
+
+library(forecast)
+
+library(lubridate)
+library(tidyverse)
+library(zoltr)
+library(covidHubUtils)
+
+library(tsibble)
+library(tsibbledata)
+library(dplyr)
+```
+
+Previously, we applied THieF to Covid-19 data but faced several issues with the implementation. Most prominently, THieF produced forecasts that stretched too far out into the future. This was problematic since we are not interested in forecasts several years into the future, forecasts which are likely not very accurate given the limited amount of data we have, because this is a retrospective analysis that aims to compare the THieF method to other forecasting models previously. 
+
+We solve this issue by redefining the aggregation levels. Instead of aggregation levels ranging from weekly to annually, we consider aggregation levels from daily to 8-weekly. This allows for a greater number data points for top-level aggregations for use in making forecasts at this level. Although it has been shown that we cannot accurately make predictions with forecast horizons longer than 6 weeks, we use 8 weeks as the top aggregation level in case there is important information captured at that time interval that may improve lower level forecasts.   
+
+As it turns out, some exploration of the truth data reveals that the analysis below is not completely accurate because truth data for the US only begins to be collected on July 27, 2020, a month after the specified start date. Thus, we do not include it here. 
+
+
+## Updated Analysis
+
+Inc hosp truth data actually begins to be collected on 7/27/20 for all 50 states and the US as a whole. The analysis is adjusted to reflect this. Further, we adjust the forecast horizons to be only one times the top aggregation level out, as forecasts cannot make accurate predictions beyond about 6 weeks. This means our longest forecast horizon is 8 weeks. 
+
+```{r, message=FALSE, fig.width=12, fig.height=8}
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         temporal_resolution="weekly",
+                         data_location = "remote_hub_repo")
+
+
+start_date <- as.Date("2020-07-27") # a monday
+end_date <- as.Date("2021-07-26")
+
+hosp_truth <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= start_date,
+                target_end_date <= end_date,
+                location == "US") %>%
+  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+  dplyr::select(value, epi_week, day)
+
+ht_day <- hosp_truth$value
+ht_day_ts <- ts(ht_day, start = c(2020, 179), end = c(2021, 178), frequency = 365)
+
+# create list of aggregation levels
+agg_list <- list(56, 42, 28, 14, 7, 1)
+
+# Construct aggregates
+ht_day_ts_ <- ts(ht_day, start = c(4,1), end = c(10, 29), frequency = 56) 
+
+day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
+agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
+for(i in seq_along(day_agg_))
+   names(day_agg_)[[i]] <- agg.names[i]
+plot(day_agg_, main="Covid-19 Inc Hosp")
+```
+
+Next, we compute forecasts: first base forecasts, then the reconciled forecasts. We set the forecast function to produce 50% and 90% uncertainty intervals for the point forecasts which are the base forecasts, and these quantiles are carried over for the reconciled forecasts. These intervals are easily adjusted, and we will change them to obtain the 23 Forecast Hub-required quantiles for the final forecasts we make. 
+
+Note that we will have to use the upper and lower bounds of the intervals to obtain the values for the desired quantiles as follows: 
+
+![](images/quant-int_table.jpg){width=100%}
+
+
+
+The THieF methodology that produces reconciled forecasts by using weighted forecast combination is applied through the `reconcilethief` function.  
+
+```{r ARIMA}
+# Compute base forecasts
+ base_fc_day <- list()
+ for(i in seq_along(day_agg_))
+   base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = c(50, 95)) 
+ 
+# Reconcile forecasts
+reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = agg_list)
+
+# Plot forecasts before and after reconcilliation
+par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
+for(i in seq_along(base_fc_day))
+{
+  plot(reconciled_fc_day[[i]], main=agg.names[i],
+       ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper))) 
+  lines(reconciled_fc_day[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
+  lines(base_fc_day[[i]]$mean, col='red') # plots red mean line
+}
+points(base_fc_day[[5]]$mean, col= 'red', bg = 'red')
+```
+
+This is the most basic implementation of THieF. We note that the plots are labeled with the arbitrary 8-week periods assigned to original data for it to be a proper time series. However, this labeling doesn't make much sense outside of its necessary use. For the actual plots, it would be better to show the actual dates as tick marks on the time axis instead. 
+
+Second, the truth data does not extend to the time period when forecasts are made. This makes sense in practice; however, it may also be beneficial to see figures that display the truth data alongside the forecasts for a visualization to accompany evaluations of forecast accuracy. All of these changes are shown below in the modifications section.
+
+
+## Modifications
+
+### Change Axis Labels to Real Dates 
+ 
+We change the time labels to match actual dates instead of arbitrary 8-week periods. 
+
+```{r aggregation plot, message=FALSE, fig.width=12, fig.height=7.5}
+for(i in seq_along(day_agg_))
+   names(day_agg_)[[i]] <- agg.names[i]
+
+periods <- as.double(diff.Date(c(start_date, end_date)))/56
+
+dates_actual_agg <- rep(start_date - weeks(1), floor(periods))
+for (i in 1:length(dates_actual_agg)) {
+  dates_actual_agg[i] <- start_date + (i-1)*weeks(8)
+}
+plot(day_agg_, main="Covid-19 Inc Hosp", xaxt = "n")
+axis(1, at=4:9, labels = dates_actual_agg, line = 1.1)
+```
+
+
+Now on the forecast plots.
+
+```{r forecast plot, , fig.width=12, fig.height=8, message=FALSE, error=FALSE}
+# vector of actual dates
+dates_actual_forecast <- rep(start_date - weeks(1), floor(periods) + 1)
+for (i in 1:length(dates_actual_forecast)) {
+  dates_actual_forecast[i] <- start_date + (i-1)*weeks(8)
+}
+
+# Plot forecasts before and after reconciliation
+par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
+for(i in seq_along(base_fc_day)) {
+  plot(reconciled_fc_day[[i]], main=agg.names[i], xaxt = "n", #axes = FALSE,
+       ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper))) 
+  lines(reconciled_fc_day[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
+  lines(base_fc_day[[i]]$mean, col='red') # plots red mean line
+  axis(1, at=4:10, labels = dates_actual_forecast)
+  axis(2)
+}
+points(base_fc_day[[5]]$mean, col= 'red')
+```
+
+### Extending the Truth Data Line
+
+We grab two times the top aggregation level more truth data, then re-run the truth aggregation, and plot the truth data on top of the forecast plots in order to compare how the base and reconciled forecasts did in terms of their predictions. This is because the THieF functions forecast two times the top level aggregation level. 
+
+```{r, fig.width=12, fig.height=8}
+# an extra 1*(top agg level) of truth data to plot against forecasts
+extended_truth <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= end_date,
+                target_end_date <= end_date + weeks(8),
+                location == "US") %>%
+  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+  dplyr::select(value, epi_week, day)
+
+long_truth <- rbind(hosp_truth, extended_truth)
+long_ts <- ts(long_truth$value, start = c(4,1), end = c(11, 29), frequency = 56) 
+
+long_aggs <- tsaggregates(long_ts, m = 56, aggregatelist = agg_list)
+for(i in seq_along(long_aggs))
+   names(long_aggs)[[i]] <- agg.names[i]
+#plot(long_aggs, main="Covid-19 Inc Hosp")
+
+# plot reconciled quantiles, base pt, and truth
+par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
+for(i in seq_along(base_fc_day)) {
+  plot(reconciled_fc_day[[i]], main=agg.names[i], shadecols = c("#C2DDEE", "#00458F"),
+       ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper))) 
+  lines(reconciled_fc_day[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
+  lines(base_fc_day[[i]]$mean, col='red', lwd=1.5) # plots red base forecasts line
+  lines(long_aggs[[i]], col='black', lwd=1.5, lty = "dotted")
+}
+points(base_fc_day[[5]]$mean, col= 'red')
+
+# plot base quantiles, reconciled pt, and truth
+par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
+for(i in seq_along(base_fc_day)) {
+  plot(base_fc_day[[i]], main=agg.names[i], fcol='red', shadecols = c("#EEC2C2", "#900000"), # interval col
+       ylim = c(0, max(base_fc_day[[i]]$x, base_fc_day[[i]]$upper))) 
+  lines(base_fc_day[[i]]$mean, col='red', lwd=2) # plots red base forecasts line
+  lines(reconciled_fc_day[[i]]$mean, col=4) # plots blue reconciled forecasts line
+  lines(long_aggs[[i]], col='black', lwd=1.5, lty = "dotted")
+}
+points(reconciled_fc_day[[5]]$mean, col= 4)
+```
+
+It seems that the reconciled forecasts are generally more consistent across levels, which makes sense given how they are constructed. The base forecasts sometimes are more accurate to the actual truth data at certain aggregation levels, but they may be wildly inaccurate at others. 
+
+
+## As Of Example:  
+
+The `load_truth()` function indicates that as-of data is only available when the data location is CovidData. So this is not truly an "as of" example, but it is the fee 
+
+```{r As Of 11 30 20, warning=FALSE, error=FALSE}
+as_of <- as.Date("2020-11-30")
+
+hosp_truth_11.30 <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= start_date,
+                target_end_date <= as_of,
+                location == "US") %>%
+  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+  dplyr::select(value, epi_week, day)
+
+# Construct aggregates (from daily data)
+day_ts <- ts(hosp_truth_11.30$value, start = c(1,1), end = c(3, 15), frequency = 56) 
+# starting from 8-week 1, day 1 up through 8-week 3, day 15
+
+day_agg <- tsaggregates(day_ts, m = 56, aggregatelist = agg_list)
+for(i in seq_along(day_agg))
+   names(day_agg)[[i]] <- agg.names[i]
+
+periods_11.30 <- as.double(diff.Date(c(start_date, as_of)))/56
+
+dates_actual_agg_11.30 <- rep(start_date - weeks(1), ceiling(periods_11.30))
+for (i in 1:length(dates_actual_agg_11.30)) {
+  dates_actual_agg_11.30[i] <- start_date + (i-1)*weeks(8)
+}
+plot(day_agg, main="Covid-19 Inc Hosp: As of 11-30-2020", xaxt = "n")
+axis(1, at=1:3, labels = dates_actual_agg_11.30, line = 1.1)
+
+# plot(day_agg, main="Covid-19 Inc Hosp: As of 11-30-2020")
+
+
+# vector of actual dates
+dates_actual_forecast_11.30 <- rep(start_date - weeks(1), ceiling(periods_11.30) + 2)
+for (i in 1:length(dates_actual_forecast_11.30)) {
+  dates_actual_forecast_11.30[i] <- start_date + (i-1)*weeks(8)
+}
+
+# Compute base forecasts
+ base_day <- list()
+ for(i in seq_along(day_agg))
+   base_day[[i]] <- forecast(auto.arima(day_agg[[i]]), h=frequency(day_agg[[i]]), level = c(50, 95)) 
+ 
+# Reconcile forecasts
+reconciled_day <- reconcilethief(base_day, aggregatelist = agg_list)
+
+# Plot forecasts before and after reconcilliation
+par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
+for(i in seq_along(base_day))
+{
+  plot(reconciled_day[[i]], main=agg.names[i], xaxt = "n",
+       ylim = c(0, max(reconciled_day[[i]]$x, reconciled_day[[i]]$upper))) 
+  lines(reconciled_fc_day[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
+  lines(base_day[[i]]$mean, col='red') # plots red mean line
+  axis(1, at=1:5, labels = dates_actual_forecast_11.30)
+}
+points(base_day[[5]]$mean, col= 'red', bg = 'red', pch = 19)
+```
+
+Now plot actual truth data alongside forecasts. 
+
+```{r}
+extended_truth_11.30 <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= as_of,
+                target_end_date <= as_of + weeks(8),
+                location == "US") %>%
+  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+  dplyr::select(value, epi_week, day)
+
+long_truth_11.30 <- rbind(hosp_truth_11.30, extended_truth_11.30)
+
+long_ts_11.30 <- ts(long_truth_11.30$value, start = c(1,1), end = c(4, 15), frequency = 56) 
+
+long_aggs_11.30 <- tsaggregates(long_ts_11.30, m = 56, aggregatelist = agg_list)
+for(i in seq_along(long_aggs_11.30))
+   names(long_aggs_11.30)[[i]] <- agg.names[i]
+# plot(long_aggs_11.30, main="Covid-19 Inc Hosp")
+
+# plot reconciled quantiles, base pt, and truth
+par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
+for(i in seq_along(base_day))
+{
+  plot(reconciled_day[[i]], main=agg.names[i], shadecols = c("#C2DDEE", "#00458F"),
+       ylim = c(0, max(reconciled_day[[i]]$x, reconciled_day[[i]]$upper)), xaxt = "n") 
+  lines(reconciled_day[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
+  lines(base_day[[i]]$mean, col='red', lwd=1.5) # plots red base forecasts line
+  lines(long_aggs_11.30[[i]], col='black', lwd=1.5, lty = "dotted")
+  axis(1, at=1:5, labels = dates_actual_forecast_11.30)
+}
+points(base_day[[5]]$mean, col= 'red', bg = 'red', pch = 19)
+
+# plot base quantiles, reconciled pt, and truth
+par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
+for(i in seq_along(base_day))
+{
+  plot(base_day[[i]], main=agg.names[i], fcol='red', shadecols = c("#EEC2C2", "#900000"),
+       ylim = c(0, max(base_day[[i]]$x, base_day[[i]]$upper)), xaxt = "n") 
+  lines(reconciled_day[[i]]$mean, col=4, lwd=1.5) # plots blue reconciled forecasts line
+  lines(base_day[[i]]$mean, col='red', lwd=2) # plots red base forecasts line
+  lines(long_aggs_11.30[[i]], col='black', lwd=1.5, lty = "dotted")
+  axis(1, at=1:5, labels = dates_actual_forecast_11.30)
+}
+points(reconciled_day[[5]]$mean, col=4, bg = 4, pch = 19)
+```
+
+All analysis was only performed on US national inc hosp truth data. Further work will require making forecasts for at the 50 states and D.C., though likely other US territories will not be included because they tend to have very small case (and thus hospitalization and death) counts and transforming the resulting reconciled forecasts into a properly formatted dataframe as specified by the Forecast Hub. It will also likely be worth writing some functinos to streamline both some of the above modifications (such as adding proper dates and extending truth data lines) and the future work described. 

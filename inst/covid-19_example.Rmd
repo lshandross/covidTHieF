@@ -1,0 +1,76 @@
+---
+title: "THieF Covid-19 Example"
+author: "Li Shandross"
+date: "10/1/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r load packages, echo=FALSE, message=FALSE, warning=FALSE, error=FALSE}
+library("thief")
+library("MAPA")
+library("hts")
+library("fable")
+
+library(forecast)
+
+library(lubridate)
+library(tidyverse)
+library(zoltr)
+library(covidHubUtils)
+```
+
+Example with Covid-19 inc hosp data. We adjust the top aggregation level to be 8 weeks, as we can't reasonably predict anything with a longer horizon well-enough. 
+
+```{r, message=FALSE, fig.width=12, fig.height=8}
+hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         temporal_resolution="weekly",
+                         data_location = "remote_hub_repo") %>%
+  dplyr::filter(target_end_date >= as.Date("2020-06-28"),
+                target_end_date <= as.Date("2021-06-27"),
+                location == "US") %>%
+  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+  dplyr::select(value, epi_week, day)
+
+ht_day <- hosp_truth$value
+ht_day_ts <- ts(ht_day, start = c(2020, 179), end = c(2021, 178), frequency = 365)
+
+# create list of aggregation levels
+agg_list <- list(56, 42, 28, 14, 7, 1)
+
+# Construct aggregates (from daily data)
+ht_day_ts_ <- ts(ht_day, start = c(4,1), end = c(9, 1), frequency = 56) 
+
+day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
+agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
+for(i in seq_along(day_agg_))
+   names(day_agg_)[[i]] <- agg.names[i]
+plot(day_agg_, main="Covid-19 Inc Hosp")
+```
+
+
+```{r}
+# Compute base forecasts
+ base_fc_day <- list()
+ for(i in seq_along(day_agg_))
+   base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=2*frequency(day_agg_[[i]]), level = c(50, 95)) 
+ 
+# Reconcile forecasts
+reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = agg_list)
+
+# Plot forecasts before and after reconcilliation
+par(mfrow=c(3,2))
+for(i in seq_along(base_fc_day))
+{
+  plot(reconciled_fc_day[[i]], main=agg.names[i], 
+       ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper))) 
+  lines(base_fc_day[[i]]$mean, col='red') # plots red mean line
+}
+```
+It would be a good idea to also plot the truth data here to compare how the base and reconciled forecasts did in terms of their predictions.
