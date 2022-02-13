@@ -1,0 +1,287 @@
+---
+title: "function_work"
+author: "Li Shandross"
+date: "2/11/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r load packages, echo=FALSE, message=FALSE, warning=FALSE, error=FALSE}
+library("thief")
+library("MAPA")
+library("hts")
+library("fable")
+
+library(forecast)
+
+library(lubridate)
+library(tidyverse)
+library(zoltr)
+library(covidHubUtils)
+#library(rlist)
+```
+
+
+```{r, message=FALSE, fig.width=12, fig.height=8}
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         temporal_resolution="weekly",
+                         data_location = "remote_hub_repo")
+
+
+start_date <- as.Date("2020-07-27") # a monday
+end_date <- as.Date("2021-07-26")
+
+hosp_truth <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= start_date,
+                target_end_date <= end_date,
+                location == "US") %>%
+  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+  dplyr::select(value, epi_week, day)
+
+ht_day <- hosp_truth$value
+ht_day_ts <- ts(ht_day, start = c(2020, 179), end = c(2021, 178), frequency = 365)
+
+# create list of aggregation levels
+agg_list <- list(56, 42, 28, 14, 7, 1)
+
+# Construct aggregates
+ht_day_ts_ <- ts(ht_day, start = c(4,1), end = c(10, 29), frequency = 56) 
+
+day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
+agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
+for(i in seq_along(day_agg_))
+   names(day_agg_)[[i]] <- agg.names[i]
+```   
+
+``` {r extended truth data}
+# an extra 1*(top agg level) of truth data to plot against forecasts
+extended_truth <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= end_date,
+                target_end_date <= end_date + weeks(8),
+                location == "US") %>%
+  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+  dplyr::select(value, epi_week, day)
+
+long_truth <- rbind(hosp_truth, extended_truth)
+
+long_ts <- ts(long_truth$value, start = c(4,1), end = c(11, 29), frequency = 56) 
+
+long_aggs <- tsaggregates(long_ts, m = 56, aggregatelist = agg_list)
+for(i in seq_along(long_aggs))
+   names(long_aggs)[[i]] <- agg.names[i]
+
+for(i in seq_along(day_agg_))
+   names(day_agg_)[[i]] <- agg.names[i]
+
+periods <- as.double(diff.Date(c(start_date, end_date)))/56
+
+dates_actual_agg <- rep(start_date - weeks(1), floor(periods))
+for (i in 1:length(dates_actual_agg)) {
+  dates_actual_agg[i] <- start_date + (i-1)*weeks(8)
+}
+plot(day_agg_, main="Covid-19 Inc Hosp", xaxt = "n")
+axis(1, at=4:9, labels = dates_actual_agg, line = 1.1)
+```
+```{r base forecasts}
+# vector of actual dates
+dates_actual_forecast <- rep(start_date - weeks(1), floor(periods) + 1)
+for (i in 1:length(dates_actual_forecast)) {
+  dates_actual_forecast[i] <- start_date + (i-1)*weeks(8)
+}
+
+# Compute base forecasts
+ base_fc_day <- list(); fits <- list()
+ for(i in seq_along(day_agg_)){
+   base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = c(0, 50, 80, 95))
+   fits[[i]] <- auto.arima(day_agg_[[i]]) 
+   # SARIMA(0,1,0)(1,0,0)[56]; ARIMA(1,1,0); AR(2) w/ non-zero mean; AR(1)
+   # of course these change depending on the data
+ }
+```
+
+```{r obtain median point forecast}
+forecasts <- USAccDeaths %>% # A time series object with month and year
+  as_tsibble() %>%
+  model(arima = ARIMA(log(value) ~ pdq(0, 1, 1) + PDQ(0, 1, 1))) %>% # model SARIMA(0,1,1)(0,1,1)
+  forecast(bootstrap = TRUE) %>% # Produces simulated trajectories for each
+  mutate(
+    median = purrr::map_dbl(
+      value, # Bootstrap sample of potential forecasts
+      function(fc_value) {
+        median(fc_value$transform(fc_value$dist$x)) 
+        # Extract the median of the results, possibly after dealing with any transformations
+        # Transformation: exp(value); Backtransformation: log(value)
+      })
+  )
+
+f1  <- USAccDeaths %>% # A time series object with month and year
+  as_tsibble() %>%
+  model(arima = ARIMA(log(value) ~ pdq(0, 1, 1) + PDQ(0, 1, 1))) %>% # model SARIMA(0,1,1)(0,1,1)
+  forecast(bootstrap = TRUE)
+
+USAccDeaths %>% # A time series object with month and year
+  as_tsibble() %>%
+  model(arima = ARIMA(log(value) ~ pdq(0, 1, 1) + PDQ(0, 1, 1))) %>% # model SARIMA(0,1,1)(0,1,1)
+  forecast(bootstrap = TRUE) %>% # Produces simulated trajectories
+  mutate(
+    median = purrr::map_dbl(
+      value, # Bootstrap sample of potential forecasts
+      function(fc_value) {
+        median(fc_value$transform(fc_value$dist$x)) 
+        # Extract the median of the results, possibly after dealing with any transformations
+        # Transformation: exp(value); Backtransformation: log(value)
+      })
+  )
+
+# Test with Covidhosp
+# forecasts2 <- 
+
+temp <- ht_day_ts_ %>%
+  as_tsibble(index = 1:365) %>%
+  model(arima = ARIMA(log(value) ~ pdq(0, 1, 1) + PDQ(0, 1, 1)))
+
+test <- ht_day_ts_2 %>%
+  as_tsibble(regular = FALSE) %>%
+  tsibble::fill_gaps(value = 0) %>%
+  model(arima = auto.arima())
+
+temp2 <- ht_day_ts_ %>%
+  as_tsibble() 
+
+# THIS WORKS!!
+new <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= start_date,
+                target_end_date <= end_date,
+                location == "US") %>%
+  select(target_end_date, value) %>%
+  as_tsibble() %>%
+  model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
+  forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]])) %>%
+  mutate(
+    median = purrr::map_dbl(
+      value,
+      function(fc_value) {
+        median(fc_value$transform(fc_value$dist$x))
+      })
+  )
+
+
+
+diff <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= start_date,
+                target_end_date <= end_date,
+                location == "US") %>%
+  select(target_end_date, value) 
+  
+  tibble(day = as.vector(1:365), as.vector(day_agg_[[1]])) %>%
+  #as_tibble() %>%
+  index_by(day) %>%
+  as_tsibble() #%>%
+  
+  model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
+  forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]])) %>%
+  mutate(
+    median = purrr::map_dbl(
+      value,
+      function(fc_value) {
+        median(fc_value$transform(fc_value$dist$x))
+      })
+  )
+
+n1 <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= start_date,
+                target_end_date <= end_date,
+                location == "US") %>%
+  select(target_end_date, value) %>%
+  as_tsibble() %>%
+  model(arima = ARIMA(log(value) ~ pdq() + PDQ()))
+
+
+# Using base forecasts
+base_fc_day[[1]]
+t1 <- forecast(auto.arima(day_agg_[[1]]), 
+                 h=frequency(day_agg_[[1]]), 
+                 level = c(80, 95),
+                 bootstrap = TRUE) # This obtains the forecasts by using a bootstrapping method
+
+```
+
+```{r trying different levels of point forecasts}
+# Daily
+median_pt <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= start_date,
+                target_end_date <= end_date,
+                location == "US") %>%
+  select(target_end_date, value) %>%
+  as_tsibble() %>%
+  model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
+  forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]])) %>%
+  mutate(
+    median = purrr::map_dbl(
+      value,
+      function(fc_value) {
+        median(fc_value$transform(fc_value$dist$x))
+      })
+  )
+
+# Weekly
+weekly_pt <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= start_date,
+                target_end_date <= end_date,
+                location == "US") %>%
+  select(target_end_date, value) %>%
+  as_tsibble() %>%
+  mutate(epi_wk=lubridate::epiweek(target_end_date), year = lubridate::year(target_end_date)) %>%
+  group_by(epi_wk, year) %>%
+  mutate(value2 = sum(value)) %>%
+  ungroup() %>%
+  distinct(value2, .keep_all=TRUE) %>%
+mutate(week = ifelse(year == 2021, epi_wk + 53, epi_wk)) %>%
+  index_by(week) %>%
+  model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
+  forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]])) %>%
+  mutate(
+    median = purrr::map_dbl(
+      value,
+      function(fc_value) {
+        median(fc_value$transform(fc_value$dist$x))
+      })
+  )
+```
+
+``` {r reconciled forecasts}
+# Reconcile forecasts
+reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = agg_list)
+
+# Plot forecasts before and after reconciliation
+par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
+for(i in seq_along(base_fc_day))
+{
+  plot(reconciled_fc_day[[i]], main=agg.names[i], shadecols = c("light gray", "#C2DDEE", "#00458F") , 
+       xaxt = "n", #axes = FALSE,
+       ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper))) 
+  lines(reconciled_fc_day[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
+  lines(base_fc_day[[i]]$mean, col='red') # plots red mean line
+  lines(long_aggs[[i]], col='black', lwd=1.5, lty = "dotted")
+  axis(1, at=4:10, labels = dates_actual_forecast)
+  axis(2)
+}
+points(base_fc_day[[5]]$mean, col= 'red')
+```
+
+
+Turn Reconciled Forecasts List into Tibble of Forecasts
+```{r}
+test2 <- reconciled_fc_day[[1]][["upper"]]
+
+test2.0 <- ts(test2, start = c(2020, 7, 27), end = c(2021, 7, 26), frequency = 365)
+# not that helpful of a transformation
+
+colnames(test2)
+
+```
