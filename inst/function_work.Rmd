@@ -118,40 +118,7 @@ forecasts <- USAccDeaths %>% # A time series object with month and year
         # Transformation: exp(value); Backtransformation: log(value)
       })
   )
-
-f1  <- USAccDeaths %>% # A time series object with month and year
-  as_tsibble() %>%
-  model(arima = ARIMA(log(value) ~ pdq(0, 1, 1) + PDQ(0, 1, 1))) %>% # model SARIMA(0,1,1)(0,1,1)
-  forecast(bootstrap = TRUE)
-
-USAccDeaths %>% # A time series object with month and year
-  as_tsibble() %>%
-  model(arima = ARIMA(log(value) ~ pdq(0, 1, 1) + PDQ(0, 1, 1))) %>% # model SARIMA(0,1,1)(0,1,1)
-  forecast(bootstrap = TRUE) %>% # Produces simulated trajectories
-  mutate(
-    median = purrr::map_dbl(
-      value, # Bootstrap sample of potential forecasts
-      function(fc_value) {
-        median(fc_value$transform(fc_value$dist$x)) 
-        # Extract the median of the results, possibly after dealing with any transformations
-        # Transformation: exp(value); Backtransformation: log(value)
-      })
-  )
-
-# Test with Covidhosp
-# forecasts2 <- 
-
-temp <- ht_day_ts_ %>%
-  as_tsibble(index = 1:365) %>%
-  model(arima = ARIMA(log(value) ~ pdq(0, 1, 1) + PDQ(0, 1, 1)))
-
-test <- ht_day_ts_2 %>%
-  as_tsibble(regular = FALSE) %>%
-  tsibble::fill_gaps(value = 0) %>%
-  model(arima = auto.arima())
-
-temp2 <- ht_day_ts_ %>%
-  as_tsibble() 
+ 
 
 # THIS WORKS!!
 new <- full_hosp_truth %>%
@@ -171,18 +138,12 @@ new <- full_hosp_truth %>%
   )
 
 
-
-diff <- full_hosp_truth %>%
-  dplyr::filter(target_end_date >= start_date,
-                target_end_date <= end_date,
-                location == "US") %>%
-  select(target_end_date, value) 
-  
-  tibble(day = as.vector(1:365), as.vector(day_agg_[[1]])) %>%
-  #as_tibble() %>%
-  index_by(day) %>%
-  as_tsibble() #%>%
-  
+tester <- day_agg_[[1]] %>%
+  as_tsibble() %>%
+  mutate(rank = rank(index)) %>%
+  as_tibble() %>%
+  select(rank, value) %>%
+  as_tsibble(index = rank) %>%
   model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
   forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]])) %>%
   mutate(
@@ -192,15 +153,6 @@ diff <- full_hosp_truth %>%
         median(fc_value$transform(fc_value$dist$x))
       })
   )
-
-n1 <- full_hosp_truth %>%
-  dplyr::filter(target_end_date >= start_date,
-                target_end_date <= end_date,
-                location == "US") %>%
-  select(target_end_date, value) %>%
-  as_tsibble() %>%
-  model(arima = ARIMA(log(value) ~ pdq() + PDQ()))
-
 
 # Using base forecasts
 base_fc_day[[1]]
@@ -212,6 +164,24 @@ t1 <- forecast(auto.arima(day_agg_[[1]]),
 ```
 
 ```{r trying different levels of point forecasts}
+point_forecast_list <- list()
+
+tester2 <- day_agg_[[2]] %>%
+  as_tsibble() %>%
+  mutate(rank = rank(index)) %>%
+  as_tibble() %>%
+  select(rank, value) %>%
+  as_tsibble(index = rank) %>%
+  model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
+  forecast(bootstrap = TRUE, h = frequency(day_agg_[[2]])) %>%
+  mutate(
+    median = purrr::map_dbl(
+      value,
+      function(fc_value) {
+        median(fc_value$transform(fc_value$dist$x))
+      })
+  )
+
 # Daily
 median_pt <- full_hosp_truth %>%
   dplyr::filter(target_end_date >= start_date,
