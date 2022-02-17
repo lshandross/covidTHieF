@@ -97,7 +97,7 @@ for (i in 1:length(dates_actual_forecast)) {
 # Compute base forecasts
  base_fc_day <- list(); fits <- list()
  for(i in seq_along(day_agg_)){
-   base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = c(0, 50, 80, 95))
+   base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = c(10, 50, 80, 95))
    fits[[i]] <- auto.arima(day_agg_[[i]]) 
    # SARIMA(0,1,0)(1,0,0)[56]; ARIMA(1,1,0); AR(2) w/ non-zero mean; AR(1)
    # of course these change depending on the data
@@ -144,8 +144,8 @@ tester <- day_agg_[[1]] %>%
   as_tibble() %>%
   select(rank, value) %>%
   as_tsibble(index = rank) %>%
-  model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
-  forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]])) %>%
+  model(arima = ARIMA((value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
+  forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]]), point_forecast = list(.median = median)) %>%
   mutate(
     median = purrr::map_dbl(
       value,
@@ -154,74 +154,87 @@ tester <- day_agg_[[1]] %>%
       })
   )
 
+tester_pi <- tester %>%hilo(level=c(80, 95))
+tester_pi_80_lower <- tester_pi$`80%`$lower
+
+tester2 <- day_agg_[[1]] %>%
+  as_tsibble() %>%
+  mutate(rank = rank(index)) %>%
+  as_tibble() %>%
+  select(rank, value) %>%
+  as_tsibble(index = rank) %>%
+  model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% 
+  forecast(level = c(80, 95), 
+  h = frequency(day_agg_[[1]])) 
+
 # Using base forecasts
 base_fc_day[[1]]
-t1 <- forecast(auto.arima(day_agg_[[1]]), 
+t1 <- forecast(auto.arima((day_agg_[[1]])), 
                  h=frequency(day_agg_[[1]]), 
-                 level = c(80, 95),
-                 bootstrap = TRUE) # This obtains the forecasts by using a bootstrapping method
+                 level = c(80, 95)) # This obtains the forecasts by using a bootstrapping method
+t2 <- forecast(auto.arima((day_agg_[[1]])), 
+                 h=frequency(day_agg_[[1]]), 
+                 level = c(0, 80, 95),
+                 bootstrap = TRUE, npaths = 5000)
+t3 <- fabletools::forecast(auto.arima((day_agg_[[1]])), 
+                 h=frequency(day_agg_[[1]]))
+auto_forecast <- auto.arima(day_agg_[[1]])
+arima(day_agg_[[1]])
 
+arima.sim(auto_forecast, n = 100)
+
+model_fable <- day_agg_[[1]] %>%
+  as_tsibble() %>%
+  mutate(rank = rank(index)) %>%
+  as_tibble() %>%
+  select(rank, value) %>%
+  as_tsibble(index = rank) %>%
+  model(arima = ARIMA(value ~ pdq() + PDQ()))
+
+temp <- day_agg_[[1]] %>%
+  as_tsibble() %>%
+  mutate(rank = rank(index)) %>%
+  as_tibble() %>%
+  select(rank, value) %>%
+  as_tsibble(index = rank)
+
+ARIMA(temp$value ~pdq() + PDQ())
+
+temp %>%
+  model(arima = ARIMA(value ~ pdq() + PDQ()))%>% # It seems that we have to log value
+  forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]]))
 ```
 
 ```{r trying different levels of point forecasts}
 point_forecast_list <- list()
-
-tester2 <- day_agg_[[2]] %>%
+point_forecast_models <- list()
+for(i in seq_along(day_agg_)) {
+  point_forecast_list[[i]] <- day_agg_[[i]] %>%
   as_tsibble() %>%
   mutate(rank = rank(index)) %>%
   as_tibble() %>%
   select(rank, value) %>%
   as_tsibble(index = rank) %>%
   model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
-  forecast(bootstrap = TRUE, h = frequency(day_agg_[[2]])) %>%
+  forecast(bootstrap = TRUE, h = frequency(day_agg_[[i]])) %>%
   mutate(
     median = purrr::map_dbl(
       value,
       function(fc_value) {
         median(fc_value$transform(fc_value$dist$x))
       })
-  )
-
-# Daily
-median_pt <- full_hosp_truth %>%
-  dplyr::filter(target_end_date >= start_date,
-                target_end_date <= end_date,
-                location == "US") %>%
-  select(target_end_date, value) %>%
-  as_tsibble() %>%
-  model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
-  forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]])) %>%
-  mutate(
-    median = purrr::map_dbl(
-      value,
-      function(fc_value) {
-        median(fc_value$transform(fc_value$dist$x))
-      })
-  )
-
-# Weekly
-weekly_pt <- full_hosp_truth %>%
-  dplyr::filter(target_end_date >= start_date,
-                target_end_date <= end_date,
-                location == "US") %>%
-  select(target_end_date, value) %>%
-  as_tsibble() %>%
-  mutate(epi_wk=lubridate::epiweek(target_end_date), year = lubridate::year(target_end_date)) %>%
-  group_by(epi_wk, year) %>%
-  mutate(value2 = sum(value)) %>%
-  ungroup() %>%
-  distinct(value2, .keep_all=TRUE) %>%
-mutate(week = ifelse(year == 2021, epi_wk + 53, epi_wk)) %>%
-  index_by(week) %>%
-  model(arima = ARIMA(log(value) ~ pdq() + PDQ())) %>% # It seems that we have to log value
-  forecast(bootstrap = TRUE, h = frequency(day_agg_[[1]])) %>%
-  mutate(
-    median = purrr::map_dbl(
-      value,
-      function(fc_value) {
-        median(fc_value$transform(fc_value$dist$x))
-      })
-  )
+  ) %>%
+  as_tibble() %>%
+  select(median)
+  
+  # point_forecast_models[[i]] <- day_agg_[[i]] %>%
+  # as_tsibble() %>%
+  # mutate(rank = rank(index)) %>%
+  # as_tibble() %>%
+  # select(rank, value) %>%
+  # as_tsibble(index = rank) %>%
+  # model(arima = ARIMA(log(value) ~ pdq() + PDQ()))
+}
 ```
 
 ``` {r reconciled forecasts}
