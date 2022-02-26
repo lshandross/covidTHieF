@@ -23,6 +23,8 @@ library(tidyverse)
 library(zoltr)
 library(covidHubUtils)
 #library(rlist)
+
+source("forecast_fns.R")
 ```
 
 
@@ -106,7 +108,6 @@ for (i in 1:length(dates_actual_forecast)) {
 
 
 ```{r}
-#day_agg_[[1]] is a time series object
 nsim <- 10000
 h <- frequency(day_agg_[[1]]) # 56
 sim <- matrix(NA_real_, nrow = nsim, ncol = h)
