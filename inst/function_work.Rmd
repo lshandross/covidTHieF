@@ -97,9 +97,10 @@ for (i in 1:length(dates_actual_forecast)) {
 }
 
 # Compute base forecasts
- base_fc_day <- list(); fits <- list()
+base_fc_day <- list(); fits <- list()
+pi_levels <- c(10 * (1:9), 98)
  for(i in seq_along(day_agg_)){
-   base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = c(10, 50, 80, 95))
+   base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = pi_levels)
    fits[[i]] <- auto.arima(day_agg_[[i]]) 
    # SARIMA(0,1,0)(1,0,0)[56]; ARIMA(1,1,0); AR(2) w/ non-zero mean; AR(1)
    # of course these change depending on the data
@@ -134,7 +135,7 @@ reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = agg_list)
 # Plot forecasts before and after reconciliation
 par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
 for(i in seq_along(base_fc_day))
-{
+{ # This code is not optimized for plotting when there are many levels
   plot(reconciled_fc_day[[i]], main=agg.names[i], shadecols = c("light gray", "#C2DDEE", "#00458F") , 
        xaxt = "n", #axes = FALSE,
        ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper))) 
@@ -157,4 +158,24 @@ test2.0 <- ts(test2, start = c(2020, 7, 27), end = c(2021, 7, 26), frequency = 3
 
 colnames(test2)
 
+###
+test <- as_tibble(reconciled_fc_day[[1]]$lower)
+  
+library(stringr) 
+old_col_names <- colnames(test)
+new_col_names <- rep("string", length(old_col_names))
+for (i in 1:length(old_col_names)) {
+  new_col_names[i] <- as.character(((100-pi_levels[i])/2)/100)
+  new_col_names[i] <- ifelse(str_length(new_col_names[i]) != 4, 
+                             paste(new_col_names[i], "0", sep=""), new_col_names[i])
+  # ifelse(str_detect(old_col_names[i], "Hi"), (100-(100-level[i/2])/2)/100, ((100-level [(i+1)/2])/2)/100)
+}
+
+colnames(reconciled_fc_day[[1]]) <- c("target_end_date", "0.50", new_col_names)
+reconciled_forecasts <- reconciled_fc_day[[1]] %>%
+  mutate(forecast_date = last_date, target_end_date = forecast_date + days(agg_levels[-1]) *rank(target_end_date)) %>%
+  pivot_longer(3:length(new_col_names)+2, "quantile")%>%
+  mutate(location, type, ...)
+
+# This should actually all be in a for loop, iterating over the different aggregation levels
 ```
