@@ -22,6 +22,7 @@ library(lubridate)
 library(tidyverse)
 library(zoltr)
 library(covidHubUtils)
+library(stringr) 
 #library(rlist)
 
 source("forecast_fns.R")
@@ -38,12 +39,14 @@ full_hosp_truth <- load_truth("HealthData",
 start_date <- as.Date("2020-07-27") # a monday
 end_date <- as.Date("2021-07-26")
 
+fips_code <- "US"
+
 hosp_truth <- full_hosp_truth %>%
   dplyr::filter(target_end_date >= start_date,
                 target_end_date <= end_date,
-                location == "US") %>%
+                location == fips_code) %>%
   mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-  dplyr::select(value, epi_week, day)
+  select(3:6, 12:13)
 
 ht_day <- hosp_truth$value
 ht_day_ts <- ts(ht_day, start = c(2020, 179), end = c(2021, 178), frequency = 365)
@@ -98,7 +101,7 @@ for (i in 1:length(dates_actual_forecast)) {
 
 # Compute base forecasts
 base_fc_day <- list(); fits <- list()
-pi_levels <- c(10 * (1:9), 98)
+pi_levels <- c(10 * (1:9), 95, 98)
  for(i in seq_along(day_agg_)){
    base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = pi_levels)
    fits[[i]] <- auto.arima(day_agg_[[i]]) 
@@ -113,6 +116,7 @@ nsim <- 10000
 h <- frequency(day_agg_[[1]]) # 56
 sim <- matrix(NA_real_, nrow = nsim, ncol = h)
 arima_fit <- auto.arima(day_agg_[[1]])
+# simulate.Arima(arima_fit, nsim = h)
 
 for (i in 1:nsim) {
     try(sim[i, ] <- simulate.Arima(arima_fit, nsim = h), silent = TRUE)
@@ -124,9 +128,6 @@ apply(sim, 2, median)
 # apply(sim, 2, quantile, probs=c(0.25, 0.5, 0.75))
 ```
 
-```{r}
-simulate.Arima(arima_fit, nsim = h)
-```
 
 ``` {r reconciled forecasts}
 # Reconcile forecasts
@@ -151,31 +152,55 @@ points(base_fc_day[[5]]$mean, col= 'red')
 
 Turn Reconciled Forecasts List into Tibble of Forecasts
 ```{r}
-test2 <- reconciled_fc_day[[1]][["upper"]]
-
-test2.0 <- ts(test2, start = c(2020, 7, 27), end = c(2021, 7, 26), frequency = 365)
-# not that helpful of a transformation
-
-colnames(test2)
-
-###
-test <- as_tibble(reconciled_fc_day[[1]]$lower)
+# Lower Forecasts
+low_fc <- as_tibble(reconciled_fc_day[[1]][[5]]) # Change TS object to tibble
+low_fc[low_fc < 0] <- 0 # Ensure all negative values are changed to 0
   
-library(stringr) 
-old_col_names <- colnames(test)
+old_col_names <- colnames(low_fc)
 new_col_names <- rep("string", length(old_col_names))
 for (i in 1:length(old_col_names)) {
   new_col_names[i] <- as.character(((100-pi_levels[i])/2)/100)
-  new_col_names[i] <- ifelse(str_length(new_col_names[i]) != 4, 
-                             paste(new_col_names[i], "0", sep=""), new_col_names[i])
-  # ifelse(str_detect(old_col_names[i], "Hi"), (100-(100-level[i/2])/2)/100, ((100-level [(i+1)/2])/2)/100)
+  # new_col_names[i] <- ifelse(str_length(new_col_names[i]) <= 4, 
+  #                            paste(new_col_names[i], "0", sep=""), new_col_names[i])
 }
 
-colnames(reconciled_fc_day[[1]]) <- c("target_end_date", "0.50", new_col_names)
-reconciled_forecasts <- reconciled_fc_day[[1]] %>%
-  mutate(forecast_date = last_date, target_end_date = forecast_date + days(agg_levels[-1]) *rank(target_end_date)) %>%
-  pivot_longer(3:length(new_col_names)+2, "quantile")%>%
-  mutate(location, type, ...)
+colnames(low_fc) <- c(new_col_names)
 
-# This should actually all be in a for loop, iterating over the different aggregation levels
+# Higher Forecasts
+high_fc <- as_tibble(reconciled_fc_day[[1]][[6]]) # Change TS object to tibble
+high_fc[high_fc < 0] <- 0 # Ensure all negative values are changed to 0
+  
+old_col_names <- colnames(high_fc)
+new_col_names <- rep("string", length(old_col_names))
+for (i in 1:length(old_col_names)) {
+  new_col_names[i] <- as.character((100-((100-pi_levels[i])/2))/100)
+  # new_col_names[i] <- ifelse(str_length(new_col_names[i]) <= 4, 
+  #                            paste(new_col_names[i], "0", sep=""), new_col_names[i])
+}
+
+colnames(high_fc) <- c(new_col_names)
+
+# Point Forecasts
+point_fc <- as_tibble(reconciled_fc_day[[1]][[4]]) %>% # Change TS object to tibble
+  transmute(`0.5`= as.numeric(x))
+point_fc[point_fc < 0] <- 0 # Ensure all negative values are changed to 0
+
+model_name = "base_arima"
+# Join forecasts together
+reconciled_forecasts <- cbind(low_fc, point_fc, high_fc) %>%
+  mutate(forecast_date = end_date, 
+         horizon = as.numeric(rownames(low_fc)),
+         temporal_resolution = "day",
+         target_end_date = forecast_date + days(horizon)) %>%
+  pivot_longer(1:23, "quantile", "value") %>%
+  arrange(target_end_date, quantile) %>%
+  mutate(model = model_name,
+         location = fips_code, 
+         type = "quantile",
+         target_variable = "inc hosp",
+         quantile = as.numeric(quantile)) %>%
+  select(model, location, forecast_date, horizon, temporal_resolution, 
+         target_variable, target_end_date, type, quantile, value) %>%
+  left_join(filter(hub_locations, fips == fips_code), by = c("location" = "fips"))
+
 ```
