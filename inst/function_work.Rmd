@@ -70,7 +70,7 @@ extended_truth <- full_hosp_truth %>%
                 target_end_date <= end_date + weeks(8),
                 location == "US") %>%
   mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-  dplyr::select(value, epi_week, day)
+  select(3:6, 12:13)
 
 long_truth <- rbind(hosp_truth, extended_truth)
 
@@ -153,7 +153,7 @@ points(base_fc_day[[5]]$mean, col= 'red')
 Turn Reconciled Forecasts List into Tibble of Forecasts
 ```{r}
 # Lower Forecasts
-low_fc <- as_tibble(reconciled_fc_day[[1]][[5]]) # Change TS object to tibble
+low_fc <- as_tibble(reconciled_fc_day[[1]][["lower"]]) # Change TS object to tibble
 low_fc[low_fc < 0] <- 0 # Ensure all negative values are changed to 0
   
 old_col_names <- colnames(low_fc)
@@ -202,5 +202,79 @@ reconciled_forecasts <- cbind(low_fc, point_fc, high_fc) %>%
   select(model, location, forecast_date, horizon, temporal_resolution, 
          target_variable, target_end_date, type, quantile, value) %>%
   left_join(filter(hub_locations, fips == fips_code), by = c("location" = "fips"))
+
+```
+
+
+
+
+
+Turn Reconciled Forecasts List into Tibble of Forecasts
+```{r}
+#rec_fc_list 
+model_name = "base_arima"
+
+transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) {
+  # If forecast_list == NULL, stop "you have not provided any forecasts"
+  # if forecast_list is not a list of forecasts, stop "Please provide a list of forecasts"
+  # if fips_code == NULL, stop "you have not provided a"
+  # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
+    
+  thief_forecast <- forecast_list
+  model_name <- model_name
+  fips_code <- fips_code
+
+  # Lower Forecasts
+  low_fc <- as_tibble(thief_forecast[[1]][["lower"]]) # Change TS object to tibble
+  low_fc[low_fc < 0] <- 0 # Ensure all negative values are changed to 0
+    
+  old_col_names <- colnames(low_fc)
+  new_col_names <- rep("string", length(old_col_names))
+  for (i in 1:length(old_col_names)) {
+    new_col_names[i] <- as.character(((100-pi_levels[i])/2)/100)
+  }
+  colnames(low_fc) <- c(new_col_names)
+  
+  # Higher Forecasts
+  high_fc <- as_tibble(thief_forecast[[1]][["upper"]]) # Change TS object to tibble
+  high_fc[high_fc < 0] <- 0 # Ensure all negative values are changed to 0
+    
+  old_col_names <- colnames(high_fc)
+  new_col_names <- rep("string", length(old_col_names))
+  for (i in 1:length(old_col_names)) {
+    new_col_names[i] <- as.character((100-((100-pi_levels[i])/2))/100)
+  }
+  colnames(high_fc) <- c(new_col_names)
+  
+  
+  # Point Forecasts
+  point_fc <- as_tibble(thief_forecast[[1]][["mean"]]) %>% # Change TS object to tibble
+    transmute(`0.5`= as.numeric(x))
+  point_fc[point_fc < 0] <- 0 # Ensure all negative values are changed to 0
+
+
+  # Join forecasts together
+  hub_df <- cbind(low_fc, point_fc, high_fc) %>%
+    mutate(forecast_date = end_date, 
+           horizon = as.numeric(rownames(low_fc)),
+           temporal_resolution = "day",
+           target_end_date = forecast_date + days(horizon)) %>%
+    pivot_longer(1:23, "quantile", "value") %>%
+    arrange(target_end_date, quantile) %>%
+    mutate(model = model_name,
+           location = fips_code, 
+           type = "quantile",
+           target_variable = "inc hosp",
+           quantile = as.numeric(quantile)) %>%
+    select(model, location, forecast_date, horizon, temporal_resolution, 
+           target_variable, target_end_date, type, quantile, value) %>%
+    left_join(filter(hub_locations, fips == fips_code), by = c("location" = "fips"))
+  
+    hub_df
+
+}
+
+transform_to_hub_df(reconciled_fc_day, "model", "US") 
+
 
 ```
