@@ -208,11 +208,9 @@ reconciled_forecasts <- cbind(low_fc, point_fc, high_fc) %>%
 
 
 
-
-Turn Reconciled Forecasts List into Tibble of Forecasts
+transform_to_hub_df() function
 ```{r}
-#rec_fc_list 
-model_name = "base_arima"
+# This function uses the most this aggregate level of forecasts
 
 transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) {
   # If forecast_list == NULL, stop "you have not provided any forecasts"
@@ -274,7 +272,5 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) 
 
 }
 
-transform_to_hub_df(reconciled_fc_day, "model", "US") 
-
-
+transform_to_hub_df(reconciled_fc_day, "model", "US")
 ```
