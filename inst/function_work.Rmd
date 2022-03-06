@@ -92,6 +92,93 @@ for (i in 1:length(dates_actual_agg)) {
 plot(day_agg_, main="Covid-19 Inc Hosp", xaxt = "n")
 axis(1, at=4:9, labels = dates_actual_agg, line = 1.1)
 ```
+
+
+
+
+```{r, message=FALSE, fig.width=12, fig.height=8}
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         temporal_resolution="weekly",
+                         data_location = "remote_hub_repo")
+
+
+start_date <- as.Date("2020-07-27") # a monday
+end_date <- as.Date("2021-07-26")
+
+fips_code <- "US"
+
+aggregate_thief_df <- 
+  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
+    # If df == NULL, stop "you have not provided a data frame"
+    # if df is not a a data frames, stop "Please provide a a data frames"
+    ts_col <- ts_col
+    # if fips_code == NULL, stop "you have not provided a fips code", else
+    fips_code <- fips_code
+    # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
+    # if (start_date == NULL) # first target_end_date, else
+    start_date <- as.Date(start_date)
+    # likewise for end_date, else
+    end_date <- as.Date(end_date)
+    
+    agg_list <- aggregate_levels
+    freq <- frequency
+    
+    hosp_truth <- df %>%
+      dplyr::filter(target_end_date >= start_date,
+                    target_end_date <= end_date,
+                    location == fips_code) %>%
+      mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+      select(3:6, 12:13)
+
+      # Construct time series      
+      time_period <- as.numeric(end_date - start_date) + 1
+      periods <- floor(time_period / freq)
+      remainder <- time_period - periods * freq
+      ht_day_ts_ <- ts(hosp_truth[ts_col], start = c(1, 1), end = c(periods+1, remainder), frequency = freq)
+      
+      # Construct temporal hierarchy
+      day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
+      agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
+      for(i in seq_along(day_agg_)) names(day_agg_)[[i]] <- agg.names[i]
+      
+      plot(day_agg_, main="Covid-19 Inc Hosp", xaxt = "n")
+  }
+
+aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+```   
+
+``` {r extended truth data}
+# an extra 1*(top agg level) of truth data to plot against forecasts
+extended_truth <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= end_date,
+                target_end_date <= end_date + weeks(8),
+                location == "US") %>%
+  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+  select(3:6, 12:13)
+
+long_truth <- rbind(hosp_truth, extended_truth)
+
+long_ts <- ts(long_truth$value, start = c(4,1), end = c(11, 29), frequency = 56) 
+
+long_aggs <- tsaggregates(long_ts, m = 56, aggregatelist = agg_list)
+for(i in seq_along(long_aggs))
+   names(long_aggs)[[i]] <- agg.names[i]
+
+for(i in seq_along(day_agg_))
+   names(day_agg_)[[i]] <- agg.names[i]
+
+periods <- as.double(diff.Date(c(start_date, end_date)))/56
+
+dates_actual_agg <- rep(start_date - weeks(1), floor(periods))
+for (i in 1:length(dates_actual_agg)) {
+  dates_actual_agg[i] <- start_date + (i-1)*weeks(8)
+}
+plot(day_agg_, main="Covid-19 Inc Hosp", xaxt = "n")
+axis(1, at=4:9, labels = dates_actual_agg, line = 1.1)
+```
+
+
 ```{r base forecasts}
 # vector of actual dates
 dates_actual_forecast <- rep(start_date - weeks(1), floor(periods) + 1)
@@ -214,7 +301,7 @@ transform_to_hub_df() function
 
 transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) {
   # If forecast_list == NULL, stop "you have not provided any forecasts"
-  # if forecast_list is not a list of forecasts, stop "Please provide a list of forecasts"
+  # if forecast_list is not a a data frames, stop "Please provide a a data frames"
   # if fips_code == NULL, stop "you have not provided a"
   # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
     
