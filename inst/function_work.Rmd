@@ -170,15 +170,24 @@ plot_thief_agg(test, start_date)
 
 
 ```{r base forecasts}
+pi_levels <- c(10 * (1:9), 95, 98)
 # Compute base forecasts
 compute_base_forecasts <-
-  function(pi_levels = c(10 * (1:9), 95, 98)) {
-    base_fc_day <- list()
-    pi_levels <- c(10 * (1:9), 95, 98)
-    for(i in seq_along(day_agg_)){
-      base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = pi_levels)
+  function(temporal_hierarchy, pi_levels = c(10 * (1:9), 95, 98)) {
+    # if temporal_hierarchy == NULL
+    temporal_hierarchy <- temporal_hierarchy
+    pi_levels <- pi_levels
+    base_forecasts <- list()
+    for(i in seq_along(temporal_hierarchy)){
+      base_forecasts[[i]] <- 
+        forecast(auto.arima(temporal_hierarchy[[i]]), 
+                 h=frequency(temporal_hierarchy[[i]]), 
+                 level = pi_levels)
     }
+    return(base_forecasts)
   }
+
+temp <- compute_base_forecasts(test, pi_levels)
 ```
 
 
