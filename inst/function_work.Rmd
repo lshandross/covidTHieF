@@ -108,7 +108,7 @@ end_date <- as.Date("2021-07-26")
 
 fips_code <- "US"
 
-aggregate_thief_df <- 
+aggregate_thief_df <- # aggregate levels list should be in order of smallest to largest level
   function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
     # If df == NULL, stop "you have not provided a data frame"
     # if df is not a a data frames, stop "Please provide a a data frames"
@@ -135,66 +135,50 @@ aggregate_thief_df <-
       time_period <- as.numeric(end_date - start_date) + 1
       periods <- floor(time_period / freq)
       remainder <- time_period - periods * freq
-      ht_day_ts_ <- ts(hosp_truth[ts_col], start = c(1, 1), end = c(periods+1, remainder), frequency = freq)
+      ht_day_ts_ <- ts(hosp_truth[ts_col], 
+                       start = c(1, 1), end = c(periods+1, remainder), 
+                       frequency = freq)
       
       # Construct temporal hierarchy
       day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
       agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
       for(i in seq_along(day_agg_)) names(day_agg_)[[i]] <- agg.names[i]
       
-      plot(day_agg_, main="Covid-19 Inc Hosp", xaxt = "n")
+      return(day_agg_)
   }
 
-aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+
+plot_thief_agg <- function(temporal_hierarchy, start_date) {
+  start_date <- as.Date(start_date)
+
+  # Make actual date labels for plot
+  periods <- floor(length(temporal_hierarchy[[1]]) / frequency(temporal_hierarchy[[1]]))
+  dates_actual_agg <- rep(start_date - weeks(1), periods + 1)
+  for (i in 1:length(dates_actual_agg)) {
+    dates_actual_agg[i] <- start_date + (i-1)*weeks(freq/7)
+  }
+
+  # Plot temporal hierarchy data
+  plot(temporal_hierarchy, main="Covid-19 Inc Hosp", xaxt = "n")
+  axis(1, at=1:(periods + 1), labels = dates_actual_agg, line = 1.1)
+}
+
+plot_thief_agg(test, start_date)
 ```   
 
-``` {r extended truth data}
-# an extra 1*(top agg level) of truth data to plot against forecasts
-extended_truth <- full_hosp_truth %>%
-  dplyr::filter(target_end_date >= end_date,
-                target_end_date <= end_date + weeks(8),
-                location == "US") %>%
-  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-  select(3:6, 12:13)
-
-long_truth <- rbind(hosp_truth, extended_truth)
-
-long_ts <- ts(long_truth$value, start = c(4,1), end = c(11, 29), frequency = 56) 
-
-long_aggs <- tsaggregates(long_ts, m = 56, aggregatelist = agg_list)
-for(i in seq_along(long_aggs))
-   names(long_aggs)[[i]] <- agg.names[i]
-
-for(i in seq_along(day_agg_))
-   names(day_agg_)[[i]] <- agg.names[i]
-
-periods <- as.double(diff.Date(c(start_date, end_date)))/56
-
-dates_actual_agg <- rep(start_date - weeks(1), floor(periods))
-for (i in 1:length(dates_actual_agg)) {
-  dates_actual_agg[i] <- start_date + (i-1)*weeks(8)
-}
-plot(day_agg_, main="Covid-19 Inc Hosp", xaxt = "n")
-axis(1, at=4:9, labels = dates_actual_agg, line = 1.1)
-```
 
 
 ```{r base forecasts}
-# vector of actual dates
-dates_actual_forecast <- rep(start_date - weeks(1), floor(periods) + 1)
-for (i in 1:length(dates_actual_forecast)) {
-  dates_actual_forecast[i] <- start_date + (i-1)*weeks(8)
-}
-
 # Compute base forecasts
-base_fc_day <- list(); fits <- list()
-pi_levels <- c(10 * (1:9), 95, 98)
- for(i in seq_along(day_agg_)){
-   base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = pi_levels)
-   fits[[i]] <- auto.arima(day_agg_[[i]]) 
-   # SARIMA(0,1,0)(1,0,0)[56]; ARIMA(1,1,0); AR(2) w/ non-zero mean; AR(1)
-   # of course these change depending on the data
- }
+compute_base_forecasts <-
+  function(pi_levels = c(10 * (1:9), 95, 98)) {
+    base_fc_day <- list()
+    pi_levels <- c(10 * (1:9), 95, 98)
+    for(i in seq_along(day_agg_)){
+      base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), h=frequency(day_agg_[[i]]), level = pi_levels)
+    }
+  }
 ```
 
 
@@ -230,12 +214,40 @@ for(i in seq_along(base_fc_day))
   lines(reconciled_fc_day[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
   lines(base_fc_day[[i]]$mean, col='red') # plots red mean line
   lines(long_aggs[[i]], col='black', lwd=1.5, lty = "dotted")
+  # axis(1, at=1:(periods + 1), labels = dates_actual_agg, line = 1.1)
   axis(1, at=4:10, labels = dates_actual_forecast)
   axis(2)
 }
 points(base_fc_day[[5]]$mean, col= 'red')
 ```
 
+
+``` {r extended truth data}
+# an extra 1*(top agg level) of truth data to plot against forecasts
+extended_truth <- full_hosp_truth %>%
+  dplyr::filter(target_end_date >= end_date,
+                target_end_date <= end_date + weeks(8),
+                location == "US") %>%
+  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+  select(3:6, 12:13)
+
+long_truth <- rbind(hosp_truth, extended_truth)
+
+long_ts <- ts(long_truth$value, start = c(4,1), end = c(11, 29), frequency = 56) 
+
+long_aggs <- tsaggregates(long_ts, m = 56, aggregatelist = agg_list)
+for(i in seq_along(long_aggs))
+   names(long_aggs)[[i]] <- agg.names[i]
+
+for(i in seq_along(day_agg_))
+   names(day_agg_)[[i]] <- agg.names[i]
+
+# vector of actual dates
+dates_actual_forecast <- rep(start_date - weeks(1), periods + 1)
+for (i in 1:length(dates_actual_forecast)) {
+  dates_actual_forecast[i] <- start_date + (i-1)*weeks(freq/7)
+}
+```
 
 Turn Reconciled Forecasts List into Tibble of Forecasts
 ```{r}
@@ -344,7 +356,7 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) 
            horizon = as.numeric(rownames(low_fc)),
            temporal_resolution = "day",
            target_end_date = forecast_date + days(horizon)) %>%
-    pivot_longer(1:23, "quantile", "value") %>%
+    pivot_longer(1:(2*length(pi_levels) + 1), "quantile", "value") %>%
     arrange(target_end_date, quantile) %>%
     mutate(model = model_name,
            location = fips_code, 
