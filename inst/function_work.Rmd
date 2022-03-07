@@ -210,7 +210,7 @@ apply(sim, 2, median)
 
 
 ``` {r reconciled forecasts}
-# Reconcile forecasts
+# Reconcile forecasts - no need to write a new function for this
 reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = agg_list)
 
 # Plot forecasts before and after reconciliation
@@ -228,19 +228,50 @@ for(i in seq_along(base_fc_day))
   axis(2)
 }
 points(base_fc_day[[5]]$mean, col= 'red')
+
+
+plot_thief <- 
+  function(base_forecasts, reconciled_forecasts, actual_dates) {
+    par(mfrow=c(ceiling(length(base_forecasts)),2), mai=c(0.35,0.5,0.35,0.35))
+    for(i in seq_along(base_forecasts))
+    { # This code is not optimized for plotting when there are many levels
+      plot(reconciled_forecasts[[i]], main=agg.names[i], shadecols = c("light gray", "#C2DDEE", "#00458F") , 
+          xaxt = "n", #axes = FALSE,
+          ylim = c(0, max(reconciled_forecasts[[i]]$x, reconciled_forecasts[[i]]$upper))) 
+      lines(reconciled_forecasts[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
+      lines(base_forecasts[[i]]$mean, col='red') # plots red mean line
+      lines(long_aggs[[i]], col='black', lwd=1.5, lty = "dotted")
+      axis(1, at=1:(periods + 1), labels = dates_actual_forecast)
+      axis(2)
+    }
+    points(base_forecasts[[length(base_forecasts)]]$mean, col= 'red')
+  }
 ```
 
 
 ``` {r extended truth data}
-# an extra 1*(top agg level) of truth data to plot against forecasts
-extended_truth <- full_hosp_truth %>%
-  dplyr::filter(target_end_date >= end_date,
-                target_end_date <= end_date + weeks(8),
-                location == "US") %>%
-  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-  select(3:6, 12:13)
+extended_truth_data <- 
+  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
+    # an extra 1*(top agg level) of truth data to plot against forecasts
+    freq <- frequency
+    end_date <- end_date + weeks (freq)
+    aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency) 
 
-long_truth <- rbind(hosp_truth, extended_truth)
+    # vector of actual dates
+    time_period <- as.numeric(end_date - start_date) + 1
+    periods <- floor(time_period / freq)
+    dates_actual_forecast <- rep(start_date - weeks(1), periods + 1)
+    for (i in 1:length(dates_actual_forecast)) {
+      dates_actual_forecast[i] <- start_date + (i-1)*weeks(freq/7)
+    }
+  }
+
+    long_truth <- full_hosp_truth %>%
+      dplyr::filter(target_end_date >= start_date,
+                    target_end_date <= end_date + weeks(8),
+                    location == "US") %>%
+      mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+      select(3:6, 12:13)
 
 long_ts <- ts(long_truth$value, start = c(4,1), end = c(11, 29), frequency = 56) 
 
