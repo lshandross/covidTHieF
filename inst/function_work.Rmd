@@ -197,17 +197,6 @@ for(i in seq_along(day_agg_)){
                                h=frequency(day_agg_[[i]]), 
                                level = pi_levels)
 }
-
-#base_fc_day; base_fc_day2
-# Compute base forecasts
-be <- list(); fits <- list()
-for(i in seq_along(test)){
-  be[[i]] <- forecast(auto.arima(test[[i]]), 
-                               h=frequency(test[[i]]), 
-                               level = pi_levels)
-}
-
-#reconcilethief(be, aggregatelist = agg_list) # produces a warning
 ```
 
 
@@ -301,7 +290,7 @@ plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates
 Turn Reconciled Forecasts List into Tibble of Forecasts
 ```{r}
 # Lower Forecasts
-low_fc <- as_tibble(reconciled_fc_day[[1]][["lower"]]) # Change TS object to tibble
+low_fc <- as_tibble(temp_reconciled[[1]][["lower"]]) # Change TS object to tibble
 low_fc[low_fc < 0] <- 0 # Ensure all negative values are changed to 0
   
 old_col_names <- colnames(low_fc)
@@ -315,7 +304,7 @@ for (i in 1:length(old_col_names)) {
 colnames(low_fc) <- c(new_col_names)
 
 # Higher Forecasts
-high_fc <- as_tibble(reconciled_fc_day[[1]][[6]]) # Change TS object to tibble
+high_fc <- as_tibble(temp_reconciled[[1]][[6]]) # Change TS object to tibble
 high_fc[high_fc < 0] <- 0 # Ensure all negative values are changed to 0
   
 old_col_names <- colnames(high_fc)
@@ -329,7 +318,7 @@ for (i in 1:length(old_col_names)) {
 colnames(high_fc) <- c(new_col_names)
 
 # Point Forecasts
-point_fc <- as_tibble(reconciled_fc_day[[1]][[4]]) %>% # Change TS object to tibble
+point_fc <- as_tibble(temp_reconciled[[1]][[4]]) %>% # Change TS object to tibble
   transmute(`0.5`= as.numeric(x))
 point_fc[point_fc < 0] <- 0 # Ensure all negative values are changed to 0
 
@@ -421,5 +410,21 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) 
 }
 
 transform_to_hub_df(reconciled_fc_day, "model", "US")
-transform_to_hub_df(temp_reconciled, "model", "US")
+temp_rec_df <- transform_to_hub_df(temp_reconciled, "model", "US")
 ```
+
+```{r map}
+locations <- filter(hub_locations, geo_type == "state", population >= 500000)
+fips_codes <- c("02", "01")
+t <- map_dfr(
+  fips_codes,
+  function(fips_codes) {
+    transform_to_hub_df(temp_reconciled, "model", fips_codes) #replace_with_wrapper_function
+  }
+)
+#working_correctly
+# might want to perform another similar map_dfr over the dates
+
+#pmap_dfr(, transform_to_hub_df, forecast_list = temp_reconciled, model_name = "model")
+```
+
