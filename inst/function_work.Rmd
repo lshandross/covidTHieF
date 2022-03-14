@@ -49,13 +49,13 @@ hosp_truth <- full_hosp_truth %>%
   select(3:6, 12:13)
 
 ht_day <- hosp_truth$value
-ht_day_ts <- ts(ht_day, start = c(2020, 179), end = c(2021, 178), frequency = 365)
+#ts <- ts(pull(hosp_truth, value), start = c(4,1), end = c(10, 29), frequency = 56, class = "ts")
 
 # create list of aggregation levels
 agg_list <- list(56, 28, 14, 7, 1)
 
 # Construct aggregates
-ht_day_ts_ <- ts(ht_day, start = c(4,1), end = c(10, 29), frequency = 56) 
+ht_day_ts_ <- ts(pull(hosp_truth, "value"), start = c(1,1), end = c(7, 29), frequency = 56) 
 
 day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
 agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
@@ -74,7 +74,7 @@ extended_truth <- full_hosp_truth %>%
 
 long_truth <- rbind(hosp_truth, extended_truth)
 
-long_ts <- ts(long_truth$value, start = c(4,1), end = c(11, 29), frequency = 56) 
+long_ts <- ts(long_truth$value, start = c(1,1), end = c(8, 29), frequency = 56) 
 
 long_aggs <- tsaggregates(long_ts, m = 56, aggregatelist = agg_list)
 for(i in seq_along(long_aggs))
@@ -90,7 +90,7 @@ for (i in 1:length(dates_actual_agg)) {
   dates_actual_agg[i] <- start_date + (i-1)*weeks(8)
 }
 plot(day_agg_, main="Covid-19 Inc Hosp", xaxt = "n")
-axis(1, at=4:9, labels = dates_actual_agg, line = 1.1)
+axis(1, at=1:6, labels = dates_actual_agg, line = 1.1)
 ```
 
 
@@ -134,26 +134,29 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
       # Construct time series      
       time_period <- as.numeric(end_date - start_date) + 1
       periods <- floor(time_period / freq)
-      remainder <- time_period - periods * freq
-      ht_day_ts_ <- ts(hosp_truth[ts_col], 
+      remainder <- time_period - (periods * freq)
+      ht_day_ts_ <- ts(pull(hosp_truth, ts_col), 
                        start = c(1, 1), end = c(periods+1, remainder), 
                        frequency = freq)
       
       # Construct temporal hierarchy
-      day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
+      day_agg_ <- tsaggregates(ht_day_ts_, m = freq, aggregatelist = agg_list)
       agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
-      for(i in seq_along(day_agg_)) names(day_agg_)[[i]] <- agg.names[i]
+      for(i in seq_along(day_agg_)) {
+        names(day_agg_)[[i]] <- agg.names[i]
+      }
       
-      return(day_agg_)
+      # return(day_agg_)
+      day_agg_
   }
 
-test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
 
 plot_thief_agg <- function(temporal_hierarchy, start_date) {
   start_date <- as.Date(start_date)
 
   # Make actual date labels for plot
-  periods <- floor(length(temporal_hierarchy[[1]]) / frequency(temporal_hierarchy[[1]]))
+  freq <-frequency(temporal_hierarchy[[1]])
+  periods <- floor(length(temporal_hierarchy[[1]]) / freq)
   dates_actual_agg <- rep(start_date - weeks(1), periods + 1)
   for (i in 1:length(dates_actual_agg)) {
     dates_actual_agg[i] <- start_date + (i-1)*weeks(freq/7)
@@ -164,7 +167,6 @@ plot_thief_agg <- function(temporal_hierarchy, start_date) {
   axis(1, at=1:(periods + 1), labels = dates_actual_agg, line = 1.1)
 }
 
-plot_thief_agg(test, start_date)
 ```   
 
 
@@ -181,13 +183,31 @@ compute_base_forecasts <-
     for(i in seq_along(temporal_hierarchy)){
       base_forecasts[[i]] <- 
         forecast(auto.arima(temporal_hierarchy[[i]]), 
-                 h=frequency(temporal_hierarchy[[i]]), 
+                 h=frequency(temporal_hierarchy[[i]])*2,
                  level = pi_levels)
     }
-    return(base_forecasts)
+    #return(base_forecasts)
+    base_forecasts
   }
 
-temp <- compute_base_forecasts(test, pi_levels)
+# Compute base forecasts
+base_fc_day <- list()
+for(i in seq_along(day_agg_)){
+  base_fc_day[[i]] <- forecast(auto.arima(day_agg_[[i]]), 
+                               h=frequency(day_agg_[[i]]), 
+                               level = pi_levels)
+}
+
+#base_fc_day; base_fc_day2
+# Compute base forecasts
+be <- list(); fits <- list()
+for(i in seq_along(test)){
+  be[[i]] <- forecast(auto.arima(test[[i]]), 
+                               h=frequency(test[[i]]), 
+                               level = pi_levels)
+}
+
+#reconcilethief(be, aggregatelist = agg_list) # produces a warning
 ```
 
 
@@ -223,16 +243,37 @@ for(i in seq_along(base_fc_day))
   lines(reconciled_fc_day[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
   lines(base_fc_day[[i]]$mean, col='red') # plots red mean line
   lines(long_aggs[[i]], col='black', lwd=1.5, lty = "dotted")
-  # axis(1, at=1:(periods + 1), labels = dates_actual_agg, line = 1.1)
-  axis(1, at=4:10, labels = dates_actual_forecast)
+  axis(1, at=1:6, labels = dates_actual_forecast)
   axis(2)
 }
 points(base_fc_day[[5]]$mean, col= 'red')
 
+```
 
+
+``` {r extended truth data}
+extended_truth_data <-
+  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
+    # an extra 1*(top agg level) of truth data to plot against forecasts
+    aggregate_thief_df(df, ts_col, start_date, end_date + days(frequency), fips_code, aggregate_levels, frequency) 
+  }
+
+get_ts_dates <-
+  function(start_date, end_date, frequency = 56) {
+    # vector of actual dates
+    freq <- frequency
+    time_period <- as.numeric(end_date - start_date) + 1
+    periods <- floor(time_period / freq)
+    dates_actual_forecast <- rep(start_date - weeks(1), periods + 3)
+    for (i in 1:length(dates_actual_forecast)) {
+      dates_actual_forecast[i] <- start_date + (i-1)*weeks(freq/7)
+    }
+    return(dates_actual_forecast)
+  }
+  
 plot_thief <- 
-  function(base_forecasts, reconciled_forecasts, actual_dates) {
-    par(mfrow=c(ceiling(length(base_forecasts)),2), mai=c(0.35,0.5,0.35,0.35))
+  function(base_forecasts, reconciled_forecasts, ts_dates, extended_truth) {
+    par(mfrow=c(ceiling(length(base_forecasts)/2), 2), mai=c(0.35,0.5,0.35,0.35))
     for(i in seq_along(base_forecasts))
     { # This code is not optimized for plotting when there are many levels
       plot(reconciled_forecasts[[i]], main=agg.names[i], shadecols = c("light gray", "#C2DDEE", "#00458F") , 
@@ -240,53 +281,21 @@ plot_thief <-
           ylim = c(0, max(reconciled_forecasts[[i]]$x, reconciled_forecasts[[i]]$upper))) 
       lines(reconciled_forecasts[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
       lines(base_forecasts[[i]]$mean, col='red') # plots red mean line
-      lines(long_aggs[[i]], col='black', lwd=1.5, lty = "dotted")
-      axis(1, at=1:(periods + 1), labels = dates_actual_forecast)
+      #lines(extended_truth[[i]], col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
+      axis(1, at=4:(periods + 6), labels = ts_dates) # changes axis labels to provided dates
       axis(2)
     }
     points(base_forecasts[[length(base_forecasts)]]$mean, col= 'red')
   }
-```
 
+test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+plot_thief_agg(test, start_date)
+temp <- compute_base_forecasts(test, pi_levels)
+temp_reconciled <- reconcilethief(temp, aggregatelist = agg_list) # produces a warning
 
-``` {r extended truth data}
-extended_truth_data <- 
-  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
-    # an extra 1*(top agg level) of truth data to plot against forecasts
-    freq <- frequency
-    end_date <- end_date + weeks (freq)
-    aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency) 
-
-    # vector of actual dates
-    time_period <- as.numeric(end_date - start_date) + 1
-    periods <- floor(time_period / freq)
-    dates_actual_forecast <- rep(start_date - weeks(1), periods + 1)
-    for (i in 1:length(dates_actual_forecast)) {
-      dates_actual_forecast[i] <- start_date + (i-1)*weeks(freq/7)
-    }
-  }
-
-    long_truth <- full_hosp_truth %>%
-      dplyr::filter(target_end_date >= start_date,
-                    target_end_date <= end_date + weeks(8),
-                    location == "US") %>%
-      mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-      select(3:6, 12:13)
-
-long_ts <- ts(long_truth$value, start = c(4,1), end = c(11, 29), frequency = 56) 
-
-long_aggs <- tsaggregates(long_ts, m = 56, aggregatelist = agg_list)
-for(i in seq_along(long_aggs))
-   names(long_aggs)[[i]] <- agg.names[i]
-
-for(i in seq_along(day_agg_))
-   names(day_agg_)[[i]] <- agg.names[i]
-
-# vector of actual dates
-dates_actual_forecast <- rep(start_date - weeks(1), periods + 1)
-for (i in 1:length(dates_actual_forecast)) {
-  dates_actual_forecast[i] <- start_date + (i-1)*weeks(freq/7)
-}
+extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56)
+dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
+plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test) 
 ```
 
 Turn Reconciled Forecasts List into Tibble of Forecasts
@@ -412,4 +421,5 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) 
 }
 
 transform_to_hub_df(reconciled_fc_day, "model", "US")
+transform_to_hub_df(temp_reconciled, "model", "US")
 ```
