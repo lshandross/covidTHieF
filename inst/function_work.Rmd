@@ -431,13 +431,13 @@ thief_wrapper <-
     # if pi_levels == NULL, warning "you have not provided any PI levels, using default levels"
     
     thief_aggregation <- aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency) 
-    # plot_thief_agg(thief_aggregation, start_date)
+    plot_thief_agg(thief_aggregation, start_date) # use if statement to turn on?
     base_fc <- compute_base_forecasts(thief_aggregation, pi_levels)
     reconciled_fc <- reconcilethief(base_fc, aggregatelist = aggregate_levels)
 
-    # extended_agg <- extended_truth_data(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency)
-    # dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
-    # plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg) 
+    extended_agg <- extended_truth_data(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency) # use if statement to turn on?
+    ts_dates <- get_ts_dates(start_date, end_date, frequency = 56) # use if statement to turn on?
+    plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg) # use if statement to turn on?
     hub_df <- transform_to_hub_df(reconciled_fc, model_name, fips_code)
     
     return(hub_df) 
@@ -451,15 +451,35 @@ hub_test <- thief_wrapper(full_hosp_truth, ts_col = "value",
 
 ```{r map}
 locations <- filter(hub_locations, geo_type == "state", population >= 500000)
-fips_codes <- c("02", "01")
-t <- map_dfr(
-  fips_codes,
-  function(fips_codes) {
-    transform_to_hub_df(temp_reconciled, "model", fips_codes) #replace_with_wrapper_function
-  }
-)
-#working_correctly
+fips_vec <- c("02", "01")
 # might want to perform another similar map_dfr over the dates
 
+t2 <- map_dfr(
+  .x = fips_vec,
+  .f = function(fips_code) {
+    thief_wrapper(full_hosp_truth, ts_col = "value", 
+  start_date, end_date, fips_code,
+  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
+  pi_levels = pi_levels, model_name = "model")
+  }
+)
+
+# function
+covid_thief <- 
+  function(df, ts_col, start_date, end_date, fips_vec, aggregate_levels, frequency, pi_levels, model_name) {
+    all_locs_df <- map_dfr(
+      .x = fips_vec,
+      .f = function(fips_code) {
+        thief_wrapper(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, model_name) 
+      }
+    )
+    return(all_locs_df)
+  }
+  
+t4 <- covid_thief(full_hosp_truth, ts_col = "value", 
+  start_date, end_date, fips_vec,
+  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
+  pi_levels = pi_levels, model)
+  
 ```
 
