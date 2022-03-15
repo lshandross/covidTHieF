@@ -270,21 +270,13 @@ plot_thief <-
           ylim = c(0, max(reconciled_forecasts[[i]]$x, reconciled_forecasts[[i]]$upper))) 
       lines(reconciled_forecasts[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
       lines(base_forecasts[[i]]$mean, col='red') # plots red mean line
-      #lines(extended_truth[[i]], col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
+      lines(extended_truth[[i]], col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
       axis(1, at=4:(periods + 6), labels = ts_dates) # changes axis labels to provided dates
       axis(2)
     }
     points(base_forecasts[[length(base_forecasts)]]$mean, col= 'red')
   }
 
-test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
-plot_thief_agg(test, start_date)
-temp <- compute_base_forecasts(test, pi_levels)
-temp_reconciled <- reconcilethief(temp, aggregatelist = agg_list) # produces a warning
-
-extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56)
-dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
-plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test) 
 ```
 
 Turn Reconciled Forecasts List into Tibble of Forecasts
@@ -410,7 +402,31 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) 
 }
 
 transform_to_hub_df(reconciled_fc_day, "model", "US")
+```
+
+```{r}
+test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+plot_thief_agg(test, start_date)
+temp <- compute_base_forecasts(test, pi_levels)
+temp_reconciled <- reconcilethief(temp, aggregatelist = agg_list) # produces a warning
+
+extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56)
+dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
+plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test) 
 temp_rec_df <- transform_to_hub_df(temp_reconciled, "model", "US")
+
+thief_wrapper <- 
+  function(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels) {
+    test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+    # plot_thief_agg(test, start_date)
+    temp <- compute_base_forecasts(test, pi_levels)
+    temp_reconciled <- reconcilethief(temp, aggregatelist = agg_list) # produces a warning
+
+    # extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56)
+    # dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
+    # plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test) 
+    temp_rec_df <- transform_to_hub_df(temp_reconciled, "model", "US")
+  }
 ```
 
 ```{r map}
@@ -425,6 +441,5 @@ t <- map_dfr(
 #working_correctly
 # might want to perform another similar map_dfr over the dates
 
-#pmap_dfr(, transform_to_hub_df, forecast_list = temp_reconciled, model_name = "model")
 ```
 
