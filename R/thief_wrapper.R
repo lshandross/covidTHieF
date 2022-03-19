@@ -27,7 +27,7 @@ thief_wrapper <-
       plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg)
     }
     
-    hub_df <- transform_to_hub_df(reconciled_fc, model_name, fips_code)
+    hub_df <- transform_to_hub_df(reconciled_fc, model_name, fips_code, pi_levels)
     
     return(hub_df) 
   }
