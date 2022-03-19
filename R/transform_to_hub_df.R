@@ -1,4 +1,4 @@
-transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code, pi_levels) {
+transform_to_hub_df <- function(forecast_list, model_name = "model", end_date, fips_code, pi_levels) {
   library(tidyverse)
   library(lubridate)
   library(forecast)
