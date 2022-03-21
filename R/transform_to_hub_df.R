@@ -58,6 +58,7 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", end_date, f
            quantile = as.numeric(quantile)) %>%
     select(model, location, forecast_date, horizon, temporal_resolution, 
            target_variable, target_end_date, type, quantile, value) %>%
+    filter(horizon <= 35) %>%
     left_join(filter(hub_locations, fips == fips_code), by = c("location" = "fips"))
   
     hub_df
