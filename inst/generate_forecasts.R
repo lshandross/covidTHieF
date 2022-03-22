@@ -61,9 +61,9 @@ generate_thief_wk <-
     lapply(func_list, source)
     
         covid_thief(full_hosp_truth, "value",
-          as.Date("2020-07-27"), mon_fc_vec, # change as needed
+          as.Date("2020-07-27"), fc_dates, # change as needed
           fips_vec = filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips),
-          agg regate_levels = c(56, 8, 4, 2, 1), frequency = 56, # change as needed
+          aggregate_levels = c(56, 8, 4, 2, 1), frequency = 56, # change as needed
           pi_levels = c(10 * (1:9), 95, 98),
           model_name="Topmost8_arima_noTrans") # change as needed
   }
