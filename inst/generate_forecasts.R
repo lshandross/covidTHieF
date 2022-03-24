@@ -1,6 +1,8 @@
 library(doParallel)
 library(parallel)
 library(covidHubUtils)
+library(lubridate)
+library(readr)
 
 # returns number of available cores
 num_cores <- detectCores(logical=TRUE)
@@ -63,9 +65,9 @@ generate_thief_wk <-
         covid_thief(full_hosp_truth, "value",
           as.Date("2020-07-27"), fc_dates, # change as needed
           fips_vec = filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips),
-          aggregate_levels = c(56, 8, 4, 2, 1), frequency = 56, # change as needed
+          aggregate_levels = c(84, 42, 28, 21, 14, 7, 1), frequency = 84, # change as needed
           pi_levels = c(10 * (1:9), 95, 98),
-          model_name="Topmost8_arima_noTrans") # change as needed
+          model_name="Multiple3_arima_noTrans") # change as needed
   }
   
 
@@ -75,13 +77,10 @@ clusterExport(cl, list('generate_thief_wk', 'full_hosp_truth', 'mon_fc_dates'))
 system.time({
   thief_fc_full <- c(parLapply(cl, mon_fc_dates, fun = generate_thief_wk))
 })
-
-
-full_df <- thief_fc[[1]]; temp_df <- thief_fc[[1]]
+ 
 for (i in 1:length(mon_fc_dates)) {
-  write_csv(thief_fc_full[[i]], file=paste("data/", mon_fc_dates[i], "-covidTHieF-Topmost8_arima_noTrans.csv", sep=""))
+  write_csv(thief_fc_full[[i]], file=paste("data/", mon_fc_dates[i], "-covidTHieF-Multiple3_arima_noTrans.csv", sep=""))
 }
-
 
 getwd()
 forecast_list <- list.files(path = "data", pattern=".csv", full.names=TRUE)
