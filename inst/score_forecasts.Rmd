@@ -1,0 +1,47 @@
+---
+title: "score_forecasts"
+author: "Li Shandross"
+date: "3/25/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("thief")
+library(forecast)
+library(lubridate)
+library(tidyverse)
+library(zoltr)
+library(covidHubUtils)
+```
+
+
+```{r, message=FALSE, fig.width=12, fig.height=8}
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         temporal_resolution="daily",
+                         data_location = "remote_hub_repo")
+
+inc_hosp_targets <- paste(0:35, "day ahead inc hosp")
+getwd()
+fc_m3 <- load_forecasts(targets = inc_hosp_targets,
+                                        source = "local_hub_repo",
+                                        hub_repo_path = "..",
+                                        data_processed_subpath = "data/Multiple3_arima_noTrans/",
+                                        verbose = FALSE,
+                                        as_of=NULL,
+                                        hub = c("US"))
+
+forecasts_hosp <- load_latest_forecasts(models = c("Multiple3_arima_noTrans", "Base_arima_noTrans", "Topmost8_arima_noTrans"),
+                                        last_forecast_date = "2021-03-08",
+                                        forecast_date_window_size = 6, 
+                                        #locations = "US",
+                                        types = c("point","quantile"),
+                                        targets = inc_hosp_targets,
+                                        source = "local_hub_repo",
+                                        hub_repo_path = "..",
+                                        data_processed_subpath = "data/",
+                                        verbose = FALSE,
+                                        as_of=NULL,
+                                        hub = c("US"))
+```
