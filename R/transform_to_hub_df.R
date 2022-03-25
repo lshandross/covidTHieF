@@ -1,4 +1,4 @@
-transform_to_hub_df <- function(forecast_list, model_name = "model", end_date, fips_code, pi_levels) {
+transform_to_hub_df <- function(forecast_list, end_date, fips_code, pi_levels) {
   library(tidyverse)
   library(lubridate)
   library(forecast)
@@ -11,7 +11,6 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", end_date, f
   # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
     
   thief_forecast <- forecast_list
-  model_name <- model_name
   fips_code <- fips_code
 
   # Lower Forecasts
@@ -45,22 +44,17 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", end_date, f
 
   # Join forecasts together
   hub_df <- cbind(low_fc, point_fc, high_fc) %>%
-    mutate(forecast_date = end_date, 
+    mutate(forecast_date = end_date,
            horizon = as.numeric(rownames(low_fc)),
-           temporal_resolution = "day",
+           target = paste(horizon, " day ahead inc hosp"),
            target_end_date = forecast_date + days(horizon)) %>%
     pivot_longer(1:(2*length(pi_levels) + 1), "quantile", "value") %>%
-    arrange(target_end_date, quantile) %>%
-    mutate(model = model_name,
-           location = fips_code, 
-           type = "quantile",
-           target_variable = "inc hosp",
-           quantile = as.numeric(quantile)) %>%
-    select(model, location, forecast_date, horizon, temporal_resolution, 
-           target_variable, target_end_date, type, quantile, value) %>%
     filter(horizon <= 35) %>%
-    left_join(filter(hub_locations, fips == fips_code), by = c("location" = "fips"))
-  
+    arrange(target_end_date, quantile) %>%
+    mutate(location = fips_code, 
+           type = "quantile",
+           quantile = as.numeric(quantile)) %>%
+    select(forecast_date, location, target, target_end_date, type, quantile, value)  
     hub_df
 
 }

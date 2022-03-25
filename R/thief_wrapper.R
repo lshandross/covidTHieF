@@ -1,5 +1,5 @@
 thief_wrapper <- 
-  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, model_name, plot.aggregates = TRUE, plot.forecasts = TRUE) {
+  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, plot.aggregates = TRUE, plot.forecasts = TRUE) {
     library(tidyverse)
     library(lubridate)
     
@@ -27,7 +27,7 @@ thief_wrapper <-
       plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg)
     }
     
-    hub_df <- transform_to_hub_df(reconciled_fc, model_name, end_date, fips_code, pi_levels)
+    hub_df <- transform_to_hub_df(reconciled_fc, end_date, fips_code, pi_levels)
     
     return(hub_df) 
   }
