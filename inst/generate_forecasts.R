@@ -41,7 +41,7 @@ system.time({
   thief_fc_full <- c(parLapply(cl, mon_fc_dates, fun = generate_thief_wk))
 })
  
-for (i in 25:31) {
+for (i in 11:31) {
   write_csv(thief_fc_full[[i]], file=paste("data/covidTHieF-Multiple3_arima_noTrans/", mon_fc_dates[i], "-covidTHieF-Multiple3_arima_noTrans.csv", sep=""))
 }
 
