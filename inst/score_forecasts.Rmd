@@ -109,11 +109,15 @@ We calculate metrics for all three models, aggregating by horizon. Since hospita
 # scores <- score_forecasts(forecasts=forecasts2, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
 #getwd()
 # save(forecasts2, scores, file="../data/loadedfc_scores.RData")
+```
 
-
-# Overall metrics
-overall_metrics <- scores %>%
-  filter(horizon <= 28, target_end_date <= as.Date("2021-07-05")) %>%
+### Overall metrics
+```{r}
+# US National
+overall_metrics_US <- scores %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location == "US") %>%
   mutate(
     horizon_wk = case_when(
       horizon %in% c(1:7) ~ 1,
@@ -128,11 +132,39 @@ overall_metrics <- scores %>%
     coverage_50 = mean(coverage_50),
     coverage_95 = mean(coverage_95)
   )
-knitr::kable(overall_metrics)
-  
-# Metrics by wave
-wave_metrics <- scores %>%
-  filter(horizon <= 28, target_end_date <= as.Date("2021-07-05")) %>%
+knitr::kable(overall_metrics_US)
+
+# Aggregated for all states and territories
+overall_metrics_states <- scores %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location != "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    )
+  ) %>%
+  group_by(model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    coverage_50 = mean(coverage_50),
+    coverage_95 = mean(coverage_95)
+  )
+knitr::kable(overall_metrics_states)
+```
+
+When splitting the results so that US National is separate, we find that for US National the Base_arima_noTrans model performed the best both in terms of WIS and MAE as well as PI Coverage, followed by the Topmost8_arima_noTrans model and finally the Multiple3_arima_noTrans model, with a noticeable difference in performance between models. On the other hand, for states we find that the Topmost8_arima_noTrans model performed the best, followed closely by the Multiple3_arima_noTrans model (which actually had slightly better 50% PI Coverage), and then much further behind the Base_arima_noTrans model. There was noticeably better PI coverage for the US National forecasts, but we cannot say much about the WIS and MAE since these metrics are scale-dependent and we are holding off on comparing to the baseline until the testing phase.
+
+### Metrics by wave
+```{r}  
+# US National
+wave_metrics_US <- scores %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location == "US") %>%
   mutate(
     horizon_wk = case_when(
       horizon %in% c(1:7) ~ 1,
@@ -145,15 +177,44 @@ wave_metrics <- scores %>%
       forecast_date >= as.Date("2021-03-17") ~"alpha"
     )
   ) %>%
-  group_by(model, wave, horizon_wk) %>%
+  group_by(wave, model, horizon_wk) %>%
   summarize(
     wis = mean(wis), mae=mean(abs_error),
     coverage_50 = mean(coverage_50),
     coverage_95 = mean(coverage_95)
   )
   
-knitr::kable(wave_metrics)
+knitr::kable(wave_metrics_US)
+
+# Aggregated for all states and territories
+wave_metrics_states <- scores %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location != "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    ),
+    wave = case_when(
+      forecast_date <= as.Date("2021-03-17") ~"winter21",
+      forecast_date >= as.Date("2021-03-17") ~"alpha"
+    )
+  ) %>%
+  group_by(wave, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    coverage_50 = mean(coverage_50),
+    coverage_95 = mean(coverage_95)
+  )
+  
+knitr::kable(wave_metrics_states)
 ```
 
 Based on the above metrics, we can see that generally the Topmost8_arima_noTrans model performed the best both in terms of WIS and MAE as well as PI Coverage, whereas the Multiple3_arima_noTrans model performed next best for PI Coverage but the Base_arima_noTrans model performed second best for WIS and MAE. There is not much difference between the metrics calculated for the entire training phase versus those split by wave, although notably the models perform better during the longer winter21 wave compared to the shorter alpha wave. The PI coverage is not great for any of the models, although it is slightly better for the 95% interval compared to the 50% one.
 
+For US National during the alpha wave, the Base_arima_noTrans model performed the best for every metric and every horizon, followed by the Topmost8_arima_noTrans model, both of which were noticeably better than the Multiple3_arima_noTrans model for all metrics and horizons. However, during the winter21 wave the Multiple3_arima_noTrans model out performed the other two models at longer horizons for all metrics except 3 week ahead 50% PI coverage where the Base_arima_noTrans performed best. At shorter horizons, though, the Base_arima_noTrans tended to perform best for all metrics, except for one week ahead 50% of PI Coverage in which the Topmost8_arima_noTrans model did the best. During the alpha wave, the best models had noticeably good coverage rates, very close to the nominal levels. The results from the alpha wave in terms of model ranking seem to match those of the overall results for the US National level.   
+
+For states during the alpha wave, the Topmost8_arima_noTrans model performed the best for every metric and every horizon, followed by the Multiple3_arima_noTrans model, both of which were better than the Base_arima_noTrans model for all (noticeably so for most) metrics and horizons. However, during the winter21 wave the Multiple3_arima_noTrans model out performed the other two models for all metrics except 95% PI coverage where the Base_arima_noTrans performed best, although not by much. Unsurprisingly, the Topmost8_arima_noTrans performed next best for most metrics, followed by the Base_arima_noTrans model. During the Winter21 wave, all the models had noticeably better performance for all metrics compared to the alpha wave, opposite of that for the wave breakdown of the US National level. However, the results from the alpha wave in terms of model ranking seem to match those of the overall results for the states.   
