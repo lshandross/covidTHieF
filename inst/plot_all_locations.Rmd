@@ -1,0 +1,56 @@
+---
+title: "plot_all_locations"
+author: "Li Shandross"
+date: "3/30/2022"
+output: pdf_document
+classoption: landscape
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+library("thief")
+library(forecast)
+library(lubridate)
+library(tidyverse)
+library(zoltr)
+library(covidHubUtils)
+```
+
+```{r, echo=FALSE, fig.width=15, fig.height=10}
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         temporal_resolution="daily",
+                         data_location = "remote_hub_repo")
+
+inc_hosp_targets <- paste(0:35, "day ahead inc hosp")
+
+load("../data/loadedfc_scores.RData")
+
+fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)))
+locs <- distinct(forecasts2, location) %>% pull()
+for (i in 1:53) {
+  fdat <-forecasts2 %>% 
+    filter(location == locs[i], 
+           forecast_date %in% fc_dates,
+           horizon <= 28)
+  
+  p <- plot_forecasts(fdat, 
+                      target_variable = "inc hosp", 
+                      intervals = c(.5, .95), 
+                      truth_source = "HealthData",
+                      use_median_as_point = TRUE,
+                      facet = model ~.,
+                      facet_nrow = 3,
+                      facet_scales = "free_y",
+                      fill_by_model = TRUE, 
+                      plot=FALSE)
+
+  pt <- p +
+    scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-07-05")), 
+              date_breaks = "2 months", date_labels = "%b") +
+    theme(axis.ticks.length.x = unit(0.5, "cm"),
+          axis.text.x = element_text(vjust = 7, hjust = -0.2))
+          
+  print(pt)
+}
+```
