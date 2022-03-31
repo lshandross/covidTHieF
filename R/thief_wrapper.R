@@ -1,5 +1,5 @@
 thief_wrapper <- 
-  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, plot.aggregates = TRUE, plot.forecasts = TRUE) {
+  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, plot.aggregates = TRUE, plot.forecasts = TRUE, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
     
@@ -16,8 +16,9 @@ thief_wrapper <-
     # if aggregate_levels == NULL, stop "you have not provided any aggregate levels"
     # if pi_levels == NULL, warning "you have not provided any PI levels, using default levels"
     
-    thief_aggregation <- aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency) 
+    thief_aggregation <- aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, transform.4root) 
     if (plot.aggregates == TRUE) {plot_thief_agg(thief_aggregation, start_date) }
+    
     base_fc <- compute_base_forecasts(thief_aggregation, pi_levels)
     reconciled_fc <- reconcilethief(base_fc, aggregatelist = aggregate_levels)
 
@@ -27,7 +28,7 @@ thief_wrapper <-
       plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg)
     }
     
-    hub_df <- transform_to_hub_df(reconciled_fc, end_date, fips_code, pi_levels)
+    hub_df <- transform_to_hub_df(reconciled_fc, end_date, fips_code, pi_levels, transform.4root)
     
     return(hub_df) 
   }

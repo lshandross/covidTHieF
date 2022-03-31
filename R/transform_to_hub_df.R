@@ -1,4 +1,4 @@
-transform_to_hub_df <- function(forecast_list, end_date, fips_code, pi_levels) {
+transform_to_hub_df <- function(forecast_list, end_date, fips_code, pi_levels, transform.4root = FALSE) {
   library(tidyverse)
   library(lubridate)
   library(forecast)
@@ -55,6 +55,8 @@ transform_to_hub_df <- function(forecast_list, end_date, fips_code, pi_levels) {
            type = "quantile",
            quantile = as.numeric(quantile)) %>%
     select(forecast_date, location, target, target_end_date, type, quantile, value)  
-    hub_df
 
+  if (transform.4root == TRUE) {hub_df <- mutate(hub_df, value=value^4)}
+  
+  return (hub_df)
 }

@@ -1,5 +1,5 @@
 aggregate_thief_df <- # aggregate levels list should be in order of smallest to largest level
-  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
+  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
     library(thief)
@@ -29,7 +29,13 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
       time_period <- as.numeric(end_date - start_date) + 1
       periods <- floor(time_period / freq)
       remainder <- time_period - (periods * freq)
-      ht_day_ts_ <- ts(pull(hosp_truth, ts_col), # difference
+
+      if (transform.4root == TRUE) {
+        hosp_values <- pull(hosp_truth, ts_col)^0.25
+      } else {
+        hosp_values <- pull(hosp_truth, ts_col)
+      }
+      ht_day_ts_ <- ts(hosp_values, # difference
                        start = c(1, 1), end = c(periods+1, remainder), # difference
                        frequency = freq)
       
