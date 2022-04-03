@@ -22,8 +22,6 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
       dplyr::filter(target_end_date >= start_date,
                     target_end_date <= end_date,
                     location == fips_code) %>%
-      mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-      select(3:6, 12:13) %>%
       arrange(target_end_date)
 
       # Construct time series      
