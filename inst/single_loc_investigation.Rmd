@@ -1,0 +1,53 @@
+---
+title: "Single location investigation"
+author: "Li Shandross"
+date: "4/2/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("thief")
+library(forecast)
+library(lubridate)
+library(tidyverse)
+library(zoltr)
+library(covidHubUtils)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
+func_list <- list.files(path = "../R", pattern=".R", full.names=TRUE)
+lapply(func_list, source)
+
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         temporal_resolution="daily",
+                         data_location = "remote_hub_repo")
+
+start_date = as.Date("2020-07-27"); end_date = as.Date("2021-05-03")
+pi_levels = c(10 * (1:9), 95, 98)
+
+test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code = "48", aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+plot_thief_agg(test, start_date)
+temp <- compute_base_forecasts(test, pi_levels)
+temp_reconciled <- reconcilethief(temp, aggregatelist = agg_list) # produces a warning
+
+extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56)
+dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
+plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test) 
+temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "48", pi_levels)
+
+hub_test <- thief_wrapper(full_hosp_truth, ts_col = "value", 
+  start_date, end_date, fips_code = "48",
+  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
+  pi_levels = pi_levels,
+  plot.aggregates = TRUE, plot.forecasts = TRUE)
+```
+
+```{r}
+full_hosp_truth %>%
+  filter(location == "48", 
+    target_end_date %in% c(start_date:end_date)) %>%
+  select(target_end_date, value) %>%
+  plot()
+```
