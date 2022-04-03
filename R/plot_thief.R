@@ -13,7 +13,7 @@ get_ts_dates <-
     freq <- frequency
     time_period <- as.numeric(end_date - start_date) + 1
     periods <- floor(time_period / freq)
-    dates_actual_forecast <- rep(start_date - weeks(1), periods + 3)
+    dates_actual_forecast <- rep(start_date - weeks(1), periods + 1)
     for (i in 1:length(dates_actual_forecast)) {
       dates_actual_forecast[i] <- start_date + (i-1)*weeks(freq/7)
     }
@@ -27,7 +27,8 @@ plot_thief <-
     library(forecast)
     library(thief)
     
-    par(mfrow=c(ceiling(length(base_forecasts))/2, 2), mai=c(0.35,0.5,0.35,0.35))
+    periods <- floor(length(base_forecasts[[1]]$x) / frequency(base_forecasts[[1]]$x))
+    par(mfrow=c(ceiling(length(base_forecasts)/2), 2), mai=c(0.35,0.5,0.35,0.35))
     for(i in seq_along(base_forecasts))
     { # This code is not optimized for plotting when there are many levels
       plot(reconciled_forecasts[[i]], main=agg.names[i], shadecols = c("light gray", "#C2DDEE", "#00458F") , 
@@ -36,7 +37,7 @@ plot_thief <-
       lines(reconciled_forecasts[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
       lines(base_forecasts[[i]]$mean, col='red') # plots red mean line
       lines(extended_truth[[i]], col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
-      axis(1, at=1:(periods + 3), labels = ts_dates) # changes axis labels to provided dates
+      axis(1, at=1:(periods + 1), labels = ts_dates) # changes axis labels to provided dates
       axis(2)
     }
     points(base_forecasts[[length(base_forecasts)]]$mean, col= 'red')
