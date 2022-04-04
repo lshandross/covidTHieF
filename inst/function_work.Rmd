@@ -37,31 +37,33 @@ full_hosp_truth <- load_truth("HealthData",
 
 
 start_date <- as.Date("2020-07-27") # a monday
-end_date <- as.Date("2021-01-11")
+end_date <- as.Date("2021-05-03")
 
-fips_code <- "US"
+fips_code <- "48"
 
 hosp_truth <- full_hosp_truth %>%
+  select(target_end_date, location, value) %>%
   dplyr::filter(target_end_date >= start_date,
                 target_end_date <= end_date,
                 location == fips_code) %>%
-  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-  select(3:6, 12:13)
+#  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+#  select(3:6, 12:13) %>%
+  arrange(target_end_date)
 
 ht_day <- hosp_truth$value
 #ts <- ts(pull(hosp_truth, value), start = c(4,1), end = c(10, 29), frequency = 56, class = "ts")
 
 # create list of aggregation levels
-agg_list <- list(84, 42, 28, 21, 14, 7, 1)
+agg_list <- list(56, 28, 14, 7, 1)
 
 # Construct aggregates
 time_period <- as.numeric(end_date - start_date) + 1
-periods <- floor(time_period / 84)
-remainder <- time_period - (periods * 84)
-ht_day_ts_ <- ts(pull(hosp_truth, "value"), start = c(1,1), end = c(periods+1, remainder), frequency = 84) 
+periods <- floor(time_period / 56)
+remainder <- time_period - (periods * 56)
+ht_day_ts_ <- ts(pull(hosp_truth, "value"), start = c(1,1), end = c(periods+1, remainder), frequency = 56) 
 
-day_agg_ <- tsaggregates(ht_day_ts_, m = 84, aggregatelist = agg_list)
-agg.names <- c("daily", "weekly", "2-weekly", "3-weekly", "4-weekly", "6-weekly", "12-weekly")
+day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
+agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
 for(i in seq_along(day_agg_))
    names(day_agg_)[[i]] <- agg.names[i]
 ```   
@@ -69,11 +71,13 @@ for(i in seq_along(day_agg_))
 ``` {r extended truth data}
 # an extra 1*(top agg level) of truth data to plot against forecasts
 extended_truth <- full_hosp_truth %>%
+  select(target_end_date, location, value) %>%
   dplyr::filter(target_end_date >= end_date,
                 target_end_date <= end_date + weeks(4),
                 location == "US") %>%
-  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-  select(3:6, 12:13)
+#  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
+#  select(3:6, 12:13)
+  arrange(target_end_date)
 
 long_truth <- rbind(hosp_truth, extended_truth)
 
