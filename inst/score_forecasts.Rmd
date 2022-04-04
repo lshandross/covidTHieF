@@ -66,6 +66,31 @@ forecasts3 <-
     left_join(hub_locations, by=c("location"="fips"))
 
 forecasts_df <- rbind(forecasts2, forecasts3)
+
+for (j in 1:31) {
+  if(j != 1) {
+    df <- thief_fc_full[[j]] %>%
+      mutate(model = "Topmost8_arima_noTrans")
+    forecasts <- rbind(forecasts, df)
+  } else {
+    forecasts <- thief_fc_full[[j]] %>%
+      mutate(model = "Topmost8_arima_noTrans")
+  }
+}
+
+forecasts_df <-
+  forecasts %>%
+    separate(target,
+      into=c("horizon", "temp"),
+      sep=" "
+    ) %>%
+    mutate(
+      horizon=as.numeric(horizon),
+      temporal_resolution="day",
+      target_variable="inc hosp"
+    ) %>%
+    select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
+    left_join(hub_locations, by=c("location"="fips"))
 ```
 
 ## Plot Forecasts
@@ -117,6 +142,8 @@ scores2 <- score_forecasts(forecasts=forecasts2, return_format="wide", truth=ful
 scores_df <- rbind(scores, scores2)
 #getwd()
 save(forecasts_df, scores_df, file="../data/loadedfc_scores_df.RData")
+
+scores_df <- score_forecasts(forecasts=forecasts_df, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
 ```
 
 ### Overall metrics
