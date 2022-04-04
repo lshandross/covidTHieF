@@ -28,9 +28,9 @@ generate_thief_wk <-
     lapply(func_list, source)
 
         covid_thief(full_hosp_truth, "value",
-          as.Date("2020-07-27"), fc_dates, # change as needed
+          as.Date("2020-07-27"), fc_dates, # change as needed 
           fips_vec = filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips),
-          aggregate_levels = c(84, 42, 28, 21, 14, 7, 1), frequency = 84, # change as needed
+          aggregate_levels = c(28, 14, 7, 1), frequency = 28, # change as needed
           pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
   }
 
@@ -41,8 +41,8 @@ system.time({
   thief_fc_full <- c(parLapply(cl, mon_fc_dates, fun = generate_thief_wk))
 })
 
-for (i in 25:31) {
-  write_csv(thief_fc_full[[i]], file=paste("data/Multiple3_arima_4root/", mon_fc_dates[i], "-covidTHieF-Multiple3_arima_4root.csv", sep=""))
+for (i in 22:31) {
+  write_csv(thief_fc_full[[i]], file=paste("data/Topmost8_arima_4root/", mon_fc_dates[i], "-covidTHieF-Topmost8_arima_4root.csv", sep=""))
 }
 
 
