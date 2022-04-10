@@ -25,46 +25,58 @@ full_hosp_truth <- load_truth("HealthData",
                          temporal_resolution="daily",
                          data_location = "remote_hub_repo")
 
-inc_hosp_targets <- paste(0:35, "day ahead inc hosp")
+inc_hosp_targets <- paste(0:30, "day ahead inc hosp")
+mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:30))
+fips <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
 
-# load("../data/loadedfc_scores.RData")
+load("../data/loadedfc_scores_df.RData")
+load("../data/baseline_fc_scores.RData")
 
+forecasts_baseline <- load_forecasts(models = "COVIDhub-baseline",
+                                        dates = mon_fc_dates,
+                                        date_window_size = 6, 
+                                        locations = fips,
+                                        types = c("point","quantile"),
+                                        targets = inc_hosp_targets,
+                                        source = "zoltar",
+                                        verbose = FALSE,
+                                        as_of=NULL,
+                                        hub = c("US"))
 
-models <- c("Base_arima_4root", "Base_arima_noTrans", 
-            "Multiple3_arima_4root", "Multiple3_arima_noTrans", 
-            "Topmost8_arima_4root", "Topmost8_arima_noTrans")
-
-files <- rep("path", 30)
-forecasts <- read_csv(file_paths[[1]][1]) %>% mutate(model=models[1])
-for (i in 1:6) {
-  files <- list.files(path=paste("../data/", models[i], "/", sep=""), pattern=".csv", full.names=TRUE)
-  for (j in 1:30) {
-    if(i + j != 2) {
-      df <- read_csv(files[j]) %>%
-        mutate(model = models[i])
-      forecasts <- rbind(forecasts, df)
-    } else {
-        forecasts <- read_csv(files[j]) %>%
-        mutate(model = models[i])
-    }
-  }
-}
-
-forecasts_df <-
-  forecasts %>%
-    separate(target,
-      into=c("horizon", "temp"),
-      sep=" "
-    ) %>%
-    mutate(
-      horizon=as.numeric(horizon),
-      temporal_resolution="day",
-      target_variable="inc hosp"
-    ) %>%
-    select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
-    left_join(hub_locations, by=c("location"="fips"))
-    
-save(forecasts_df, file="../data/loadedfc_df.RData")
+# models <- c("Base_arima_4root", "Base_arima_noTrans", 
+#             "Multiple3_arima_4root", "Multiple3_arima_noTrans", 
+#             "Topmost8_arima_4root", "Topmost8_arima_noTrans")
+# 
+# files <- rep("path", 30)
+# for (i in 1:6) {
+#   files <- list.files(path=paste("../data/", models[i], "/", sep=""), pattern=".csv", full.names=TRUE)
+#   for (j in 1:30) {
+#     if(i + j != 2) {
+#       df <- read_csv(files[j]) %>%
+#         mutate(model = models[i])
+#       forecasts <- rbind(forecasts, df)
+#     } else {
+#         forecasts <- read_csv(files[j]) %>%
+#         mutate(model = models[i])
+#     }
+#   }
+# }
+# 
+# forecasts_df <-
+#   forecasts %>%
+#     separate(target,
+#       into=c("horizon", "temp"),
+#       sep=" "
+#     ) %>%
+#     mutate(
+#       horizon=as.numeric(horizon),
+#       temporal_resolution="day",
+#       target_variable="inc hosp"
+#     ) %>%
+#     select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
+#     left_join(hub_locations, by=c("location"="fips"))
+#     
+# save(forecasts_df, file="../data/loadedfc_df.RData")
 ```
 
 ## Plot Forecasts
@@ -82,8 +94,10 @@ locs <- full_hosp_truth %>%
 
 fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)))
 
+fc_df <- forecasts_df %>% rbind(forecasts_baseline) 
 for (i in 1:3) {
-  fdat <-forecasts_df %>% filter(location == locs[i], forecast_date %in% fc_dates)
+  fdat <- fc_df %>%
+    filter(location == locs[i], forecast_date %in% fc_dates)
   
   p <- plot_forecasts(fdat, 
                       target_variable = "inc hosp", 
@@ -91,14 +105,15 @@ for (i in 1:3) {
                       truth_source = "HealthData",
                       use_median_as_point = TRUE,
                       facet = model ~.,
-                      facet_nrow = 3,
-                      facet_scales = "free_y",
+                      facet_nrow = 4,
+                      #facet_scales = "free_y",
                       fill_by_model = TRUE, 
                       plot=FALSE)
 
   pt <- p +
     scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-07-05")), 
               date_breaks = "2 months", date_labels = "%b") +
+    #scale_y_continuous(limits=c(0, max(filter(full_hosp_truth, location==locs[i])$value) * 1.25)) +
     theme(axis.ticks.length.x = unit(0.5, "cm"),
           axis.text.x = element_text(vjust = 7, hjust = -0.2),
           legend.position = "none")
@@ -107,7 +122,7 @@ for (i in 1:3) {
 }
 ```
 
-The plots don't show much visible difference between the three models (although this is partially due to the fact that the yscales are free and are not consistent even for the same location). However, it is clear that performance differs by location, all three models performing the worst for Texas and most closely following the trend line for the US National truth. We investigate model accuracy more deeply by scoring the forecasts for each model and calculating appropriate metrics.   
+The plots don't show much difference between the 6 models (although this is partially due to the fact that the yscales are free and are not consistent even for the same location). However, of note is the fact that the models that use a forth root transformation tend to have wider prediction intervals than the models without transformations. All of the models reasonably follow the trend of the truth lines for every location shown, although it seems like lower count locations may have slightly greater accuracy. We investigate model accuracy more deeply by scoring the forecasts for each model and calculating appropriate metrics.   
 
 ## Score forecasts
 We calculate metrics for all three models, aggregating by horizon. Since hospitalizations are forecasted at a daily time scale, a new horizon week variable is created in which scoring metrics are averaged over from a single week Tuesday to the following Monday. We perform these calculations for the entire training phase as well as for each of the two waves that occurred during the training phase.   
@@ -115,13 +130,16 @@ We calculate metrics for all three models, aggregating by horizon. Since hospita
 ```{r}
 scores_df <- score_forecasts(forecasts=forecasts_df, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
 #getwd()
-save(scores_df, file="../data/loadedfc_df.RData")
+#save(scores_df, file="../data/loadedfc_df.RData")
+# score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth)
+save(forecasts_baseline, score_baseline, file="../data/baseline_fc_scores.RData")
 ```
 
 ### Overall metrics
 ```{r}
 # US National
 overall_metrics_US <- scores_df %>%
+  rbind(score_baseline) %>%
   filter(horizon <= 28, 
          target_end_date <= as.Date("2021-07-05"),
          location == "US") %>%
@@ -141,8 +159,25 @@ overall_metrics_US <- scores_df %>%
   )
 knitr::kable(overall_metrics_US)
 
+overall_metrics_US <- overall_metrics_US %>%
+  mutate(
+    rwis = case_when(
+      horizon_wk == 1 ~ wis / pull(overall_metrics_US[9,3]),
+      horizon_wk == 2 ~ wis / pull(overall_metrics_US[10,3]),
+      horizon_wk == 3 ~ wis / pull(overall_metrics_US[11,3]),
+      horizon_wk == 4 ~ wis / pull(overall_metrics_US[12,3])
+    ),
+    rmae = case_when(
+      horizon_wk == 1 ~ mae / pull(overall_metrics_US[9,4]),
+      horizon_wk == 2 ~ mae / pull(overall_metrics_US[10,4]),
+      horizon_wk == 3 ~ mae / pull(overall_metrics_US[11,4]),
+      horizon_wk == 4 ~ mae / pull(overall_metrics_US[12,4])
+    )
+  )
+
 # Aggregated for all states and territories
 overall_metrics_states <- scores_df %>%
+  rbind(score_baseline) %>%
   filter(horizon <= 28, 
          target_end_date <= as.Date("2021-07-05"),
          location != "US") %>%
@@ -161,14 +196,34 @@ overall_metrics_states <- scores_df %>%
     coverage_95 = mean(coverage_95)
   )
 knitr::kable(overall_metrics_states)
+
+overall_metrics_states <- overall_metrics_states %>%
+  mutate(
+    rwis = case_when(
+      horizon_wk == 1 ~ wis / pull(overall_metrics_states[9,3]),
+      horizon_wk == 2 ~ wis / pull(overall_metrics_states[10,3]),
+      horizon_wk == 3 ~ wis / pull(overall_metrics_states[11,3]),
+      horizon_wk == 4 ~ wis / pull(overall_metrics_states[12,3])
+    ),
+    rmae = case_when(
+      horizon_wk == 1 ~ mae / pull(overall_metrics_states[9,4]),
+      horizon_wk == 2 ~ mae / pull(overall_metrics_states[10,4]),
+      horizon_wk == 3 ~ mae / pull(overall_metrics_states[11,4]),
+      horizon_wk == 4 ~ mae / pull(overall_metrics_states[12,4])
+    )
+  )
 ```
 
-When splitting the results so that US National is separate, we find that for US National the Base_arima_noTrans model performed the best both in terms of WIS and MAE as well as PI Coverage, followed by the Topmost8_arima_noTrans model and finally the Multiple3_arima_noTrans model, with a noticeable difference in performance between models. On the other hand, for states we find that the Topmost8_arima_noTrans model performed the best, followed closely by the Multiple3_arima_noTrans model (which actually had slightly better 50% PI Coverage), and then much further behind the Base_arima_noTrans model. There was noticeably better PI coverage for the US National forecasts, but we cannot say much about the WIS and MAE since these metrics are scale-dependent and we are holding off on comparing to the baseline until the testing phase.
+When splitting the results so that US National is separate, we find that for US National the two models that use the base set hierarchy tended to perform the best, followed by the Topmost8_arima_noTrans model. The Base_arima_noTrans model performed the best in terms of PI Coverage, followed by the Base_arima_4root and Topmost8_arima_noTrans models (with the latter being more consistent with coverage rates for all horizons). In terms of WIS and MAE, the Base_arima_4root model performed the best, followed by the Base_arima_noTrans model. Overall, for the US National level, it seems that there is a pattern that for coverage rates, the models without transformations perform better (and these tend to have smaller prediction intervals) while for WIS and MAE the fourth root transform models perform better; these patterns hold at all horizons. Further, there is a general order to model accuracy in terms of hierarchical structure used: the Base set performs the best, followed by the Topmost8 set, and finally the Multiple3 set.   
+
+For the state level, we see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models. (We also see shrunken WIS and MAE values, although this is likely partially due to the fact that the states have smaller scale values than the National level.) It's a little harder to definitively say which models have the best coverage rates, as the results differ between the 50% and 95% intervals and the models are quite similar in coverage rates, especially for the 95% intervals. However, it seems that the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model.   
+
 
 ### Metrics by wave
 ```{r}  
 # US National
 wave_metrics_US <- scores_df %>%
+  rbind(score_baseline) %>%
   filter(horizon <= 28, 
          target_end_date <= as.Date("2021-07-05"),
          location == "US") %>%
@@ -195,6 +250,7 @@ knitr::kable(wave_metrics_US)
 
 # Aggregated for all states and territories
 wave_metrics_states <- scores_df %>%
+  rbind(score_baseline) %>%
   filter(horizon <= 28, 
          target_end_date <= as.Date("2021-07-05"),
          location != "US") %>%
@@ -220,8 +276,99 @@ wave_metrics_states <- scores_df %>%
 knitr::kable(wave_metrics_states)
 ```
 
-Based on the above metrics, we can see that generally the Topmost8_arima_noTrans model performed the best both in terms of WIS and MAE as well as PI Coverage, whereas the Multiple3_arima_noTrans model performed next best for PI Coverage but the Base_arima_noTrans model performed second best for WIS and MAE. There is not much difference between the metrics calculated for the entire training phase versus those split by wave, although notably the models perform better during the longer winter21 wave compared to the shorter alpha wave. The PI coverage is not great for any of the models, although it is slightly better for the 95% interval compared to the 50% one.
+For US National during the alpha wave, the Base_arima_noTrans model performed the best for coverage rates and second best for WIS and MAE at every horizon. The Base_arima_4root model performed best in terms of WIS and MAE but was third for coverage rate while the Topmost8_arima_noTrans model had the second best coverage rates and third best WIS and MAE. During the alpha wave, these models performed the best and tended to have more consistent values for their metrics. The winter21 wave saw noticeably worse values for all metrics at every horizon. Generally, the two models that use the base set hierarchy tended to perform the best for all metrics, although the coverage rates varied a lot by horizon, with the Topmost8_arima_4root and Multiple3_arima_noTrans achieving closer to nominal coverage rates for the 95% interval than even the Base models at horizons greater than 1 week ahead.   
 
-For US National during the alpha wave, the Base_arima_noTrans model performed the best for every metric and every horizon, followed by the Topmost8_arima_noTrans model, both of which were noticeably better than the Multiple3_arima_noTrans model for all metrics and horizons. However, during the winter21 wave the Multiple3_arima_noTrans model out performed the other two models at longer horizons for all metrics except 3 week ahead 50% PI coverage where the Base_arima_noTrans performed best. At shorter horizons, though, the Base_arima_noTrans tended to perform best for all metrics, except for one week ahead 50% of PI Coverage in which the Topmost8_arima_noTrans model did the best. During the alpha wave, the best models had noticeably good coverage rates, very close to the nominal levels. The results from the alpha wave in terms of model ranking seem to match those of the overall results for the US National level.   
+For states during both waves, we again see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models, compared to those of the US National level when broken into waves. During the alpha wave, the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model. During the winter21 wave, the Base_arima_4root model is again generally the best for all metrics at all horizon weeks but sometimes loses out in terms of 95% coverage at longer horizons to other models. Notably during this wave, there are much greater similarities in coverage rates and certain models have better coverage rates for the 50% interval while others have better coverage reads for the 95% one.   
 
-For states during the alpha wave, the Topmost8_arima_noTrans model performed the best for every metric and every horizon, followed by the Multiple3_arima_noTrans model, both of which were better than the Base_arima_noTrans model for all (noticeably so for most) metrics and horizons. However, during the winter21 wave the Multiple3_arima_noTrans model out performed the other two models for all metrics except 95% PI coverage where the Base_arima_noTrans performed best, although not by much. Unsurprisingly, the Topmost8_arima_noTrans performed next best for most metrics, followed by the Base_arima_noTrans model. During the Winter21 wave, all the models had noticeably better performance for all metrics compared to the alpha wave, opposite of that for the wave breakdown of the US National level. However, the results from the alpha wave in terms of model ranking seem to match those of the overall results for the states.   
+### By forecast date (week)
+
+```{r}  
+# US National
+forecast_date_metrics_US <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location == "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    )
+  ) %>%
+  group_by(forecast_date, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    coverage_50 = mean(coverage_50),
+    coverage_95 = mean(coverage_95)
+  )
+
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
+        aes(x = forecast_date + weeks(1), y = wis)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+    axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
+        aes(x = forecast_date + weeks(1), y = wis)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+    axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
+        aes(x = forecast_date + weeks(1), y = mae)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+    axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
+        aes(x = forecast_date + weeks(1), y = mae)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+    axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+      
+# Aggregated for all states and territories
+forecast_date_metrics_states <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location != "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    )) %>%
+  group_by(forecast_date, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    coverage_50 = mean(coverage_50),
+    coverage_95 = mean(coverage_95)
+  )
+
+ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
+        aes(x = forecast_date + weeks(1), y = wis)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+    axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+#knitr::kable(forecast_date_metrics_states)
+```
+
+
+### Scoring Conclusions   
+It seems that the best three models that should be passed onto the testing phase are the Base_arima_noTrans, the Base_arima_4root, and the Topmost8_arima_noTrans models, which seem to take turns being most accurate depending on state or national level overall and during different waves.
+
+
