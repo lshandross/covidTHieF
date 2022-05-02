@@ -8,7 +8,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo = FALSE)
 library("thief")
 library(forecast)
 library(lubridate)
@@ -31,6 +31,10 @@ fips <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pul
 
 load("../data/loadedfc_scores_df.RData")
 load("../data/baseline_fc_scores.RData")
+
+# Rename models
+forecasts_df <-forecasts_df %>%
+  mutate(model=case_when("Base_arima"))
 
 # forecasts_baseline <- load_forecasts(models = "COVIDhub-baseline",
 #                                         dates = mon_fc_dates,
@@ -131,14 +135,61 @@ We calculate metrics for all three models, aggregating by horizon. Since hospita
 ```{r}
 #scores_df <- score_forecasts(forecasts=forecasts_df, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
 #save(scores_df, file="../data/loadedfc_df.RData")
-# score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth)
-#save(forecasts_baseline, score_baseline, file="../data/baseline_fc_scores.RData")
+ score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth)
+save(forecasts_baseline, score_baseline, file="../data/baseline_fc_scores.RData")
 ```
 
 ### Overall metrics
 ```{r}
 # US National
 overall_metrics_US <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location == "US") %>%
+  group_by(model) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+overall_metrics_US <- overall_metrics_US %>%
+  mutate(
+    rwis = wis/pull(overall_metrics_US[3, 2]),
+    rmae = mae/pull(overall_metrics_US[3, 3]),
+    rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_US[3, 4])-0.5),
+    rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_US[3, 5])-0.95),
+  ) %>% 
+  mutate(across(where(is.numeric), round, digits=3))
+knitr::kable(overall_metrics_US)
+
+# States
+overall_metrics_states <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location != "US") %>%
+  group_by(model) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+overall_metrics_states <- overall_metrics_states %>%
+  mutate(
+    rwis = wis/pull(overall_metrics_states[3, 2]),
+    rmae = mae/pull(overall_metrics_states[3, 3]),
+    rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_states[3, 4])-0.5),
+    rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_states[3, 5])-0.95),
+  ) %>% 
+  mutate(across(where(is.numeric), round, digits=3))
+knitr::kable(overall_metrics_states)
+```
+
+### Horizon week metrics
+```{r}
+# US National
+horizon_wk_metrics_US <- scores_df %>%
   rbind(score_baseline) %>%
   filter(horizon <= 28, 
          target_end_date <= as.Date("2021-07-05"),
@@ -157,38 +208,38 @@ overall_metrics_US <- scores_df %>%
     cov_50 = mean(coverage_50),
     cov_95 = mean(coverage_95)
   ) 
-overall_metrics_US <- overall_metrics_US %>%
+horizon_wk_metrics_US <- horizon_wk_metrics_US %>%
   mutate(
     rwis = case_when(
-      horizon_wk == 1 ~ wis / pull(overall_metrics_US[9,3]),
-      horizon_wk == 2 ~ wis / pull(overall_metrics_US[10,3]),
-      horizon_wk == 3 ~ wis / pull(overall_metrics_US[11,3]),
-      horizon_wk == 4 ~ wis / pull(overall_metrics_US[12,3])
+      horizon_wk == 1 ~ wis / pull(horizon_wk_metrics_US[9,3]),
+      horizon_wk == 2 ~ wis / pull(horizon_wk_metrics_US[10,3]),
+      horizon_wk == 3 ~ wis / pull(horizon_wk_metrics_US[11,3]),
+      horizon_wk == 4 ~ wis / pull(horizon_wk_metrics_US[12,3])
     ),
     rmae = case_when(
-      horizon_wk == 1 ~ mae / pull(overall_metrics_US[9,4]),
-      horizon_wk == 2 ~ mae / pull(overall_metrics_US[10,4]),
-      horizon_wk == 3 ~ mae / pull(overall_metrics_US[11,4]),
-      horizon_wk == 4 ~ mae / pull(overall_metrics_US[12,4])
+      horizon_wk == 1 ~ mae / pull(horizon_wk_metrics_US[9,4]),
+      horizon_wk == 2 ~ mae / pull(horizon_wk_metrics_US[10,4]),
+      horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_US[11,4]),
+      horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_US[12,4])
     ),
     rcov_50 = case_when(
-      horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(overall_metrics_US[9,5])-0.5),
-      horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(overall_metrics_US[10,5])-0.5),
-      horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(overall_metrics_US[11,5])-0.5),
-      horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(overall_metrics_US[12,5])-0.5),
+      horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[9,5])-0.5),
+      horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[10,5])-0.5),
+      horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[11,5])-0.5),
+      horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[12,5])-0.5),
     ),
     rcov_95 = case_when(
-      horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(overall_metrics_US[9,6])-0.95),
-      horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(overall_metrics_US[10,6])-0.95),
-      horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(overall_metrics_US[11,6])-0.95),
-      horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(overall_metrics_US[12,6])-0.95),
+      horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[9,6])-0.95),
+      horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[10,6])-0.95),
+      horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[11,6])-0.95),
+      horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[12,6])-0.95),
     )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3))
-knitr::kable(overall_metrics_US)
+knitr::kable(horizon_wk_metrics_US)
 
 # Aggregated for all states and territories
-overall_metrics_states <- scores_df %>%
+horizon_wk_metrics_states <- scores_df %>%
   rbind(score_baseline) %>%
   filter(horizon <= 28, 
          target_end_date <= as.Date("2021-07-05"),
@@ -207,35 +258,35 @@ overall_metrics_states <- scores_df %>%
     cov_50 = mean(coverage_50),
     cov_95 = mean(coverage_95)
   ) 
-overall_metrics_states <- overall_metrics_states %>%
+horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
   mutate(
     rwis = case_when(
-      horizon_wk == 1 ~ wis / pull(overall_metrics_states[9,3]),
-      horizon_wk == 2 ~ wis / pull(overall_metrics_states[10,3]),
-      horizon_wk == 3 ~ wis / pull(overall_metrics_states[11,3]),
-      horizon_wk == 4 ~ wis / pull(overall_metrics_states[12,3])
+      horizon_wk == 1 ~ wis / pull(horizon_wk_metrics_states[9,3]),
+      horizon_wk == 2 ~ wis / pull(horizon_wk_metrics_states[10,3]),
+      horizon_wk == 3 ~ wis / pull(horizon_wk_metrics_states[11,3]),
+      horizon_wk == 4 ~ wis / pull(horizon_wk_metrics_states[12,3])
     ),
     rmae = case_when(
-      horizon_wk == 1 ~ mae / pull(overall_metrics_states[9,4]),
-      horizon_wk == 2 ~ mae / pull(overall_metrics_states[10,4]),
-      horizon_wk == 3 ~ mae / pull(overall_metrics_states[11,4]),
-      horizon_wk == 4 ~ mae / pull(overall_metrics_states[12,4])
+      horizon_wk == 1 ~ mae / pull(horizon_wk_metrics_states[9,4]),
+      horizon_wk == 2 ~ mae / pull(horizon_wk_metrics_states[10,4]),
+      horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_states[11,4]),
+      horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_states[12,4])
     ),
     rcov_50 = case_when(
-      horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(overall_metrics_states[9,5])-0.5),
-      horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(overall_metrics_states[10,5])-0.5),
-      horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(overall_metrics_states[11,5])-0.5),
-      horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(overall_metrics_states[12,5])-0.5),
+      horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[9,5])-0.5),
+      horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[10,5])-0.5),
+      horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[11,5])-0.5),
+      horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[12,5])-0.5),
     ),
     rcov_95 = case_when(
-      horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(overall_metrics_states[9,6])-0.95),
-      horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(overall_metrics_states[10,6])-0.95),
-      horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(overall_metrics_states[11,6])-0.95),
-      horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(overall_metrics_states[12,6])-0.95),
+      horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[9,6])-0.95),
+      horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[10,6])-0.95),
+      horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[11,6])-0.95),
+      horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[12,6])-0.95),
     )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3))
-knitr::kable(overall_metrics_states)
+knitr::kable(horizon_wk_metrics_states)
 ```
 
 When splitting the results so that US National is separate, we find that for US National the two models that use the base set hierarchy tended to perform the best, with improvements seen over a naive baseline in all metrics except for 95%PI Coverage. These two models are followed by the Topmost8_arima_noTrans model, which showed more comparable performance to the baseline. The Base_arima_noTrans model performed the best in terms of PI Coverage, followed by the Base_arima_4root and Topmost8_arima_noTrans models (with the latter being more consistent with coverage rates for all horizons). In terms of WIS and MAE, the Base_arima_4root model performed the best, followed by the Base_arima_noTrans model. Overall, for the US National level, it seems that there is a pattern that for coverage rates, the models without transformations perform better (and these tend to have smaller prediction intervals) while for WIS and MAE the fourth root transform models perform better; these patterns hold at all horizons. Further, there is a general order to model accuracy in terms of hierarchical structure used: the Base set performs the best, followed by the Topmost8 set, and finally the Multiple3 set.   
@@ -272,28 +323,44 @@ wave_metrics_US <- scores_df %>%
 wave_metrics_US <- wave_metrics_US %>%
   mutate(
     rwis = case_when(
-      horizon_wk == 1 ~ wis / pull(wave_metrics_US[9, 4]),
-      horizon_wk == 2 ~ wis / pull(wave_metrics_US[10,4]),
-      horizon_wk == 3 ~ wis / pull(wave_metrics_US[11,4]),
-      horizon_wk == 4 ~ wis / pull(wave_metrics_US[12,4])
+      horizon_wk == 1 & wave == "alpha" ~ wis / pull(wave_metrics_US[9, 4]),
+      horizon_wk == 2 & wave == "alpha" ~ wis / pull(wave_metrics_US[10,4]),
+      horizon_wk == 3 & wave == "alpha" ~ wis / pull(wave_metrics_US[11,4]),
+      horizon_wk == 4 & wave == "alpha" ~ wis / pull(wave_metrics_US[12,4]),
+      horizon_wk == 1 & wave == "winter21" ~ wis / pull(wave_metrics_US[37,4]),
+      horizon_wk == 2 & wave == "winter21" ~ wis / pull(wave_metrics_US[38,4]),
+      horizon_wk == 3 & wave == "winter21" ~ wis / pull(wave_metrics_US[39,4]),
+      horizon_wk == 4 & wave == "winter21" ~ wis / pull(wave_metrics_US[40,4])
     ),
     rmae = case_when(
-      horizon_wk == 1 ~ mae / pull(wave_metrics_US[9,5]),
-      horizon_wk == 2 ~ mae / pull(wave_metrics_US[10,5]),
-      horizon_wk == 3 ~ mae / pull(wave_metrics_US[11,5]),
-      horizon_wk == 4 ~ mae / pull(wave_metrics_US[12,5])
+      horizon_wk == 1 & wave == "alpha" ~ mae / pull(wave_metrics_US[9, 5]),
+      horizon_wk == 2 & wave == "alpha" ~ mae / pull(wave_metrics_US[10, 5]),
+      horizon_wk == 3 & wave == "alpha" ~ mae / pull(wave_metrics_US[11, 5]),
+      horizon_wk == 4 & wave == "alpha" ~ mae / pull(wave_metrics_US[12, 5]),
+      horizon_wk == 1 & wave == "winter21" ~ mae / pull(wave_metrics_US[37, 5]),
+      horizon_wk == 2 & wave == "winter21" ~ mae / pull(wave_metrics_US[38, 5]),
+      horizon_wk == 3 & wave == "winter21" ~ mae / pull(wave_metrics_US[39, 5]),
+      horizon_wk == 4 & wave == "winter21" ~ mae / pull(wave_metrics_US[40,5])
     ),
     rcov_50 = case_when(
-      horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(wave_metrics_US[9,6])-0.5),
-      horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(wave_metrics_US[10,6])-0.5),
-      horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(wave_metrics_US[11,6])-0.5),
-      horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(wave_metrics_US[12,6])-0.5),
+      horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[9,6])-0.5),
+      horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[10,6])-0.5),
+      horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[11,6])-0.5),
+      horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[12,6])-0.5),
+      horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[37,6])-0.5),
+      horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[38,6])-0.5),
+      horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[39,6])-0.5),
+      horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[40,6])-0.5)
     ),
     rcov_95 = case_when(
-      horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(wave_metrics_US[9,7])-0.95),
-      horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(wave_metrics_US[10,7])-0.95),
-      horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(wave_metrics_US[11,7])-0.95),
-      horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(wave_metrics_US[12,7])-0.95),
+      horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[9, 7])-0.95),
+      horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[10, 7])-0.95),
+      horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[11, 7])-0.95),
+      horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[12, 7])-0.95),
+      horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[37, 7])-0.95),
+      horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[38, 7])-0.95),
+      horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[39, 7])-0.95),
+      horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[40, 7])-0.95)
     )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3))
@@ -372,9 +439,9 @@ wave_metrics_states <- wave_metrics_states %>%
 knitr::kable(wave_metrics_states)
 ```
 
-For US National during the alpha wave, the Base_arima_noTrans model performed the best for coverage rates and second best for WIS and MAE at every horizon. The Base_arima_4root model performed best in terms of WIS and MAE but was third for coverage rate while the Topmost8_arima_noTrans model had the second best coverage rates and third best WIS and MAE. During the alpha wave, these models performed the best and tended to have more consistent values for their metrics. The winter21 wave saw noticeably worse values for all metrics at every horizon. Generally, the two models that use the base set hierarchy tended to perform the best for all metrics, although the coverage rates varied a lot by horizon, with the Topmost8_arima_4root and Multiple3_arima_noTrans achieving closer to nominal coverage rates for the 95% interval than even the Base models at horizons greater than 1 week ahead. These results are pretty consistent with improvements over the base-line, which ranged from modest to significant for the best performing models during the alpha wave, especially for WIS and 50% PI coverage. The winter21 wave saw...   
+For US National during the alpha wave, the Base_arima_noTrans model performed the best for coverage rates and second best for WIS and MAE at every horizon. The Base_arima_4root model performed best in terms of WIS and MAE but was third for coverage rate while the Topmost8_arima_noTrans model had the second best coverage rates and third best WIS and MAE. During the alpha wave, these models performed the best and tended to have more consistent values for their metrics. The winter21 wave saw noticeably worse values for all metrics at every horizon. Generally, the two models that use the base set hierarchy tended to perform the best for all metrics, although the coverage rates varied a lot by horizon, with the Topmost8_arima_4root and Multiple3_arima_noTrans achieving closer to nominal coverage rates for the 95% interval than even the Base models at horizons greater than 1 week ahead. These results are pretty consistent with improvements over the base-line, which ranged from modest to significant for the best performing models during the alpha wave, especially for WIS and 50% PI coverage. The winter21 wave saw fairly comparable or worse performance compared to the baseline for WIS and MAE. The 50% coverage was better than the baseline for all models, the greatest improvements for the best models, but the 95% coverage could be better or worse for the best models.   
 
-For states during both waves, we again see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models, compared to those of the US National level when broken into waves. During the alpha wave, the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model. During the winter21 wave, the Base_arima_4root model is again generally the best for all metrics at all horizon weeks but sometimes loses out in terms of 95% coverage at longer horizons to other models. Notably during this wave, there are much greater similarities in coverage rates and certain models have better coverage rates for the 50% interval while others have better coverage reads for the 95% one.   
+For states during both waves, we again see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models, compared to those of the US National level when broken into waves. During the alpha wave, the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model. During the winter21 wave, the Base_arima_4root model is again generally the best for all metrics at all horizon weeks but sometimes loses out in terms of 95% coverage at longer horizons to other models. Notably during this wave, there are much greater similarities in coverage rates and certain models have better coverage rates for the 50% interval while others have better coverage reads for the 95% one. Similar patterns to the ones described above for the US national level when compared to the baseline were observed.   
 
 ### By forecast date (week)
 
