@@ -1,0 +1,43 @@
+---
+title: "Forecasting COVID-19 Incident Hospitalizations with Temporal Hierarchies"
+author: "Li Shandross"
+date: "5/2/2022"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Introduction
+Throughout the past two years, the COVID-19 pandemic has underscored how infectious disease outbreaks can strain public health, clinical, and economic institutions. This has highlighted the importance of infectious disease forecasting as a way for the scientific community to communicate information, both to policymakers and the general public, about future directions of the pandemic.   
+
+Outbreaks of other transmissible diseases like dengue, ebola, SARS, and influenza have also seen substantial forecasting efforts to reduce their spread and wider impact, modelers making quantitative predictions about the future based on already-observed data. These predictions may pertain to a specific event, outcome, or trend related to one (or occasionally more) infectious disease (Lauer, 2020). In this way, decisions that balance prevention or mitigation with economic or societal loss can be made much more effectively (Smith, 2019). For example, healthcare staffing and allocation of limited resources may be determined by any forecasted trends. Targeted communication campaigns about social distancing or vaccination may also be scheduled ahead of any forecasted increases in order to be most effective while lockdowns may be eased during a downward trend to help boost the economy.   
+
+COVID-19 forecasts (and many infectious disease forecasts in general) are short-term, predicting up to no more than four weeks ahead. Further, this type of forecast is quantifiable and specific for a fixed period of time (e.g. one week ahead, two weeks ahead, etc.) and are thus evaluable. Although longer-term COVID-19 scenario projections that predict further out into the future are useful in making more lasting plans for combatting in infectious disease, only short-term COVID-19 forecasts are explored in this work.   
+
+Short-term COVID-19 forecasting has been heavily researched with efforts synthesized, collected, archived, and evaluated in a centralized repository called the COVID-19 Forecast Hub [https://covid19forecasthub.org/]. COVID-19 forecasts have also been in the form of probabilistic forecasts rather than point forecasts. The use of probabilistic forecasts is a distinguishing characteristic of outbreak forecasting efforts, as this type of forecast provides more information, including about the likelihood of the forecast occurring.   
+
+Infectious disease forecasting faces four main challenges in terms of accuracy: system complexity, data sparsity/quality, the forecasting feedback loop, and public understanding of probabilistic forecasts. Although these obstacles may also be found in other disciplines, they are important to keep in mind when making forecasts about an infectious disease (Lauer, 2020; Moran, 2016).   
+
+More specifically, the systems that govern the spread of infectious diseases tend to be non-stationary processes since they are partially dependent on human behavior. For COVID-19, this non-stationarity was caused by continually changing policies and behaviors due to school closures, lockdowns, masking, social distancing, and the appearance of new variants. This makes any trends difficult to forecast. Not only that, any forecasts made were used to inform those changing policies, further complicating matters due to the forecast feedback loop (Cramer, 2021).    
+
+Forecasting COVID-19 also sees the additional challenge of of an emergent outbreak setting, in which data availability and quality is severely limited (Lauer, 2020). This was especially true at the beginning of the pandemic, but a lack of a national testing protocol and issues properly categorizing deaths has meant that models do not have accurate data to train on. This means that incident hospitalizations have started to become the a more relevant public health metric compared to the other two targets, despite previous under-forecasting, making it an appropriate forecasts target to explore.   
+
+Recent research about COVID-19 forecasting has also shown that most models have trouble predicting change-points in which trends in the data change direction (that is, hospitalizations start to increase or decrease in a way that is different from the previous pattern). Not only that, despite a range in data sources and modeling techniques, many models don't even assign probability to the potential of a large change in trend. This gap calls for the exploration and testing of new methods.   
+
+Temporal Hierarchical Forecasting (THieF) created by Athanasopoulos, et. al in 2017 is a novel method that combines hierarchical forecasting and temporal aggregation for time series. This approach consists of three main steps: creation of the temporal hierarchy through data aggregation, generation of forecasts at every level of the hierarchy using a classical statistical model, and reconciliation of those forecasts. The final step performs weighted forecast combination to not only achieve coherency but also improved accuracy.   
+
+In light of the above-mentioned challenges within infectious disease forecasting, THieF might have something to offer. First, the THieF methodology relies on an underlying phenomenological model, and for short-term outbreak forecasting, despite the growing body of knowledge we have about the system, these types of models often show good performance. Second, to my knowledge, THieF has not been applied in outbreak forecasting previously, meaning that it might offer insight about effective modeling techniques, even regardless of its performance. Third, THieF has shown significant performance gains in other settings, which may translate to infectious disease forecasting.   
+
+The THieF methodology is used to retrospectively create probabilistic forecasts for COVID-19 incident daily hospitalizations for the United States at the state and national level. Six models were created based on the THieF methodology using a ARIMA base forecaster then were compared against each other and a naive baseline model during the training phase to find the most accurate models. Success is demonstrated by a few models that are shown to have accuracy gains when compared to the baseline. All of these forecasts will be implemented through R using the package THieF made available by Athanasopoulos, et. al (2017).   
+
+
+### Methods
+## Data
+The data used in this analysis is the HealthData.gov COVID-19 Reported Patient Impact and Hospital Capacity by State Timeseries which reports daily incident hospitalizations for all 50 states, several US territories, and the aggregated U.S. national level. The sources of this state-aggregated time series are HHS TeleTracking, state/territorial health department reports to HHS Protect, and (prior to July 15, 2020) National Healthcare Safety Network. The COVID-19 Forecast Hub [https://covid19forecasthub.org/] designated this data set as the official ground truth data for COVID-19 incident hospitalizations on December 1, 2020 for modeling teams to train with and for models to be compared against. The data are collected at a daily frequency but are reported weekly through the covidHubUtils R package. Reporting for hospitalizations was sporadic during the early stages of the pandemic and only became consistent for all locations in July 2020. However, once hospitalization reporting became required for Medicare reimbursement, hospitalization data became much more reliable than case and death data, which suffer major underreporting issues.   
+
+## Forecast Quantiles
+As specified by the COVID-19 Forecast Hub, the 23 quantiles $\Q = {.01, .05, .10, …, .90, .95, .99}$ are used to represent a single forecast’s probabilistic distribution with the median 0.50 quantile taken as the point forecast. However, instead of specifying a full probabilistic distribution, I narrow the scope to make interval forecasts whose bounds can be used to obtain the desired 23 quantiles instead. The following table summarizes the translation from prediction interval bounds to quantiles, where “L” indicates the lower bound of a quantile while “U” indicates the upper bound.    
+
+
