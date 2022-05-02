@@ -42,7 +42,7 @@ system.time({
 })
 
 for (i in 22:31) {
-  write_csv(thief_fc_full[[i]], file=paste("data/Topmost8_arima_4root/", mon_fc_dates[i], "-covidTHieF-Topmost8_arima_4root.csv", sep=""))
+  write_csv(thief_fc_full[[i-21]], file=paste("data/Multiple3_arima_noTrans/", mon_fc_dates[i], "-covidTHieF-Multiple3_arima_noTrans.csv", sep=""))
 }
 
 

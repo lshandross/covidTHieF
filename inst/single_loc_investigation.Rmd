@@ -38,10 +38,10 @@ plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates
 temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "48", pi_levels)
 
 hub_test <- thief_wrapper(full_hosp_truth, ts_col = "value", 
-  start_date, end_date, fips_code = "48",
+  start_date, end_date, fips_code = "US",
   aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
   pi_levels = pi_levels,
-  plot.aggregates = TRUE, plot.forecasts = TRUE)
+  plot.aggregates = FALSE, plot.forecasts = FALSE)
 ```
 
 ```{r}
