@@ -13,6 +13,7 @@ library(lubridate)
 library(tidyverse)
 library(zoltr)
 library(covidHubUtils)
+library(stringr)
 ```
 
 # Introduction
@@ -44,7 +45,7 @@ The THieF methodology is used to retrospectively create probabilistic forecasts 
 The data used in this analysis is the HealthData.gov COVID-19 Reported Patient Impact and Hospital Capacity by State Timeseries which reports daily incident hospitalizations for all 50 states, several US territories, and the aggregated U.S. national level. The sources of this state-aggregated time series are HHS TeleTracking, state/territorial health department reports to HHS Protect, and (prior to July 15, 2020) National Healthcare Safety Network. The COVID-19 Forecast Hub [https://covid19forecasthub.org/] designated this data set as the official ground truth data for COVID-19 incident hospitalizations on December 1, 2020 for modeling teams to train with and for models to be compared against. The data are collected at a daily frequency but are reported weekly through the covidHubUtils R package. Reporting for hospitalizations was sporadic during the early stages of the pandemic and only became consistent for all locations in July 2020. However, once hospitalization reporting became required for Medicare reimbursement, hospitalization data became much more reliable than case and death data, which suffer major underreporting issues.   
 
 ## Truth Data 
-```{r}
+```{r, message=FALSE, warning=FALSE}
 full_hosp_truth <- load_truth("HealthData", 
                          "inc hosp", 
                          temporal_resolution="weekly",
@@ -77,7 +78,7 @@ ggplot(data = hosp_truth_US, aes(x = target_end_date, y = value)) + geom_line() 
   annotate(geom = "text", x = as.Date("2021-01-01"), y = 2000, 
            label = "Training Phase", size = 7, color = "blue") + 
   annotate(geom = "text", x = as.Date("2021-03-18"), y = 100, 
-           label = "Training Forecasts", size = 4, color = "light blue") + # change color
+           label = "Training Forecasts", size = 4, color = "#72b6ff") + # change color
   annotate(geom = "text", x = as.Date("2021-09-04"), y = 2000, 
            label = "Testing", size = 7, color = "red") + 
     scale_x_date(name=NULL, date_breaks = "2 month", minor_breaks = "1 month",
@@ -115,9 +116,14 @@ It is important to note that the original THieF defined by Athanasopoulos, et. a
 ##  Model Specifications
 During the training/validation phase, I compare several different specifications for the candidate models. Various combinations of modeling frameworks and timescale sets for the temporal hierarchies are used to generate the candidate models. More specifically, I test three hierarchical structures and two data transformations, resulting in six total candidate models.  
 
-Three different sets of time scales for the aggregation levels within the temporal hierarchy are explored in this work. The covidTHieF_4wk set of time scales consist of daily, weekly, 2-weekly, and 4-weekly; these aggregation levels are a complete set but are also always included in the hierarchy. The covidTHieF_8wk set is made up of the covidTHieF_4wk set plus an additional 8-weekly level that serves as the new topmost level. The covidTHieF_12wk set adds 3-weekly, 6-weekly, and (topmost) 12-weekly time scales together in addition to the base set. Note that the lower levels of each hierarchy are all multiples of that hierarchy's top level, an essential component to the THieF method.   
+Three different sets of time scales for the aggregation levels within the temporal hierarchy are explored in this work with a naming convention based on the topmost level. The 4-week Set of time scales consist of daily, weekly, 2-weekly, and 4-weekly; these aggregation levels are a complete set but are also always included in the hierarchy. The 8-week Set is made up of the covidTHieF_4wk set plus an additional 8-weekly level that serves as the new topmost level. The 12-week Set adds 3-weekly, 6-weekly, and (topmost) 12-weekly time scales together in addition to the base set. Note that the lower levels of each hierarchy are all multiples of that hierarchy's top level, an essential component to the THieF method.   
 
-Additionally, each of these hierarchy schemes is explored with both no data transformation and a fourth root data transformation. The latter transformation is chosen based on prior work by the Reich Lab that has shown accuracy improvements when using a fourth root transformation for forecasting COVID-19.   
+![](thief_4wk.jpg){width=100%}
+![](thief_8wk.jpg){width=100%}
+![](thief_12wk.jpg){width=100%}
+
+
+Additionally, each hierarchy scheme is explored with both no data transformation and a fourth root data transformation. The latter transformation is chosen based on prior work by the Reich Lab that has shown accuracy improvements when using a fourth root transformation for forecasting COVID-19.   
 
 ## Metrics and Evaluation  
 The evaluation is conducted through several different aggregation schemes: horizon, target end date, location, pandemic wave (when applicable), and overall. Although incident hospitalizations are observed and forecasted at a daily level, I choose to evaluate the forecasts on a weekly basis. This is the standard in the monthly evaluation reports from the COVID-19 Forecast Hub and is computed by averaging the values for the metric of choice across a single week (Tuesday through Monday) to obtain a single value for that week. The aggregation scheme based on horizon, location, and pandemic wave will also be calculated similarly by averaging values by week.  
@@ -143,24 +149,315 @@ load("../data/loadedfc_scores_df.RData")
 load("../data/baseline_fc_scores.RData")
 
 # Rename models
-# forecasts_df <-forecasts_df %>%
-#  mutate(model=case_when("Base_arima"))
+forecasts_df <-forecasts_df %>%
+  mutate(
+    model=
+      case_when(
+        str_detect(model, "Base_arima")~str_replace(model, "Base_arima", "covidTHieF_4wk"),
+        str_detect(model, "Topmost8_arima")~str_replace(model, "Topmost8_arima", "covidTHieF_8wk"),
+        str_detect(model, "Multiple3_arima")~str_replace(model, "Multiple3_arima", "covidTHieF_12wk")
+       )
+  )
+  
+scores_df <-scores_df %>%
+  mutate(
+    model=
+      case_when(
+        str_detect(model, "Base_arima")~str_replace(model, "Base_arima", "covidTHieF_4wk"),
+        str_detect(model, "Topmost8_arima")~str_replace(model, "Topmost8_arima", "covidTHieF_8wk"),
+        str_detect(model, "Multiple3_arima")~str_replace(model, "Multiple3_arima", "covidTHieF_12wk")
+       )
+  )
 ```
 
 ## Overall Model Performance
+
+```{r, warning=FALSE, message=FALSE}
+locs <- full_hosp_truth %>%
+  filter(target_end_date <= as.Date("2021-07-05")) %>%
+  group_by(location) %>%
+  summarize(cum_value=sum(value)) %>%
+  ungroup() %>%
+  arrange(desc(cum_value)) %>%
+  filter(row_number() %in% c(1, 2, 53)) %>%
+  pull(location)
+
+fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)))
+
+fc_df <- forecasts_df %>% rbind(forecasts_baseline) 
+for (i in 1:3) {
+  fdat <- fc_df %>%
+    filter(location == locs[i], forecast_date %in% fc_dates)
+  
+  p <- plot_forecasts(fdat, 
+                      target_variable = "inc hosp", 
+                      models = c("covidTHieF_4wk_4root", "COVIDhub-baseline", "covidTHieF_12wk_noTrans"),
+                      intervals = c(.5, .95), 
+                      truth_source = "HealthData",
+                      use_median_as_point = TRUE,
+                      facet = model ~.,
+                      facet_nrow = 3,
+                      #facet_scales = "free_y",
+                      fill_by_model = TRUE, 
+                      plot=FALSE)
+
+  pt <- p +
+    scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-07-05")), 
+              date_breaks = "2 months", date_labels = "%b") +
+    #scale_y_continuous(limits=c(0, max(filter(full_hosp_truth, location==locs[i])$value) * 1.25)) +
+    theme(axis.ticks.length.x = unit(0.5, "cm"),
+          axis.text.x = element_text(vjust = 7, hjust = -0.2),
+          legend.position = "none")
+          
+  print(pt)
+}
+```
+
 For the US National level, the two covidTHieF_4wk models take the lead for forecast accuracy and show better performance than the naive baseline for all metrics except 95% PI Coverage. In terms of WIS, the covidTHieF_4wk_4root model performs the best with a relative WIS value of 0.924 and a relative MAE value of 0.938, meaning it had 7.6% and 6.2% improvements over the baseline. This model also had 0.303 and 0.810 coverage rates for 50% and 95% prediction intervals, respectively, the former slightly closer to the nominal coverage rate than the baseline. In terms of 50% coverage rate, covidTHieF_4wk_noTrans performed the best with a 50% coverage rate of 0.407 and a 95% coverage rate of 0.839, the former a decent amount closer to the nominal coverage rate then the baseline. This model also had a 0.965 relative WIS and 0.937 relative MAE, or 3.5% and 6.3% improvements over the baseline. The other models show poorer performance compared to the baseline, with the covidTHieF_8wk models performing about equally or worse than the baseline but the covidTHieF_12wk models performing substantially worse than the baseline.   
 
 For the aggregated states level, there is much greater similarity between the covidTHieF_4wk and covidTHieF_8wk models in terms of all metrics except 95% PI Coverage. These models show more substantial improvements over the baseline compared to that for the US National level for all metrics except for relative MAE, for which the best models perform slightly worse then the baseline. The covidTHieF_4wk_4root model performs the best for all metrics except for 95% PI Coverage, although it is a very close third best in terms of being closest to the nominal coverage rate. This model has a relative WIS of 0.873 (12.7% improvement over the baseline), 1.007 relative MAE (0.7% worse than the baseline), 0.478 50% PI Coverage (the baseline has an 0.888 50% Coverage Rate) and 0.916 95% PI Coverage (the baseline has a 1.000 95% Coverage Rate). The covidTHieF_8wk_4root model has similar relative WIS and relative MAE values (but worse coverage rates) while the covidTHieF_8wk_noTrans model has similar coverage rates (but worse relative WIS and relative MAE). The covidTHieF_12wk show certain improvements in coverage rates but do not show the same number of improvements over the baseline as the other for models.   
+
+```{r, message=FALSE, warning=FALSE}
+# US National
+overall_metrics_US <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location == "US") %>%
+  group_by(model) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+overall_metrics_US <- overall_metrics_US %>%
+  mutate(
+    rwis = wis/pull(overall_metrics_US[1, 2]),
+    rmae = mae/pull(overall_metrics_US[1, 3])
+  ) %>% 
+  mutate(across(where(is.numeric), round, digits=3)) %>%
+  arrange(wis)
+knitr::kable(overall_metrics_US)
+
+# States
+overall_metrics_states <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location != "US") %>%
+  group_by(model) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+overall_metrics_states <- overall_metrics_states %>%
+  mutate(
+    rwis = wis/pull(overall_metrics_states[1, 2]),
+    rmae = mae/pull(overall_metrics_states[1, 3])
+  ) %>% 
+  mutate(across(where(is.numeric), round, digits=3)) %>%
+  arrange(wis)
+knitr::kable(overall_metrics_states)
+```
+
 
 ## Model Performance by Horizon Week
 Similar patterns in model accuracy are seen when forecasts are aggregated by horizon week for the US National level. Notably, the models tend to perform the worst with one week ahead and 4 week ahead horizons, although this is not true for every model across every metric. The covidTHieF_4wk models once again generally show the best performance of the six models, especially at smaller horizons with covidTHieF_8wk models performing similarly or better at a 4 week ahead horizon for certain metrics. The covidTHieF_4wk_4root performs better at smaller horizons while the covidTHieF_4wk_noTrans generally performs better at longer horizons. We see improved performance over the baseline for different metrics at different horizons for the covidTHieF_4wk and covidTHieF_8wk models, although no improvement is shown for 95% PI coverage for any of the models. In fact, all of the models show poor 95% PI Coverage compared to the baseline.   
 
 Likewise for the aggregated states level, similar trends in model accuracy are seen in terms of model ranking when forecasts are stratified by horizon week compared to when there is no such stride of occasion. The greatest improvements over the baseline are seen in coverage rates, especially the 95% PI coverage, although the 50% PI coverage shows every model beating the baseline in terms of coverage rates closer to the nominal rate. This coverage rate improvement over the baseline at the states level is striking when compared to the US National level. On the other hand, only the covidTHieF_8wk models show improved performance at the state level for every metric over the US national level while the covidTHieF_4wk_4root model only shows improve performance at the state level for relative WIS. However, that all four covidTHieF_4wk and covidTHieF_8wk models show improvement over the baseline for their relative WIS values for 2, 3, and 4 week ahead horizons.   
 
+```{r, message=FALSE, warning=FALSE}
+# US National
+horizon_wk_metrics_US <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location == "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    )
+  ) %>%
+  group_by(model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+horizon_wk_metrics_US <- horizon_wk_metrics_US %>%
+  mutate(
+    rwis = case_when(
+      horizon_wk == 1 ~ wis / pull(horizon_wk_metrics_US[1,3]),
+      horizon_wk == 2 ~ wis / pull(horizon_wk_metrics_US[2,3]),
+      horizon_wk == 3 ~ wis / pull(horizon_wk_metrics_US[3,3]),
+      horizon_wk == 4 ~ wis / pull(horizon_wk_metrics_US[4,3])
+    ),
+    rmae = case_when(
+      horizon_wk == 1 ~ mae / pull(horizon_wk_metrics_US[1,4]),
+      horizon_wk == 2 ~ mae / pull(horizon_wk_metrics_US[2,4]),
+      horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_US[3,4]),
+      horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_US[4,4])
+    )
+  ) %>% 
+  mutate(across(where(is.numeric), round, digits=3)) %>%
+  arrange(horizon_wk, wis)
+knitr::kable(horizon_wk_metrics_US)
+
+# Aggregated for all states and territories
+horizon_wk_metrics_states <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location != "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    )
+  ) %>%
+  group_by(model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
+  mutate(
+    rwis = case_when(
+      horizon_wk == 1 ~ wis / pull(horizon_wk_metrics_states[1,3]),
+      horizon_wk == 2 ~ wis / pull(horizon_wk_metrics_states[2,3]),
+      horizon_wk == 3 ~ wis / pull(horizon_wk_metrics_states[3,3]),
+      horizon_wk == 4 ~ wis / pull(horizon_wk_metrics_states[4,3])
+    ),
+    rmae = case_when(
+      horizon_wk == 1 ~ mae / pull(horizon_wk_metrics_states[1,4]),
+      horizon_wk == 2 ~ mae / pull(horizon_wk_metrics_states[2,4]),
+      horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_states[3,4]),
+      horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_states[4,4])
+    )
+  ) %>% 
+  mutate(across(where(is.numeric), round, digits=3)) %>%
+  arrange(horizon_wk, wis)
+knitr::kable(horizon_wk_metrics_states)
+```
+
 ## Model Performance by Wave
 For the US National level, both waves saw models yet again performing the worst during one week or four week ahead horizons. Notably, most models performed better during the alpha wave in terms of every metric except relative MAE, likely due to the fact that the number of hospitalizations were smaller and thus had less variance. Once again, there tended to be worse coverage rates for the 95% PI compared to the 50% PI. During the alpha wave, the covidTHieF_4wk_4root model shows the most improvements over the baseline in terms of relative WIS and MAE at every horizon, with between nearly 20% and 38% improvements for WIS and the third best coverage rates with some improvements over the baseline. The covidTHieF_4wk_noTrans and covidTHieF_8wk_noTrans models were the two best performing for coverage rate, beating the baseline for every horizon at the 50% level and matching it at the 95% level. During the winter21 wave, the two covidTHieF_4wk models performed more similarly, each performing the best for different horizons and different metrics. Generally, the covidTHieF_4wk_4root model performed better for shorter horizons while the covidTHieF_4wk_noTrans model performed better for longer horizons. Interestingly, at longer horizons the covidTHieF_12wk_noTrans model achieved some of the best relative WIS and MAE values of the winter21 wave, being between 10% and 19% better than the baseline despite poor performance in other instances.   
 
 For the states level, there is somewhat of a trend of the worst performance during one week or four week ahead horizons, although it is much less pronounced than that of the US National level. The 95% coverage rates are also less poor compared to the US National level. During the alpha wave, the covidTHieF_4wk_4root model similarly shows the most improvements over the baseline in terms of relative WIS and MAE at every horizon, with between close to 30% and 45% improvements for WIS and the best coverage rates with large improvements over the baseline except for one week ahead 95% coverage which was equal to that of the baseline. The covidTHieF_4wk_noTrans model didn't always have the best performance the four metrics but it was one of the top performing models that had consistent improvements over the baseline. The covidTHieF_8wk_noTrans models showed some very competitive coverage rates that improved over the baseline for 50% coverage at every horizon but also had some instances of performing worse than the baseline for 95% coverage. During the winter21 wave, the two covidTHieF_4wk models performed more similarly, though the covidTHieF_4wk_4root model performed slightly better overall. In addition, the covidTHieF_8wk models showed smaller relative WIS and relative MAE values compared to the covidTHieF_4wk models performed for longer horizons. Interestingly, at longer horizons the covidTHieF_12wk_noTrans model also achieved some of the best relative WIS and MAE values of the winter21 wave, being up to just over 10% better than the baseline despite poor performance in other instances.   
+
+```{r, message=FALSE, warning=FALSE}  
+# US National
+wave_metrics_US <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location == "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    ),
+    wave = case_when(
+      forecast_date <= as.Date("2021-03-17") ~"winter21",
+      forecast_date >= as.Date("2021-03-17") ~"alpha"
+    )
+  ) %>%
+  group_by(wave, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+wave_metrics_US <- wave_metrics_US %>%
+  mutate(
+    rwis = case_when(
+      horizon_wk == 1 & wave == "alpha" ~ wis / pull(wave_metrics_US[1, 4]),
+      horizon_wk == 2 & wave == "alpha" ~ wis / pull(wave_metrics_US[2,4]),
+      horizon_wk == 3 & wave == "alpha" ~ wis / pull(wave_metrics_US[3,4]),
+      horizon_wk == 4 & wave == "alpha" ~ wis / pull(wave_metrics_US[4,4]),
+      horizon_wk == 1 & wave == "winter21" ~ wis / pull(wave_metrics_US[29,4]),
+      horizon_wk == 2 & wave == "winter21" ~ wis / pull(wave_metrics_US[30,4]),
+      horizon_wk == 3 & wave == "winter21" ~ wis / pull(wave_metrics_US[31,4]),
+      horizon_wk == 4 & wave == "winter21" ~ wis / pull(wave_metrics_US[32,4])
+    ),
+    rmae = case_when(
+      horizon_wk == 1 & wave == "alpha" ~ mae / pull(wave_metrics_US[1, 5]),
+      horizon_wk == 2 & wave == "alpha" ~ mae / pull(wave_metrics_US[2, 5]),
+      horizon_wk == 3 & wave == "alpha" ~ mae / pull(wave_metrics_US[3, 5]),
+      horizon_wk == 4 & wave == "alpha" ~ mae / pull(wave_metrics_US[4, 5]),
+      horizon_wk == 1 & wave == "winter21" ~ mae / pull(wave_metrics_US[29, 5]),
+      horizon_wk == 2 & wave == "winter21" ~ mae / pull(wave_metrics_US[30, 5]),
+      horizon_wk == 3 & wave == "winter21" ~ mae / pull(wave_metrics_US[31, 5]),
+      horizon_wk == 4 & wave == "winter21" ~ mae / pull(wave_metrics_US[32,5])
+    )
+  ) %>% 
+  mutate(across(where(is.numeric), round, digits=3)) %>%
+  arrange(wave, horizon_wk, wis)
+  
+knitr::kable(wave_metrics_US)
+
+# Aggregated for all states and territories
+wave_metrics_states <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location != "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    ),
+    wave = case_when(
+      forecast_date <= as.Date("2021-03-17") ~"winter21",
+      forecast_date >= as.Date("2021-03-17") ~"alpha"
+    )
+  ) %>%
+  group_by(wave, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+wave_metrics_states <- wave_metrics_states %>%
+  mutate(
+    rwis = case_when(
+      horizon_wk == 1 & wave == "alpha" ~ wis / pull(wave_metrics_states[1,4]),
+      horizon_wk == 2 & wave == "alpha" ~ wis / pull(wave_metrics_states[2,4]),
+      horizon_wk == 3 & wave == "alpha" ~ wis / pull(wave_metrics_states[3,4]),
+      horizon_wk == 4 & wave == "alpha" ~ wis / pull(wave_metrics_states[4,4]),
+      horizon_wk == 1 & wave == "winter21" ~ wis / pull(wave_metrics_states[29,4]),
+      horizon_wk == 2 & wave == "winter21" ~ wis / pull(wave_metrics_states[30,4]),
+      horizon_wk == 3 & wave == "winter21" ~ wis / pull(wave_metrics_states[31,4]),
+      horizon_wk == 4 & wave == "winter21" ~ wis / pull(wave_metrics_states[32,4])
+    ),
+    rmae = case_when(
+      horizon_wk == 1 & wave == "alpha" ~ mae / pull(wave_metrics_states[1,5]),
+      horizon_wk == 2 & wave == "alpha" ~ mae / pull(wave_metrics_states[2,5]),
+      horizon_wk == 3 & wave == "alpha" ~ mae / pull(wave_metrics_states[3,5]),
+      horizon_wk == 4 & wave == "alpha" ~ mae / pull(wave_metrics_states[4,5]),
+      horizon_wk == 1 & wave == "winter21" ~ mae / pull(wave_metrics_states[29,5]),
+      horizon_wk == 2 & wave == "winter21" ~ mae / pull(wave_metrics_states[30,5]),
+      horizon_wk == 3 & wave == "winter21" ~ mae / pull(wave_metrics_states[31,5]),
+      horizon_wk == 4 & wave == "winter21" ~ mae / pull(wave_metrics_states[32,5])
+    )
+  ) %>% 
+  mutate(across(where(is.numeric), round, digits=3)) %>%
+  arrange(wave, horizon_wk, wis)
+  
+knitr::kable(wave_metrics_states)
+```
+
 
 ## Model Performance by Week
 For the US National level, except for some poor performance at the start, the covidTHieF_4wk models show lower or comparable WIS to the baseline across most of the training period with a forecast horizon of one week ahead. The covidTHieF_8wk models show mostly comparable WIS to the baseline while the covidTHieF_12wk models show mostly higher WIS than the baseline for a one week ahead horizon during the entire training period. On the other hand, for a four week ahead horizon the covidTHieF_4wk models show only comparable WIS to the baseline not during change points. We see a very similar graph shape to that of the actual values for incident hospitalizations. Meanwhile, for four week ahead horizons the covidTHieF_12wk models show comparable WIS to the baseline not during phases of low incidence, often showing comparable or even better performance compared to the baseline during change points. Once again, the covidTHieF_8wk models show and intermediate performance between the other two groups of models.   
@@ -168,6 +465,169 @@ For the US National level, except for some poor performance at the start, the co
 Very similar patterns are observed for one week ahead and four week ahead US National level forecasts in terms of MAE, although the best models (the two covidTHieF_4wk ones) only tend to perform about comparably to the baseline, unlike for WIS. The weekly one week ahead 95% PI coverage rate plots are not very informative for the US National level because most models tend to either achieve the coverage (1.00) for all forecasts during a particular week or not at all (0.00). The four week ahead ones are a little bit more informative and show that three models (both covidTHieF_4wk ones and covidTHieF_8wk_noTrans) tend to achieve full coverage except during change points while the other models often struggle to achieve non-zero coverage consistently.   
 
 For the states level aggregation, the same patterns are observed as for the US National level for one week ahead and four week ahead WIS and MAE, with strangely large four week ahead WIS values for the covidTHieF_12wk_4root model. The weekly 95% PI coverage rate plots are more informative for the states level, and they look like upside down versions of the weekly WIS plots. For the one week ahead horizon, the covidTHieF_4wk models and the covidTHieF_8wk_noTrans model show improved and fairly stable coverage starting in March 2021, likely due to smaller variance in incident values. For four week ahead horizon, all of the models without a data transformation seem to do the best starting from March 2021 with decent performance from covidTHieF_4wk_4root and covidTHieF_8wk_4root after the downward winter21 change point.   
+
+```{r, message=FALSE, warning=FALSE}  
+# US National
+forecast_date_metrics_US <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location == "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    )
+  ) %>%
+  group_by(forecast_date, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  )
+
+# WIS
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
+        aes(x = forecast_date + weeks(1), y = wis)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 1-week ahead WIS by model (US)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
+        aes(x = forecast_date + weeks(1), y = wis)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 4-week ahead WIS by model (US)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+# MAE
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
+        aes(x = forecast_date + weeks(1), y = mae)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 1-week ahead MAE by model (US)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
+        aes(x = forecast_date + weeks(1), y = mae)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 4-week ahead MAE by model (US)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+# 95% PI Coverage
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
+        aes(x = forecast_date + weeks(1), y = cov_95)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  geom_hline(aes(yintercept=0.95)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 1-week ahead 95% PI Coverage by model (US)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
+        aes(x = forecast_date + weeks(1), y = cov_95)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  geom_hline(aes(yintercept=0.95)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 4-week ahead 95% PI Coverage by model (US)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+      
+# Aggregated for all states and territories
+forecast_date_metrics_states <- scores_df %>%
+  rbind(score_baseline) %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location != "US") %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    )) %>%
+  group_by(forecast_date, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  )
+
+# WIS
+ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
+        aes(x = forecast_date + weeks(1), y = wis)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 1-week ahead WIS by model (states)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+ggplot(filter(forecast_date_metrics_states, horizon_wk == 4), 
+        aes(x = forecast_date + weeks(1), y = wis)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 4-week ahead WIS by model (states)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+# MAE
+ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
+        aes(x = forecast_date + weeks(1), y = mae)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 1-week ahead MAE by model (states)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+ggplot(filter(forecast_date_metrics_states, horizon_wk == 4), 
+        aes(x = forecast_date + weeks(1), y = mae)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 4-week ahead MAE by model (states)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+# 95% PI Coverage
+ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
+        aes(x = forecast_date + weeks(1), y = cov_95)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  geom_hline(aes(yintercept=0.95)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 1-week ahead 95% PI Coverage by model (states)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+ggplot(filter(forecast_date_metrics_states, horizon_wk == 4), 
+        aes(x = forecast_date + weeks(1), y = cov_95)) +
+  geom_line(aes(color=model)) +
+  geom_point(aes(color=model)) +
+  geom_hline(aes(yintercept=0.95)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  labs(title = "Average 4-week ahead 95% PI Coverage by model (states)") +
+  theme(axis.ticks.length.x = unit(0.5, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+
+```
 
 
 # Conclusions/Discussion
