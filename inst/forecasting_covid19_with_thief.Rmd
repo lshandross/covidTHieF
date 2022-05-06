@@ -14,6 +14,7 @@ library(tidyverse)
 library(zoltr)
 library(covidHubUtils)
 library(stringr)
+library(patchwork)
 ```
 
 # Introduction
@@ -55,7 +56,7 @@ full_hosp_truth <- load_truth("HealthData",
 ## Forecast Quantiles
 As specified by the COVID-19 Forecast Hub, the 23 quantiles $Q = \{.01, .05, .10, \cdots, .90, .95, .99\}$ are used to represent a single forecast’s probabilistic distribution with the median 0.50 quantile taken as the point forecast. However, instead of specifying a full probabilistic distribution, I narrow the scope to make interval forecasts whose bounds can be used to obtain the desired 23 quantiles instead. The following table summarizes the translation from prediction interval bounds to quantiles, where “L” indicates the lower bound of a quantile while “U” indicates the upper bound.    
 
-![Table 1](quant-int_table.jpg){width=100%}
+![](quant-int_table.jpg){width=100%}
 
 ## Forecast Locations 
 Forecasts are made for all 50 states, Washington DC, Puerto Rico, and the US as a whole with a forecast horizon up to 84-day ahead incident hospitalizations, depending on the forecasting model (see Model Specifications below). Other US territories such as American Samoa and Guam are not included due to their very low or zero COVID-19 incident hospitalizations over the course of the pandemic. Forecasts that predicted single digit or even zero daily hospitalizations for these locations were often very accurate, meaning that when comparing overall forecasting accuracy between models, a model that predicts for these locations will have an unfair advantage (Cramer, 2021).   
@@ -238,7 +239,9 @@ overall_metrics_US <- overall_metrics_US %>%
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
 knitr::kable(overall_metrics_US)
+```
 
+```{r, message=FALSE, warning=FALSE}
 # States
 overall_metrics_states <- scores_df %>%
   rbind(score_baseline) %>%
@@ -305,8 +308,15 @@ horizon_wk_metrics_US <- horizon_wk_metrics_US %>%
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(horizon_wk, wis)
-knitr::kable(horizon_wk_metrics_US)
 
+ggplot(horizon_wk_metrics_US, mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  geom_point(mapping=aes(col=model)) +
+  geom_line(mapping=aes(col=model)) +
+  labs(title="Average WIS by Horizon Week (US)",
+       x="Horizon Week", y="Average WIS")
+```
+
+```{r, message=FALSE, warning=FALSE}
 # Aggregated for all states and territories
 horizon_wk_metrics_states <- scores_df %>%
   rbind(score_baseline) %>%
@@ -344,7 +354,12 @@ horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(horizon_wk, wis)
-knitr::kable(horizon_wk_metrics_states)
+  
+ggplot(horizon_wk_metrics_states, mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  geom_point(mapping=aes(col=model)) +
+  geom_line(mapping=aes(col=model)) +
+  labs(title="Average WIS by Horizon Week (States)",
+       x="Horizon Week", y="Average WIS")
 ```
 
 ## Model Performance by Wave
@@ -403,8 +418,15 @@ wave_metrics_US <- wave_metrics_US %>%
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wave, horizon_wk, wis)
   
-knitr::kable(wave_metrics_US)
+# Maybe do a sub-plot for each wave
+# ggplot(wave_metrics_US, mapping=aes(x=horizon_wk, y=wis, group=model)) +
+#   geom_point(mapping=aes(col=model)) +
+#   geom_line(mapping=aes(col=model)) +
+#   labs(title="Average WIS by Horizon Week (US)",
+#        x="Horizon Week", y="Average WIS")
+```  
 
+```{r, message=FALSE, warning=FALSE}
 # Aggregated for all states and territories
 wave_metrics_states <- scores_df %>%
   rbind(score_baseline) %>%
@@ -455,7 +477,6 @@ wave_metrics_states <- wave_metrics_states %>%
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wave, horizon_wk, wis)
   
-knitr::kable(wave_metrics_states)
 ```
 
 
@@ -489,66 +510,79 @@ forecast_date_metrics_US <- scores_df %>%
   )
 
 # WIS
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = wis)) +
+wis_1wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = wis)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead WIS by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "WIS (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')
 
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = wis)) +
+wis_4wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 4) %>%
+ggplot(aes(x = forecast_date + weeks(1), y = wis)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead WIS by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "WIS (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')
 
 # MAE
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = mae)) +
+mae_1wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 1) %>%
+ggplot(aes(x = forecast_date + weeks(1), y = mae)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead MAE by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "MAE (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')
 
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = mae)) +
+mae_4wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = mae)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead MAE by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "MAE (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')
 
 # 95% PI Coverage
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = cov_95)) +
+cov95_1wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = cov_95)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead 95% PI Coverage by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "95% PI Coverage (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')  
 
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = cov_95)) +
+cov95_4wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 4) %>%
+ggplot(aes(x = forecast_date + weeks(1), y = cov_95)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead 95% PI Coverage by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "95% PI Coverage (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')  
 
-      
-# Aggregated for all states and territories
+wis_1wk_plot_US + wis_4wk_plot_US + 
+  cov95_1wk_plot_US + cov95_4wk_plot_US +
+  plot_layout(ncol = 2, guides='collect') +
+  plot_annotation(title='Average h-week ahead metric by model (US)') &
+  theme(legend.position='bottom')
+```
+
+```{r, message=FALSE, warning=FALSE}  
+# States Aggregated
 forecast_date_metrics_states <- scores_df %>%
   rbind(score_baseline) %>%
   filter(horizon <= 28, 
@@ -560,7 +594,8 @@ forecast_date_metrics_states <- scores_df %>%
       horizon %in% c(8:14) ~ 2,
       horizon %in% c(15:21) ~ 3,
       horizon %in% c(22:28) ~ 4
-    )) %>%
+    )
+  ) %>%
   group_by(forecast_date, model, horizon_wk) %>%
   summarize(
     wis = mean(wis), mae=mean(abs_error),
@@ -569,64 +604,75 @@ forecast_date_metrics_states <- scores_df %>%
   )
 
 # WIS
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = wis)) +
+wis_1wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = wis)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead WIS by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "WIS (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')
 
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = wis)) +
+wis_4wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 4) %>%
+ggplot(aes(x = forecast_date + weeks(1), y = wis)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead WIS by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "WIS (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')
 
 # MAE
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = mae)) +
+mae_1wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 1) %>%
+ggplot(aes(x = forecast_date + weeks(1), y = mae)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead MAE by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "MAE (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')
 
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = mae)) +
+mae_4wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = mae)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead MAE by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "MAE (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')
 
 # 95% PI Coverage
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = cov_95)) +
+cov95_1wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = cov_95)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead 95% PI Coverage by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "95% PI Coverage (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')  
 
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = cov_95)) +
+cov95_4wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 4) %>%
+ggplot(aes(x = forecast_date + weeks(1), y = cov_95)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead 95% PI Coverage by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  labs(title = "95% PI Coverage (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 7, hjust = -0.2),
+        legend.position = 'bottom')  
 
+wis_1wk_plot_states + wis_4wk_plot_states + 
+  cov95_1wk_plot_states + cov95_4wk_plot_states +
+  plot_layout(ncol = 2, guides='collect') +
+  plot_annotation(title='Average h-week ahead metric by model (states)') &
+  theme(legend.position='bottom')
 ```
 
 
@@ -641,4 +687,10 @@ While these results are promising, they are only initial results from the traini
 
 In addition, there remain certain limitations of the THieF methodology in practice that may restrict its utility until further developments are made. The inherent structure of the temporal hierarchy only allows aggregation levels whose time scales are factors of the highest level’s time scale. This means that seasonality at any excluded timescales might be missed due to their exclusion, which is especially problematic when only limited data is available. Moreover, at the present, THieF lacks a simple probabilistic implementation, making it difficult to apply to areas in which probabilistic forecasting is the widely accepted standard. Future work points to applying the existing probabilistic implementation of THieF to forecasting COVID-19 incident hospitalizations. Still, the current work serves as indication that the THieF methodology performs well in an infectious disease setting and warrants further exploration.
 
-
+# Supplemental Figures and Tables
+```{r}
+knitr::kable(horizon_wk_metrics_US)
+knitr::kable(horizon_wk_metrics_states)
+knitr::kable(wave_metrics_US)
+knitr::kable(wave_metrics_states)
+```
