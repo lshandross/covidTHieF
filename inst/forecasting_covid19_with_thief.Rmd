@@ -56,7 +56,12 @@ full_hosp_truth <- load_truth("HealthData",
 ## Forecast Quantiles
 As specified by the COVID-19 Forecast Hub, the 23 quantiles $Q = \{.01, .05, .10, \cdots, .90, .95, .99\}$ are used to represent a single forecast’s probabilistic distribution with the median 0.50 quantile taken as the point forecast. However, instead of specifying a full probabilistic distribution, I narrow the scope to make interval forecasts whose bounds can be used to obtain the desired 23 quantiles instead. The following table summarizes the translation from prediction interval bounds to quantiles, where “L” indicates the lower bound of a quantile while “U” indicates the upper bound.    
 
-![](quant-int_table.jpg){width=100%}
+```{r, message=FALSE, warning=FALSE}
+Quantile <- c("0.010", "0.025", "0.050", paste("0",(2:10)*50, sep="."), "...", "0.975", "0.990")
+Interval <- c("98L", "95L", paste((9:1)*10, "L", sep=""), "Mean", "...", "95U", "98U")
+quant_int_table <- rbind(Quantile, Interval)
+knitr::kable(quant_int_table, caption="FIX_ME", col.names=NULL)
+```
 
 ## Forecast Locations 
 Forecasts are made for all 50 states, Washington DC, Puerto Rico, and the US as a whole with a forecast horizon up to 84-day ahead incident hospitalizations, depending on the forecasting model (see Model Specifications below). Other US territories such as American Samoa and Guam are not included due to their very low or zero COVID-19 incident hospitalizations over the course of the pandemic. Forecasts that predicted single digit or even zero daily hospitalizations for these locations were often very accurate, meaning that when comparing overall forecasting accuracy between models, a model that predicts for these locations will have an unfair advantage (Cramer, 2021).   
@@ -66,7 +71,7 @@ The period of analysis was initially defined to be 462 days (66 weeks) long, sta
 
 Only training phase analysis is included in this thesis to avoid preemptively looking at testing phase data; further work will contain testing phase analysis.   
 
-```{r, caption="Figure 1: Period of Analysis Phases"}
+```{r, fig.cap="Period of Analysis Phases"}
 hosp_truth_US <- full_hosp_truth %>%
   filter(location == "US", 
          target_end_date >= as.Date("2020-07-27"), target_end_date <= as.Date("2021-12-01"))
@@ -173,7 +178,7 @@ scores_df <-scores_df %>%
 
 ## Overall Model Performance
 
-```{r, warning=FALSE, message=FALSE}
+```{r, warning=FALSE, message=FALSE, fig.cap="FIX ME"}
 locs <- full_hosp_truth %>%
   filter(target_end_date <= as.Date("2021-07-05")) %>%
   group_by(location) %>%
@@ -205,7 +210,7 @@ for (i in 1:3) {
   pt <- p +
     scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-07-05")), 
               date_breaks = "2 months", date_labels = "%b") +
-    #scale_y_continuous(limits=c(0, max(filter(full_hosp_truth, location==locs[i])$value) * 1.25)) +
+    scale_y_continuous(limits=c(0, max(filter(full_hosp_truth, location==locs[i])$value) * 1.25)) +
     theme(axis.ticks.length.x = unit(0.5, "cm"),
           axis.text.x = element_text(vjust = 7, hjust = -0.2),
           legend.position = "none")
@@ -239,6 +244,8 @@ overall_metrics_US <- overall_metrics_US %>%
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
 knitr::kable(overall_metrics_US)
+
+models <- pull(overall_metrics_US, model)   
 ```
 
 ```{r, message=FALSE, warning=FALSE}
@@ -309,14 +316,7 @@ horizon_wk_metrics_US <- horizon_wk_metrics_US %>%
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(horizon_wk, wis)
 
-ggplot(horizon_wk_metrics_US, mapping=aes(x=horizon_wk, y=wis, group=model)) +
-  geom_point(mapping=aes(col=model)) +
-  geom_line(mapping=aes(col=model)) +
-  labs(title="Average WIS by Horizon Week (US)",
-       x="Horizon Week", y="Average WIS")
-```
 
-```{r, message=FALSE, warning=FALSE}
 # Aggregated for all states and territories
 horizon_wk_metrics_states <- scores_df %>%
   rbind(score_baseline) %>%
@@ -354,12 +354,35 @@ horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(horizon_wk, wis)
-  
-ggplot(horizon_wk_metrics_states, mapping=aes(x=horizon_wk, y=wis, group=model)) +
+```
+
+```{r, message=FALSE, warning=FALSE}  
+wis_hzn_plot_US <- horizon_wk_metrics_US %>%
+ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model)) +
   geom_line(mapping=aes(col=model)) +
-  labs(title="Average WIS by Horizon Week (States)",
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title="US",
        x="Horizon Week", y="Average WIS")
+       
+wis_hzn_plot_states <- horizon_wk_metrics_states %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  geom_point(mapping=aes(col=model)) +
+  geom_line(mapping=aes(col=model)) +
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title="States", 
+       x="Horizon Week", y="Average WIS")
+       
+wis_hzn_plot_US + wis_hzn_plot_states +
+  plot_layout(ncol = 2, guides='collect') +
+  plot_annotation(title='Average WIS by horizon week and model') &
+  theme(legend.position='bottom')
 ```
 
 ## Model Performance by Wave
@@ -417,16 +440,7 @@ wave_metrics_US <- wave_metrics_US %>%
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wave, horizon_wk, wis)
-  
-# Maybe do a sub-plot for each wave
-# ggplot(wave_metrics_US, mapping=aes(x=horizon_wk, y=wis, group=model)) +
-#   geom_point(mapping=aes(col=model)) +
-#   geom_line(mapping=aes(col=model)) +
-#   labs(title="Average WIS by Horizon Week (US)",
-#        x="Horizon Week", y="Average WIS")
-```  
 
-```{r, message=FALSE, warning=FALSE}
 # Aggregated for all states and territories
 wave_metrics_states <- scores_df %>%
   rbind(score_baseline) %>%
@@ -476,7 +490,58 @@ wave_metrics_states <- wave_metrics_states %>%
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wave, horizon_wk, wis)
+```  
   
+```{r, message=FALSE, warning=FALSE, fig.cap="FIX_ME"}
+wis_hzn_plot_winter21_US <- wave_metrics_US %>%
+  filter(wave == "winter21") %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+   geom_point(mapping=aes(col=model)) +
+   geom_line(mapping=aes(col=model)) +
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+   labs(title="Winter '21 Wave (US)", x="Horizon Week", y="Average WIS")
+   
+wis_hzn_plot_alpha_US <- wave_metrics_US %>%
+  filter(wave == "alpha") %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+   geom_point(mapping=aes(col=model)) +
+   geom_line(mapping=aes(col=model)) +
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+   labs(title="Alpha Wave (US)", x="Horizon Week", y="Average WIS")
+   
+wis_hzn_plot_winter21_states <- wave_metrics_states %>%
+  filter(wave == "winter21") %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+   geom_point(mapping=aes(col=model)) +
+   geom_line(mapping=aes(col=model)) +
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+   labs(title="Winter '21 Wave (states)", x="Horizon Week", y="Average WIS")
+
+wis_hzn_plot_alpha_states <- wave_metrics_states %>%
+  filter(wave == "alpha") %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+   geom_point(mapping=aes(col=model)) +
+   geom_line(mapping=aes(col=model)) +
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+   labs(title="Alpha Wave (states)", x="Horizon Week", y="Average WIS")
+   
+wis_hzn_plot_winter21_US + wis_hzn_plot_alpha_US + 
+  wis_hzn_plot_winter21_states + wis_hzn_plot_alpha_states +
+  plot_layout(ncol = 2, guides='collect') +
+  plot_annotation(title='Average WIS by wave and model') &
+  theme(legend.position='bottom')
 ```
 
 
@@ -686,6 +751,9 @@ For the most part, it seems that the additions of the 8 week and 12 week aggrega
 While these results are promising, they are only initial results from the training phase. The performance of the subset of models that are passed onto the testing phase is still yet to be calculated, meaning the drawing of any definitive conclusions must be put on hold. Further investigation into model performance stratified by location would also serve to provide useful information to help determine which models perform the best under different circumstances, as well as an exploration of the prediction accuracy of a simple ARIMA model without the use of a temporal hierarchy.   
 
 In addition, there remain certain limitations of the THieF methodology in practice that may restrict its utility until further developments are made. The inherent structure of the temporal hierarchy only allows aggregation levels whose time scales are factors of the highest level’s time scale. This means that seasonality at any excluded timescales might be missed due to their exclusion, which is especially problematic when only limited data is available. Moreover, at the present, THieF lacks a simple probabilistic implementation, making it difficult to apply to areas in which probabilistic forecasting is the widely accepted standard. Future work points to applying the existing probabilistic implementation of THieF to forecasting COVID-19 incident hospitalizations. Still, the current work serves as indication that the THieF methodology performs well in an infectious disease setting and warrants further exploration.
+
+
+Infectious disease forecasting faces four main challenges in terms of accuracy: system complexity, data sparsity/quality, the forecasting feedback loop, and public understanding of probabilistic forecasts. Although these obstacles may also be found in other disciplines, they are important to keep in mind when making forecasts about an infectious disease (Lauer, 2020; Moran, 2016). 
 
 # Supplemental Figures and Tables
 ```{r}
