@@ -18,34 +18,30 @@ library(patchwork)
 ```
 
 # Introduction
-Throughout the past two years, the COVID-19 pandemic has underscored how infectious disease outbreaks can strain public health, clinical, and economic institutions. This has highlighted the importance of infectious disease forecasting as a way for the scientific community to communicate information, both to policymakers and the general public, about future directions of the pandemic.   
+The COVID-19 pandemic has underscored how infectious disease outbreaks can strain public health, clinical, and economic institutions. This has highlighted the importance of infectious disease forecasting as a way for the scientific community to communicate information, both to policymakers and the general public, about future directions of the pandemic.
+Outbreaks of other transmissible diseases like dengue, ebola, SARS, and influenza have also seen substantial forecasting efforts to reduce their spread and wider impact, modelers making quantitative predictions about the future based on already-observed data. These predictions may pertain to a specific event, outcome, or trend related to one (or occasionally more) infectious disease (Lauer, 2020). In this way, decisions that balance prevention or mitigation with economic or societal loss can be made much more effectively (Smith, 2019). For example, healthcare staffing and allocation of limited resources may be determined by any forecasted trends. Targeted communication campaigns about social distancing or vaccination may also be scheduled ahead of any forecasted increases in order to be most effective. Similarly, lockdowns may be eased during a forecasted downward trend to help boost the economy.   
 
-Outbreaks of other transmissible diseases like dengue, ebola, SARS, and influenza have also seen substantial forecasting efforts to reduce their spread and wider impact, modelers making quantitative predictions about the future based on already-observed data. These predictions may pertain to a specific event, outcome, or trend related to one (or occasionally more) infectious disease (Lauer, 2020). In this way, decisions that balance prevention or mitigation with economic or societal loss can be made much more effectively (Smith, 2019). For example, healthcare staffing and allocation of limited resources may be determined by any forecasted trends. Targeted communication campaigns about social distancing or vaccination may also be scheduled ahead of any forecasted increases in order to be most effective while lockdowns may be eased during a downward trend to help boost the economy.   
+COVID-19 forecasts (and many infectious disease forecasts in general) tend to be short-term, predicting up to no more than four weeks ahead. Further, this type of forecast is quantifiable and specific for a fixed period of time (e.g. one week ahead, two weeks ahead, etc.) and can therefore be evaluated by comparing the forecasts to the eventually observed data. Although longer-term COVID-19 scenario projections that predict further out into the future under specified hypothetical conditions are useful in making more lasting plans for combating infectious disease, only short-term COVID-19 forecasts are explored in this work.   
 
-COVID-19 forecasts (and many infectious disease forecasts in general) are short-term, predicting up to no more than four weeks ahead. Further, this type of forecast is quantifiable and specific for a fixed period of time (e.g. one week ahead, two weeks ahead, etc.) and are thus evaluable. Although longer-term COVID-19 scenario projections that predict further out into the future are useful in making more lasting plans for combatting in infectious disease, only short-term COVID-19 forecasts are explored in this work.   
+Short-term COVID-19 forecasting has been heavily researched with efforts synthesized, collected, archived, and evaluated in a centralized repository called the US COVID-19 Forecast Hub [https://covid19forecasthub.org/]. COVID-19 forecasts have also been in the form of probabilistic forecasts rather than point forecasts. The use of probabilistic forecasts is a distinguishing characteristic of outbreak forecasting efforts, as this type of forecast provides more information. For example, a probabilistic forecast quantifies the the likelihood of a forecast's occurrence.   
 
-Short-term COVID-19 forecasting has been heavily researched with efforts synthesized, collected, archived, and evaluated in a centralized repository called the COVID-19 Forecast Hub [https://covid19forecasthub.org/]. COVID-19 forecasts have also been in the form of probabilistic forecasts rather than point forecasts. The use of probabilistic forecasts is a distinguishing characteristic of outbreak forecasting efforts, as this type of forecast provides more information, including about the likelihood of the forecast occurring.   
+However, obtaining accurate forecasts is not an easy task. For example, the systems that govern the spread of infectious diseases tend to be non-stationary processes since they are partially dependent on human behavior. For COVID-19, this non-stationarity was caused by continually changing policies and behaviors due to school closures, lockdowns, masking, social distancing, and the appearance of new variants. This makes trends difficult to forecast. Not only that, any forecasts made were used to inform those changing policies, further complicating matters due to the forecast feedback loop, a paradox that occurs when infectious disease forecasts guide intervention or risk communication, and thus impacting the path of the epidemic (Cramer, 2021; Lauer, 2020).   
 
-Infectious disease forecasting faces four main challenges in terms of accuracy: system complexity, data sparsity/quality, the forecasting feedback loop, and public understanding of probabilistic forecasts. Although these obstacles may also be found in other disciplines, they are important to keep in mind when making forecasts about an infectious disease (Lauer, 2020; Moran, 2016).   
+Forecasting COVID-19 also sees the additional challenge of an emergent outbreak setting, in which data availability and quality is severely limited (Lauer, 2020). This was especially true at the beginning of the pandemic, but a lack of a national testing protocol and issues properly categorizing deaths has meant that models do not have accurate data to train on. This means that incident hospitalizations have started to become a more relevant public health metric compared to incident cases and incident deaths, despite its fewer previous forecasting efforts, making it an appropriate forecast target to explore.   
 
-More specifically, the systems that govern the spread of infectious diseases tend to be non-stationary processes since they are partially dependent on human behavior. For COVID-19, this non-stationarity was caused by continually changing policies and behaviors due to school closures, lockdowns, masking, social distancing, and the appearance of new variants. This makes any trends difficult to forecast. Not only that, any forecasts made were used to inform those changing policies, further complicating matters due to the forecast feedback loop (Cramer, 2021).    
+Recent research about COVID-19 forecasting has also shown that most models have trouble predicting change-points in which trends in the data change direction (that is, hospitalizations start to increase or decrease in a way that is different from the previous pattern). Not only that, despite a range in data sources and modeling techniques, many models do not assign probability to the potential of a large change in trend. This gap calls for the exploration and testing of new methods.   
 
-Forecasting COVID-19 also sees the additional challenge of of an emergent outbreak setting, in which data availability and quality is severely limited (Lauer, 2020). This was especially true at the beginning of the pandemic, but a lack of a national testing protocol and issues properly categorizing deaths has meant that models do not have accurate data to train on. This means that incident hospitalizations have started to become the a more relevant public health metric compared to the other two targets, despite previous under-forecasting, making it an appropriate forecasts target to explore.   
+Temporal Hierarchical Forecasting (THieF) created by Athanasopoulos et al in 2017 is a novel method that combines hierarchical forecasting and temporal aggregation for time series. This approach consists of three main steps: creation of a temporal hierarchy through data aggregation, generation of forecasts at every level of the hierarchy using a classical statistical model, and reconciliation of those forecasts. The final step performs weighted forecast combination to not only achieve coherence but also improved accuracy (Athanasopoulos, 2017). Coherence describes when hierarchical forecasts predict the same trend, event, or outcome at every level; reconciliation is the process of making forecasts coherent. If forecasts are not coherent, it is unclear which level of forecasts should be trusted and chosen over other levels (Kourentzes, 2021).   
 
-Recent research about COVID-19 forecasting has also shown that most models have trouble predicting change-points in which trends in the data change direction (that is, hospitalizations start to increase or decrease in a way that is different from the previous pattern). Not only that, despite a range in data sources and modeling techniques, many models don't even assign probability to the potential of a large change in trend. This gap calls for the exploration and testing of new methods.   
+In light of the above-mentioned challenges within infectious disease forecasting, THieF might have something to offer. First, the THieF methodology relies on a phenomenological model, and for short-term outbreak forecasting, despite the growing body of knowledge we have about the mechanisms underlying disease transmission, models that focus only on the observed data, without incorporating a mechanistic understanding of outbreaks, often show good performance. Second, to my knowledge, THieF has not been applied in outbreak forecasting previously, meaning that it might offer insight about effective modeling techniques, regardless of its performance. Third, THieF has shown significant performance gains in other settings, which may translate to infectious disease forecasting.   
 
-Temporal Hierarchical Forecasting (THieF) created by Athanasopoulos, et. al in 2017 is a novel method that combines hierarchical forecasting and temporal aggregation for time series. This approach consists of three main steps: creation of the temporal hierarchy through data aggregation, generation of forecasts at every level of the hierarchy using a classical statistical model, and reconciliation of those forecasts. The final step performs weighted forecast combination to not only achieve coherency but also improved accuracy.   
-
-In light of the above-mentioned challenges within infectious disease forecasting, THieF might have something to offer. First, the THieF methodology relies on an underlying phenomenological model, and for short-term outbreak forecasting, despite the growing body of knowledge we have about the system, these types of models often show good performance. Second, to my knowledge, THieF has not been applied in outbreak forecasting previously, meaning that it might offer insight about effective modeling techniques, even regardless of its performance. Third, THieF has shown significant performance gains in other settings, which may translate to infectious disease forecasting.   
-
-The THieF methodology is used to retrospectively create probabilistic forecasts for COVID-19 incident daily hospitalizations for the United States at the state and national level. Six models were created based on the THieF methodology using a ARIMA base forecaster then were compared against each other and a naive baseline model during the training phase to find the most accurate models. Success is demonstrated by a few models that are shown to have accuracy gains when compared to the baseline. All of these forecasts will be implemented through R using the package THieF made available by Athanasopoulos, et. al (2017).   
+The THieF methodology was used to retrospectively create probabilistic forecasts for COVID-19 incident daily hospitalizations for the United States at the state and national level. Six models were created based on the THieF methodology using an ARIMA base forecaster, and then were compared against each other and a naive baseline model during the training phase to find the most accurate models. Success was demonstrated by a few models shown to have accuracy gains when compared to the baseline. All of these forecasts were implemented through R using the package THieF made available by Athanasopoulos, et. al (2017).   
 
 
 # Methods
 ## Data
-The data used in this analysis is the HealthData.gov COVID-19 Reported Patient Impact and Hospital Capacity by State Timeseries which reports daily incident hospitalizations for all 50 states, several US territories, and the aggregated U.S. national level. The sources of this state-aggregated time series are HHS TeleTracking, state/territorial health department reports to HHS Protect, and (prior to July 15, 2020) National Healthcare Safety Network. The COVID-19 Forecast Hub [https://covid19forecasthub.org/] designated this data set as the official ground truth data for COVID-19 incident hospitalizations on December 1, 2020 for modeling teams to train with and for models to be compared against. The data are collected at a daily frequency but are reported weekly through the covidHubUtils R package. Reporting for hospitalizations was sporadic during the early stages of the pandemic and only became consistent for all locations in July 2020. However, once hospitalization reporting became required for Medicare reimbursement, hospitalization data became much more reliable than case and death data, which suffer major underreporting issues.   
+The data used in this analysis is the HealthData.gov COVID-19 Reported Patient Impact and Hospital Capacity by State Timeseries which reports daily incident hospitalizations for all 50 states, several US territories, and the aggregated U.S. national level. The sources of this state-aggregated time series are HHS TeleTracking, state/territorial health department reports to HHS Protect, and (prior to July 15, 2020) National Healthcare Safety Network. The COVID-19 Forecast Hub [https://covid19forecasthub.org/] designated this data set as the official ground truth data for COVID-19 incident hospitalizations on December 1, 2020 for modeling teams to train with and for models to be compared against. The data are collected at a daily frequency but are reported weekly through the covidHubUtils R package. Reporting for hospitalizations was sporadic during the early stages of the pandemic and only became consistent for all locations in July 2020. However, once hospitalization reporting became required for Medicare reimbursement, hospitalization data became much more reliable than case and death data, which suffer from major underreporting issues.   
 
-## Truth Data 
 ```{r, message=FALSE, warning=FALSE}
 full_hosp_truth <- load_truth("HealthData", 
                          "inc hosp", 
@@ -53,21 +49,21 @@ full_hosp_truth <- load_truth("HealthData",
                          data_location = "remote_hub_repo")
 ```
 
-## Forecast Quantiles
-As specified by the COVID-19 Forecast Hub, the 23 quantiles $Q = \{.01, .05, .10, \cdots, .90, .95, .99\}$ are used to represent a single forecast’s probabilistic distribution with the median 0.50 quantile taken as the point forecast. However, instead of specifying a full probabilistic distribution, I narrow the scope to make interval forecasts whose bounds can be used to obtain the desired 23 quantiles instead. The following table summarizes the translation from prediction interval bounds to quantiles, where “L” indicates the lower bound of a quantile while “U” indicates the upper bound.    
+## Forecast quantiles
+As specified by the COVID-19 Forecast Hub, the 23 quantiles $Q = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}$ are used to represent a single forecast’s probabilistic distribution with the median 0.50 quantile typically taken as the point forecast. However, instead of specifying a full probabilistic distribution, I narrow the scope to make interval forecasts whose bounds can be used to obtain the desired 23 quantiles instead. The following table summarizes the translation from prediction interval bounds to quantiles, where “L” indicates the lower bound of a quantile while “U” indicates the upper bound.    
 
 ```{r, message=FALSE, warning=FALSE}
-Quantile <- c("0.010", "0.025", "0.050", paste("0",(2:10)*50, sep="."), "...", "0.975", "0.990")
-Interval <- c("98L", "95L", paste((9:1)*10, "L", sep=""), "Mean", "...", "95U", "98U")
+Quantile <- c(".010", ".025", ".050", paste(".",(2:10)*50, sep=""), "...", ".975", ".990")
+Interval <- c("98L", "95L", paste((9:1)*10, "L", sep=""), "Median", "...", "95U", "98U")
 quant_int_table <- rbind(Quantile, Interval)
-knitr::kable(quant_int_table, caption="FIX_ME", col.names=NULL)
+knitr::kable(quant_int_table, caption="Quantile-Interval", col.names=NULL)
 ```
 
-## Forecast Locations 
-Forecasts are made for all 50 states, Washington DC, Puerto Rico, and the US as a whole with a forecast horizon up to 84-day ahead incident hospitalizations, depending on the forecasting model (see Model Specifications below). Other US territories such as American Samoa and Guam are not included due to their very low or zero COVID-19 incident hospitalizations over the course of the pandemic. Forecasts that predicted single digit or even zero daily hospitalizations for these locations were often very accurate, meaning that when comparing overall forecasting accuracy between models, a model that predicts for these locations will have an unfair advantage (Cramer, 2021).   
+## Forecast locations 
+Forecasts are made for all 50 states, Washington DC, Puerto Rico, and the US as a whole with a forecast horizon up to 84-day ahead incident hospitalizations, depending on the forecasting model (see Model Specifications below). Other US territories such as American Samoa and Guam are not included due to their very low or zero COVID-19 incident hospitalizations over the course of the pandemic. Forecasts that predicted single digit or even zero daily hospitalizations for these locations were often very accurate, meaning that these locations do not add much to understanding of differences in forecast skill between different modeling approaches (Cramer, 2021).   
 
-## Date Range Of Analysis 
-The period of analysis was initially defined to be 462 days (66 weeks) long, starting on Monday, July 27th 2020 and ending Monday, November 1st 2021. This time period is split into a 343 day (49 week) training phase that ends on Monday, July 5th 2021 and a 119 day (17 week) testing phase that ends on Monday, November 1st 2021. The division is based on including two waves (the winter 2020-21 and the Alpha variant) of the pandemic in the training phase and one (Delta variant) in the testing phase. July 27th 2020 marks the beginning of when the forecast locations of interest had reliable truth data.   
+## Date range Of analysis 
+The period of analysis was initially defined to be 462 days (66 weeks) long, starting on Monday, July 27th 2020 and ending Monday, November 1st 2021. This time period is split into a 343 day (49 week) training phase that ends on Monday, July 5th 2021 and a 119 day (17 week) testing phase that ends on Monday, November 1st 2021. The division is based on including two waves (the winter 2020-21 and the Alpha variant) of the pandemic in the training phase and one (Delta variant) in the testing phase. July 27th 2020 marks the beginning of when the forecast locations of interest had reliable truth data.    
 
 Only training phase analysis is included in this thesis to avoid preemptively looking at testing phase data; further work will contain testing phase analysis.   
 
@@ -97,41 +93,44 @@ ggplot(data = hosp_truth_US, aes(x = target_end_date, y = value)) + geom_line() 
        x = "date", y = "inc hosp (daily)")
 ```
 
-### Training/Validation And Testing
+### Training/validation and testing
 The training phase is used to fit candidate models (see Model Specification subsection below) to the data, which are used to make forecasts between December 7th 2020 and July 5th 2021. (December 7th 2020 is the first Monday after the HealthData.gov incident hospitalizations dataset was designated the official ground truth data.) The training phase also serves as a validation period in which three models are chosen to move on to the test phase.   
 
-[FIX ME: Do we want this anymore, since it seems like the lower numbers of the alpha wave simply lend themselves to being easier to predict] Two of the models will be the overall best based on forecast accuracy during the training phase while the remaining model will be the single best model in terms of forecast accuracy during the last 12 weeks of the training phase. This selection rule is to account for any models that perform better with more data to train on, as they will have this greater amount of data to help inform their forecasts during the testing phase.   
+Two of the models will be the overall best based on forecast accuracy during the training phase while the remaining model will be the single best model in terms of forecast accuracy during the last 12 weeks of the training phase. This selection rule is to account for any models that perform better with more data to train on, as they will have this greater amount of data to help inform their forecasts during the testing phase.   
 
-### Temporal Hierarchical Forecasting
-Hierarchical forecasting has historically been utilized in business, economics, operations management, and related fields. This type of forecasting has seen useful advantages like producing coherent forecasts and enjoyed certain accuracy gains. Forecast combination, too, has been applied in a myriad of settings with favorable outcomes. The unique merging of these techniques in the THieF methodology has led to its promising accuracy improvements over more traditional hierarchical forecasting that does not involve forecasts combination.   
+## Temporal hierarchical forecasting
+Hierarchical forecasting has historically been utilized in business, economics, operations management, and related fields. This type of forecasting has seen useful advantages like producing coherent forecasts and enjoyed certain accuracy gains. Forecast combination, too, has been applied in a myriad of settings with favorable outcomes. The unique merging of these techniques in the THieF methodology has led to its promising accuracy improvements over more traditional hierarchical forecasting that does not involve forecasts combination.  
 
-The THieF approach has shown promising accuracy improvements over conventional methods due to its use of forecast combination. This forecast combination, while different from that of ensemble methods which combine forecasts from different, independent modeling frameworks, shares certain similarities which may indicate it could also show better performance. Research has also shown that classical statistical models often show good performance for short-term outbreak forecasting, suggesting another aspect of this methodology that may be beneficial. Further, THieF's temporal aggregation structure could improve its accuracy by being able to better detect patterns and trends amid noisy data and reducing the impact of outliers at higher aggregation levels. This is particularly helpful in this setting because outbreak data often has issues with noise.   
+The THieF approach has shown promising accuracy improvements over conventional methods due to its use of forecast combination. This forecast combination, while different from that of ensemble methods which combine forecasts from different, independent modeling frameworks, shares certain similarities which may indicate it could also show better performance. Research has also shown that classical statistical models often show good performance for short-term outbreak forecasting, suggesting another aspect of this methodology that may be beneficial.   
+
+Further, THieF's technique of combining forecasts at every level means that this method strikes a balance between including key information from lower aggregation levels and detecting bigger picture trends more evidence at higher aggregation levels. In this way, THieF potentially could better pinpoint the true trend even amid noisy data and see less impact on its forecasts from outliers at lower levels. These are particularly attractive qualities because infectious disease surveillance data is often filled with noise due to substantial reporting delays and data revisions.   
 
 As previously mentioned, THieF is a three-step method for forecasting time-series data using a time-based hierarchical structure. These steps (outlined in more detail below) consist of data aggregation, base forecast creation, and reconciliation of the base forecasts.   
 
-The first step in using the THieF methodology is to create the hierarchical structure. Time-series data of a particular time scale can be aggregated into the desired levels of the hierarchy, where the original time scale defines the lowest temporal level (Athanasopoulos, 2017). For example, a three-level hierarchy can be created from a quarterly time series in which the data is aggregated to semi-annual and annual levels. Although in this case all the levels feed neatly into each other, the only other restriction on the temporal hierarchy is that all of the levels must be factors of the top-level (Athanasopoulos, 2017). Returning to the example, by thinking of the aggregation levels in terms of months, it can be seen that all of the levels (3-month, 6-month, 12-month) are all factors of the topmost level. Other temporal scales (in terms of months) that could be added to the hierarchy could be any other factors of 12.   
+The first step in using the THieF methodology is to create the hierarchical structure. Time-series data of a particular time scale can be aggregated into the desired levels of the hierarchy, where the original time scale defines the lowest temporal level (Athanasopoulos, 2017). For example, a three-level hierarchy can be created from a quarterly time series in which the data is aggregated to semi-annual and annual levels. Although in this case all the levels feed neatly into each other, the only other restriction on the temporal hierarchy is that all of the levels must be factors of the top-level (Athanasopoulos, 2017). Returning to the example, by thinking of the aggregation levels in terms of months, it can be seen that all of the levels (3-month, 6-month, 12-month) are all factors of the topmost level. Other temporal scales (in terms of months) that could be added to the hierarchy could be any other factors of 12.
 
-Next, a classic statistical modeling approach is used to make the base forecasts at every level of the hierarchy. Athanasopoulos, et. al (2017) test both ETS and ARIMA approaches, with ARIMA shown to be more accurate. (I also choose to only use ARIMA based forecasters for all of my models.) The model is fit to each aggregation level separately, as if they were separate time series, meaning that the order and values of parameters are allowed to vary. Hence, at this stage the forecasts are usually not coherent (Athanasopoulos, 2017).   
+Next, a classic statistical modeling approach is used to make the base forecasts at every level of the hierarchy. Athanasopoulos et al (2017) test both ETS and ARIMA approaches, with ARIMA shown to be more accurate. Based on these results, I choose to only use ARIMA based forecasters for all of my models. The model is fit to each aggregation level separately, as if they were separate time series, meaning that the order and values of parameters are allowed to vary. Hence, at this stage the forecasts are usually not coherent (Athanasopoulos, 2017). 
 
-Finally, these forecasts are optimally combined to obtain the reconciled forecasts. A simplified weighted least squares (WLS) estimator is used for this process due to certain challenges posed by using a Greatest Least Squares estimator (Athanasopoulos, 2017). The series variance scaling WLs estimator is used for the reconciliation process to determine the appropriate weights for each level of base forecasts and which favor those with more variance of “reconciliation error” (the difference between base forecasts and their expected value if they were reconciled) (Athanasopoulos, 2017).   
+Finally, these forecasts are optimally combined to obtain the reconciled forecasts. A simplified weighted least squares (WLS) estimator is used for this process (Athanasopoulos, 2017). The series variance scaling WLS estimator is used for the reconciliation process to determine the appropriate weights for each level of base forecasts. Forecasts with less variance of “reconciliation error” (the difference between base forecasts and their expected value if they were reconciled) are favored in this process (Athanasopoulos, 2017).   
 
-For my work forecasting COVID-19 incident hospitalizations, the base set of time scales consist of 1-day, 7-day, 14-day, and 28-day. (These can also be thought of as daily, weekly, 2-weekly, and 4-weekly, and will be referred to as such in the rest of this proposal for convenience.) Each aggregation level can be thought of as a univariate time series from which forecasts can be easily made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model. I use the automatically generated prediction intervals from the forecast package to obtain the values for the 23 quantiles specified earlier (see Table 1 above). Then I optimally combine these base forecasts to get unbiased, reconciled forecasts using the series variance scaling estimator defined by Athanasopoulos, et. al (2017). This estimator determines the amount of weight to give the forecasts of each aggregation level when they are combined and reconciled based on the size of their forecast errors.   
+For my work on forecasting COVID-19 incident hospitalizations, the 4-week set of time scales consists of 1-day, 7-day, 14-day, and 28-day. These can also be thought of as daily, weekly, 2-weekly, and 4-weekly, and will be referred to as such in the rest of this thesis for convenience (Figure X). Each aggregation level can be thought of as a univariate time series from which forecasts can be made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model. I use the automatically generated prediction intervals from the `forecast` package to obtain the values for the 23 quantiles specified earlier (see Table 1 above). Then I optimally combine these base forecasts to obtain reconciled forecasts using the series variance scaling estimator defined by Athanasopoulos, et. al (2017). This estimator determines the amount of weight to give the forecasts of each aggregation level when they are combined and reconciled based on the variance of their estimated in-sample forecast errors. 
 
-It is important to note that the original THieF defined by Athanasopoulos, et. al (2017) is only defined for point forecasting. Further work on this methodology was developed by Taieb and Gamakumara of the same lab group to expand THieF to probabilistic forecasting but were deemed beyond the scope of this thesis due to the complexity of these developments. Instead, prediction intervals were used in place of fully specifying a probabilistic distribution (see Forecast Quantiles). Additional discussion can be found in Conclusions/Discussion.   
+It is important to note that the original THieF method defined by Athanasopoulos, et. al (2017) is only defined for point forecasting. Further work on this methodology was developed by Taieb and Gamakumara to expand THieF to probabilistic forecasting but were deemed beyond the scope of this thesis due to the complexity of these developments. Instead, prediction intervals were used in place of fully specifying a probabilistic distribution (see Forecast Quantiles). Additional discussion can be found in Conclusions/Discussion.   
 
-##  Model Specifications
-During the training/validation phase, I compare several different specifications for the candidate models. Various combinations of modeling frameworks and timescale sets for the temporal hierarchies are used to generate the candidate models. More specifically, I test three hierarchical structures and two data transformations, resulting in six total candidate models.  
 
-Three different sets of time scales for the aggregation levels within the temporal hierarchy are explored in this work with a naming convention based on the topmost level. The 4-week Set of time scales consist of daily, weekly, 2-weekly, and 4-weekly; these aggregation levels are a complete set but are also always included in the hierarchy. The 8-week Set is made up of the covidTHieF_4wk set plus an additional 8-weekly level that serves as the new topmost level. The 12-week Set adds 3-weekly, 6-weekly, and (topmost) 12-weekly time scales together in addition to the base set. Note that the lower levels of each hierarchy are all multiples of that hierarchy's top level, an essential component to the THieF method.   
+##  Model specifications
+During the training/validation phase, I compare several different specifications for the candidate models. Various combinations of modeling frameworks and timescale sets for the temporal hierarchies are used to generate the candidate models. More specifically, I test three hierarchical structures and two data transformations, resulting in six total candidate models.   
+
+Three different sets of time scales for the aggregation levels within the temporal hierarchy are explored in this work. The THieF_4wk set of time scales consist of daily, weekly, 2-weekly, and 4-weekly. The THieF_8wk set is made up of the THieF_4wk set plus an additional 8-weekly level that serves as the new topmost level. The THieF_12wk set adds 3-weekly, 6-weekly, and (topmost) 12-weekly time scales together in addition to the covidTHieF_4wk set. Note that the lower levels of each hierarchy are all multiples of that hierarchy's top level, an essential component to the THieF method.   
 
 ![](thief_4wk.jpg){width=100%}
 ![](thief_8wk.jpg){width=100%}
 ![](thief_12wk.jpg){width=100%}
 
+Additionally, each of these hierarchy schemes is explored with both no data transformation and a variance-stabilizing fourth-root data transformation. The latter transformation is chosen based on prior work by the Reich Lab at UMass Amherst that has shown accuracy improvements when using a fourth root transformation for forecasting COVID-19.   
 
-Additionally, each hierarchy scheme is explored with both no data transformation and a fourth root data transformation. The latter transformation is chosen based on prior work by the Reich Lab that has shown accuracy improvements when using a fourth root transformation for forecasting COVID-19.   
 
-## Metrics and Evaluation  
+## Metrics and evaluation  
 The evaluation is conducted through several different aggregation schemes: horizon, target end date, location, pandemic wave (when applicable), and overall. Although incident hospitalizations are observed and forecasted at a daily level, I choose to evaluate the forecasts on a weekly basis. This is the standard in the monthly evaluation reports from the COVID-19 Forecast Hub and is computed by averaging the values for the metric of choice across a single week (Tuesday through Monday) to obtain a single value for that week. The aggregation scheme based on horizon, location, and pandemic wave will also be calculated similarly by averaging values by week.  
 
 I use the same three metrics as the COVID-19 Forecast Hub: MAE for point forecasts and WIS and PI coverage for probabilistic forecasts. Relative versions of MAE and WIS are also used when applicable, and are calculated as $MAE_{model m} / MAE_{baseline}$ and $WIS_{model m} /WIS_{baseline}$, respectively. Equations for these metrics are taken from Cramer, et. al (2021) and are shown below:   
@@ -159,9 +158,9 @@ forecasts_df <-forecasts_df %>%
   mutate(
     model=
       case_when(
-        str_detect(model, "Base_arima")~str_replace(model, "Base_arima", "covidTHieF_4wk"),
-        str_detect(model, "Topmost8_arima")~str_replace(model, "Topmost8_arima", "covidTHieF_8wk"),
-        str_detect(model, "Multiple3_arima")~str_replace(model, "Multiple3_arima", "covidTHieF_12wk")
+        str_detect(model, "Base_arima_")~str_replace(model, "Base_arima_", "THieF_4wk-"),
+        str_detect(model, "Topmost8_arima_")~str_replace(model, "Topmost8_arima_", "THieF_8wk-"),
+        str_detect(model, "Multiple3_arima_")~str_replace(model, "Multiple3_arima_", "THieF_12wk-")
        )
   )
   
@@ -169,16 +168,16 @@ scores_df <-scores_df %>%
   mutate(
     model=
       case_when(
-        str_detect(model, "Base_arima")~str_replace(model, "Base_arima", "covidTHieF_4wk"),
-        str_detect(model, "Topmost8_arima")~str_replace(model, "Topmost8_arima", "covidTHieF_8wk"),
-        str_detect(model, "Multiple3_arima")~str_replace(model, "Multiple3_arima", "covidTHieF_12wk")
+        str_detect(model, "Base_arima_")~str_replace(model, "Base_arima_", "THieF_4wk-"),
+        str_detect(model, "Topmost8_arima_")~str_replace(model, "Topmost8_arima_", "THieF_8wk-"),
+        str_detect(model, "Multiple3_arima_")~str_replace(model, "Multiple3_arima_", "THieF_12wk-")
        )
   )
 ```
 
-## Overall Model Performance
+## Overall model performance
 
-```{r, warning=FALSE, message=FALSE, fig.cap="FIX ME"}
+```{r, warning=FALSE, message=FALSE, fig.cap='forecast plots'}
 locs <- full_hosp_truth %>%
   filter(target_end_date <= as.Date("2021-07-05")) %>%
   group_by(location) %>%
@@ -197,7 +196,7 @@ for (i in 1:3) {
   
   p <- plot_forecasts(fdat, 
                       target_variable = "inc hosp", 
-                      models = c("covidTHieF_4wk_4root", "COVIDhub-baseline", "covidTHieF_12wk_noTrans"),
+                      models = c("THieF_4wk-4root", "COVIDhub-baseline", "THieF_12wk-noTrans"),
                       intervals = c(.5, .95), 
                       truth_source = "HealthData",
                       use_median_as_point = TRUE,
@@ -219,9 +218,9 @@ for (i in 1:3) {
 }
 ```
 
-For the US National level, the two covidTHieF_4wk models take the lead for forecast accuracy and show better performance than the naive baseline for all metrics except 95% PI Coverage. In terms of WIS, the covidTHieF_4wk_4root model performs the best with a relative WIS value of 0.924 and a relative MAE value of 0.938, meaning it had 7.6% and 6.2% improvements over the baseline. This model also had 0.303 and 0.810 coverage rates for 50% and 95% prediction intervals, respectively, the former slightly closer to the nominal coverage rate than the baseline. In terms of 50% coverage rate, covidTHieF_4wk_noTrans performed the best with a 50% coverage rate of 0.407 and a 95% coverage rate of 0.839, the former a decent amount closer to the nominal coverage rate then the baseline. This model also had a 0.965 relative WIS and 0.937 relative MAE, or 3.5% and 6.3% improvements over the baseline. The other models show poorer performance compared to the baseline, with the covidTHieF_8wk models performing about equally or worse than the baseline but the covidTHieF_12wk models performing substantially worse than the baseline.   
+For the US National level (Table 2), the two THieF_4wk models take the lead for forecast accuracy and show better performance than the naive baseline for all metrics except 95% PI coverage. In terms of WIS, the THieF_4wk-4root model performs the best with a relative WIS value of 0.924 and a relative MAE value of 0.938, meaning it had 7.6% and 6.2% improvements over the baseline. This model also had 30.3% and 81.0% coverage rates for 50% and 95% prediction intervals, respectively, the former slightly closer to the nominal coverage rate than the baseline. In terms of 50% coverage rate, THieF_4wk-noTrans performed the best with a 50% coverage rate of 40.7% and a 95% coverage rate of 83.9%, the former a decent amount closer to the nominal coverage rate then the baseline. This model also had a 0.965 relative WIS and 0.937 relative MAE, or 3.5% and 6.3% improvements over the baseline. The other models show poorer performance compared to the baseline, with the THieF_8wk models performing about equally or worse than the baseline but the THieF_12wk models performing substantially worse than the baseline.   
 
-For the aggregated states level, there is much greater similarity between the covidTHieF_4wk and covidTHieF_8wk models in terms of all metrics except 95% PI Coverage. These models show more substantial improvements over the baseline compared to that for the US National level for all metrics except for relative MAE, for which the best models perform slightly worse then the baseline. The covidTHieF_4wk_4root model performs the best for all metrics except for 95% PI Coverage, although it is a very close third best in terms of being closest to the nominal coverage rate. This model has a relative WIS of 0.873 (12.7% improvement over the baseline), 1.007 relative MAE (0.7% worse than the baseline), 0.478 50% PI Coverage (the baseline has an 0.888 50% Coverage Rate) and 0.916 95% PI Coverage (the baseline has a 1.000 95% Coverage Rate). The covidTHieF_8wk_4root model has similar relative WIS and relative MAE values (but worse coverage rates) while the covidTHieF_8wk_noTrans model has similar coverage rates (but worse relative WIS and relative MAE). The covidTHieF_12wk show certain improvements in coverage rates but do not show the same number of improvements over the baseline as the other for models.   
+For the aggregated states level (Table 3), there is much greater similarity between the THieF_4wk and THieF_8wk models in terms of all metrics except 95% PI coverage. These models show more substantial improvements over the baseline compared to that for the US National level for all metrics except for relative MAE, for which the best models perform slightly worse than the baseline. The THieF_4wk-4root model performs the best for all metrics except for 95% PI coverage, although it is a very close third best in terms of being closest to the nominal coverage rate. This model has a relative WIS of 0.873 (12.7% improvement over the baseline), 1.007 relative MAE (0.7% worse than the baseline), 47.8% 50% PI coverage (the baseline has an 88.8% 50% coverage rate) and 91.6% 95% PI coverage (the baseline has a 100% 95% coverage rate). The THieF_8wk-4root model has similar relative WIS and relative MAE values (but worse coverage rates) while the THieF_8wk-noTrans model has similar coverage rates (but worse relative WIS and relative MAE). The THieF_12wk show certain improvements in coverage rates but do not show the same number of improvements over the baseline as the other for models.   
 
 ```{r, message=FALSE, warning=FALSE}
 # US National
@@ -243,7 +242,7 @@ overall_metrics_US <- overall_metrics_US %>%
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
-knitr::kable(overall_metrics_US)
+knitr::kable(overall_metrics_US, caption="Overall model performance for the US national level")
 
 models <- pull(overall_metrics_US, model)   
 ```
@@ -268,14 +267,14 @@ overall_metrics_states <- overall_metrics_states %>%
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
-knitr::kable(overall_metrics_states)
+knitr::kable(overall_metrics_states, caption="Overall model performance averaged over the states level")
 ```
 
 
-## Model Performance by Horizon Week
-Similar patterns in model accuracy are seen when forecasts are aggregated by horizon week for the US National level. Notably, the models tend to perform the worst with one week ahead and 4 week ahead horizons, although this is not true for every model across every metric. The covidTHieF_4wk models once again generally show the best performance of the six models, especially at smaller horizons with covidTHieF_8wk models performing similarly or better at a 4 week ahead horizon for certain metrics. The covidTHieF_4wk_4root performs better at smaller horizons while the covidTHieF_4wk_noTrans generally performs better at longer horizons. We see improved performance over the baseline for different metrics at different horizons for the covidTHieF_4wk and covidTHieF_8wk models, although no improvement is shown for 95% PI coverage for any of the models. In fact, all of the models show poor 95% PI Coverage compared to the baseline.   
+## Model performance by horizon week
+Similar patterns in model accuracy are seen when forecasts are aggregated by horizon week for the US National level (see Supplemental Table 1). Although only the poor-performing models showed worse WIS and MAE values at a 1-week ahead horizon, all models had worse relative performance compared to the baseline at the same 1-week ahead horizon (see Figure 3). This is likely due to the models being overconfident at this horizon, as evidenced by their low PI coverage rates (see Supplemental Table 1). The THieF_4wk models once again generally show the best performance of the six models, especially at smaller horizons with THieF_8wk models performing similarly or better at a 4 week ahead horizon for certain metrics. The THieF_4wk-4root model performs better at smaller horizons while the THieF_4wk-noTrans model generally performs better at longer horizons. We see improved performance over the baseline for different metrics at different horizons for the THieF_4wk and THieF_8wk models, although no improvement is shown for 95% PI coverage for any of the models. In fact, all of the models show poor 95% PI coverage compared to the baseline.   
 
-Likewise for the aggregated states level, similar trends in model accuracy are seen in terms of model ranking when forecasts are stratified by horizon week compared to when there is no such stride of occasion. The greatest improvements over the baseline are seen in coverage rates, especially the 95% PI coverage, although the 50% PI coverage shows every model beating the baseline in terms of coverage rates closer to the nominal rate. This coverage rate improvement over the baseline at the states level is striking when compared to the US National level. On the other hand, only the covidTHieF_8wk models show improved performance at the state level for every metric over the US national level while the covidTHieF_4wk_4root model only shows improve performance at the state level for relative WIS. However, that all four covidTHieF_4wk and covidTHieF_8wk models show improvement over the baseline for their relative WIS values for 2, 3, and 4 week ahead horizons.   
+Likewise for the aggregated states level, similar trends in model accuracy are seen in terms of model ranking when forecasts are stratified by horizon week compared to when there is no such stratification (see Supplemental Table 2). The greatest improvements over the baseline are seen in coverage rates, especially the 95% PI coverage, although the 50% PI coverage shows every model beating the baseline in terms of coverage rates closer to the nominal rate. This coverage rate improvement over the baseline at the states level is striking when compared to the US National level. On the other hand, only the THieF_8wk models show improved performance at the state level for every metric over the US national level while the THieF_4wk-4root model only shows improve performance at the state level for relative WIS. However, that all four THieF_4wk and covidTHieF_8wk models show improvement over the baseline for their relative WIS values for 2, 3, and 4 week ahead horizons.   
 
 ```{r, message=FALSE, warning=FALSE}
 # US National
@@ -356,9 +355,9 @@ horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
   arrange(horizon_wk, wis)
 ```
 
-```{r, message=FALSE, warning=FALSE}  
+```{r, message=FALSE, warning=FALSE, fig.cap='Average WIS by horizon week and model'}  
 wis_hzn_plot_US <- horizon_wk_metrics_US %>%
-ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+ggplot(mapping=aes(x=horizon_wk, y=wis, group=model), alpha=0.5) +
   geom_point(mapping=aes(col=model)) +
   geom_line(mapping=aes(col=model)) +
   scale_color_manual(
@@ -367,9 +366,9 @@ ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
       "green", "blue", "purple", "magenta")) +
   labs(title="US",
        x="Horizon Week", y="Average WIS")
-       
+              
 wis_hzn_plot_states <- horizon_wk_metrics_states %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model), alpha=0.5) +
   geom_point(mapping=aes(col=model)) +
   geom_line(mapping=aes(col=model)) +
   scale_color_manual(
@@ -378,17 +377,18 @@ wis_hzn_plot_states <- horizon_wk_metrics_states %>%
       "green", "blue", "purple", "magenta")) +
   labs(title="States", 
        x="Horizon Week", y="Average WIS")
-       
+              
 wis_hzn_plot_US + wis_hzn_plot_states +
   plot_layout(ncol = 2, guides='collect') +
   plot_annotation(title='Average WIS by horizon week and model') &
   theme(legend.position='bottom')
 ```
 
-## Model Performance by Wave
-For the US National level, both waves saw models yet again performing the worst during one week or four week ahead horizons. Notably, most models performed better during the alpha wave in terms of every metric except relative MAE, likely due to the fact that the number of hospitalizations were smaller and thus had less variance. Once again, there tended to be worse coverage rates for the 95% PI compared to the 50% PI. During the alpha wave, the covidTHieF_4wk_4root model shows the most improvements over the baseline in terms of relative WIS and MAE at every horizon, with between nearly 20% and 38% improvements for WIS and the third best coverage rates with some improvements over the baseline. The covidTHieF_4wk_noTrans and covidTHieF_8wk_noTrans models were the two best performing for coverage rate, beating the baseline for every horizon at the 50% level and matching it at the 95% level. During the winter21 wave, the two covidTHieF_4wk models performed more similarly, each performing the best for different horizons and different metrics. Generally, the covidTHieF_4wk_4root model performed better for shorter horizons while the covidTHieF_4wk_noTrans model performed better for longer horizons. Interestingly, at longer horizons the covidTHieF_12wk_noTrans model achieved some of the best relative WIS and MAE values of the winter21 wave, being between 10% and 19% better than the baseline despite poor performance in other instances.   
 
-For the states level, there is somewhat of a trend of the worst performance during one week or four week ahead horizons, although it is much less pronounced than that of the US National level. The 95% coverage rates are also less poor compared to the US National level. During the alpha wave, the covidTHieF_4wk_4root model similarly shows the most improvements over the baseline in terms of relative WIS and MAE at every horizon, with between close to 30% and 45% improvements for WIS and the best coverage rates with large improvements over the baseline except for one week ahead 95% coverage which was equal to that of the baseline. The covidTHieF_4wk_noTrans model didn't always have the best performance the four metrics but it was one of the top performing models that had consistent improvements over the baseline. The covidTHieF_8wk_noTrans models showed some very competitive coverage rates that improved over the baseline for 50% coverage at every horizon but also had some instances of performing worse than the baseline for 95% coverage. During the winter21 wave, the two covidTHieF_4wk models performed more similarly, though the covidTHieF_4wk_4root model performed slightly better overall. In addition, the covidTHieF_8wk models showed smaller relative WIS and relative MAE values compared to the covidTHieF_4wk models performed for longer horizons. Interestingly, at longer horizons the covidTHieF_12wk_noTrans model also achieved some of the best relative WIS and MAE values of the winter21 wave, being up to just over 10% better than the baseline despite poor performance in other instances.   
+## Model performance by wave
+For the US National level (see Supplemental Table 3 for full results), both waves yet again saw the THieF_12wk models performing worse at a 1-week ahead horizon compared to longer horizons while all models performed worse relative to the baseline at the same 1-week ahead horizon due to overconfidence. This is shown in Figure 4. Notably, most models performed better during the alpha wave in terms of every metric except relative MAE, likely due to the fact that the number of hospitalizations were smaller and thus had less variance. Once again, there tended to be worse coverage rates for the 95% PI compared to the 50% PI. During the alpha wave, the THieF_4wk_4root model showed the most improvements over the baseline in terms of relative WIS and MAE at every horizon, with between nearly 20% and 38% improvements for WIS and the third best coverage rates with some improvements over the baseline. The THieF_4wk_noTrans and THieF_8wk_noTrans models were the two best performing for coverage rate, beating the baseline for every horizon at the 50% level and matching it at the 95% level. During the winter21 wave, the two THieF_4wk models performed similarly, each performing the best for different horizons and different metrics. Generally, the THieF_4wk_4root model performed better for shorter horizons while the THieF_4wk_noTrans model performed better for longer horizons. Interestingly, at longer horizons the covidTHieF_12wk_noTrans model achieved some of the best relative WIS and MAE values of the winter21 wave, being between 10% and 19% better than the baseline despite poor performance in other instances.    
+
+For the states level (see Supplemental Table 4 for full results), there is somewhat of a someone of a similar trend of the worst performance relative to the baseline at 1-week ahead, although it is much less pronounced than that of the US National level (see Figure 4). The 95% coverage rates are also less poor compared to the US National level. During the alpha wave, the THieF_4wk_4root model similarly shows the most improvements over the baseline in terms of relative WIS and MAE at every horizon, with between close to 30% and 45% improvements for WIS and the best coverage rates with large improvements over the baseline except for one week ahead 95% coverage which was equal to that of the baseline. The THieF_4wk_noTrans model didn't always have the best performance across the four metrics but it was one of the top performing models that had consistent improvements over the baseline. The THieF_8wk_noTrans models showed some very competitive coverage rates that improved over the baseline for 50% coverage at every horizon but also had some instances of performing worse than the baseline for 95% coverage. During the winter21 wave, the two THieF_4wk models performed more similarly, though the THieF_4wk_4root model performed slightly better overall. In addition, the THieF_8wk models showed smaller relative WIS and relative MAE values compared to the THieF_4wk models performed for longer horizons. Interestingly, at longer horizons the THieF_12wk_noTrans model also achieved some of the best relative WIS and MAE values of the winter21 wave, being up to just over 10% better than the baseline despite poor performance in other instances.   
 
 ```{r, message=FALSE, warning=FALSE}  
 # US National
@@ -492,10 +492,10 @@ wave_metrics_states <- wave_metrics_states %>%
   arrange(wave, horizon_wk, wis)
 ```  
   
-```{r, message=FALSE, warning=FALSE, fig.cap="FIX_ME"}
+```{r, message=FALSE, warning=FALSE, fig.cap='Average WIS by wave and model'}
 wis_hzn_plot_winter21_US <- wave_metrics_US %>%
   filter(wave == "winter21") %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model), alpha=0.5) +
    geom_point(mapping=aes(col=model)) +
    geom_line(mapping=aes(col=model)) +
   scale_color_manual(
@@ -506,7 +506,7 @@ wis_hzn_plot_winter21_US <- wave_metrics_US %>%
    
 wis_hzn_plot_alpha_US <- wave_metrics_US %>%
   filter(wave == "alpha") %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model), alpha=0.5) +
    geom_point(mapping=aes(col=model)) +
    geom_line(mapping=aes(col=model)) +
   scale_color_manual(
@@ -517,7 +517,7 @@ wis_hzn_plot_alpha_US <- wave_metrics_US %>%
    
 wis_hzn_plot_winter21_states <- wave_metrics_states %>%
   filter(wave == "winter21") %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model), alpha=0.5) +
    geom_point(mapping=aes(col=model)) +
    geom_line(mapping=aes(col=model)) +
   scale_color_manual(
@@ -528,7 +528,7 @@ wis_hzn_plot_winter21_states <- wave_metrics_states %>%
 
 wis_hzn_plot_alpha_states <- wave_metrics_states %>%
   filter(wave == "alpha") %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model), alpha=0.5) +
    geom_point(mapping=aes(col=model)) +
    geom_line(mapping=aes(col=model)) +
   scale_color_manual(
@@ -546,19 +546,40 @@ wis_hzn_plot_winter21_US + wis_hzn_plot_alpha_US +
 
 
 ## Model Performance by Week
-For the US National level, except for some poor performance at the start, the covidTHieF_4wk models show lower or comparable WIS to the baseline across most of the training period with a forecast horizon of one week ahead. The covidTHieF_8wk models show mostly comparable WIS to the baseline while the covidTHieF_12wk models show mostly higher WIS than the baseline for a one week ahead horizon during the entire training period. On the other hand, for a four week ahead horizon the covidTHieF_4wk models show only comparable WIS to the baseline not during change points. We see a very similar graph shape to that of the actual values for incident hospitalizations. Meanwhile, for four week ahead horizons the covidTHieF_12wk models show comparable WIS to the baseline not during phases of low incidence, often showing comparable or even better performance compared to the baseline during change points. Once again, the covidTHieF_8wk models show and intermediate performance between the other two groups of models.   
+For the US National level, except for some poor performance at the start, the THieF_4wk models show lower or comparable WIS to the baseline across most of the training period with a forecast horizon of one week ahead. The THieF_8wk models show mostly comparable WIS to the baseline while the THieF_12wk models show mostly higher WIS than the baseline for a one week ahead horizon during the entire training period. On the other hand, for a four week ahead horizon the THieF_4wk models show only comparable WIS to the baseline not during change points. We see a very similar graph shape to that of the actual values for incident hospitalizations. Meanwhile, for four week ahead horizons the THieF_12wk models show comparable WIS to the baseline not during phases of low incidence, often showing comparable or even better performance compared to the baseline during change points. Once again, the THieF_8wk models show intermediate performance between the other two groups of models.   
 
-Very similar patterns are observed for one week ahead and four week ahead US National level forecasts in terms of MAE, although the best models (the two covidTHieF_4wk ones) only tend to perform about comparably to the baseline, unlike for WIS. The weekly one week ahead 95% PI coverage rate plots are not very informative for the US National level because most models tend to either achieve the coverage (1.00) for all forecasts during a particular week or not at all (0.00). The four week ahead ones are a little bit more informative and show that three models (both covidTHieF_4wk ones and covidTHieF_8wk_noTrans) tend to achieve full coverage except during change points while the other models often struggle to achieve non-zero coverage consistently.   
+Very similar patterns are observed for one week ahead and four week ahead US National level forecasts in terms of MAE, although the best models (the two THieF_4wk ones) only tend to perform about comparably to the baseline, unlike for WIS. The weekly 95% PI coverage rate plots show more stable coverage rates at the 4-week ahead horizon compared to that out the 1-week ahead horizon. Except for the baseline, most models show very variable coverage up until around March 2021, some weeks hitting full coverage while others falling short for most forecast days. Similarly, most models do not show good coverage rates at a 4-week ahead horizon until that March 2021 cut off date. For both 1-week ahead and 4-week ahead horizons, the models without a data transformation tend to see consistently high or even 100% coverage for the 95% PI while the models with a fourth root transformation do not meet nominal coverage rates during certain periods. These do not quite line up with change points seen in incident hospitalizations.   
 
-For the states level aggregation, the same patterns are observed as for the US National level for one week ahead and four week ahead WIS and MAE, with strangely large four week ahead WIS values for the covidTHieF_12wk_4root model. The weekly 95% PI coverage rate plots are more informative for the states level, and they look like upside down versions of the weekly WIS plots. For the one week ahead horizon, the covidTHieF_4wk models and the covidTHieF_8wk_noTrans model show improved and fairly stable coverage starting in March 2021, likely due to smaller variance in incident values. For four week ahead horizon, all of the models without a data transformation seem to do the best starting from March 2021 with decent performance from covidTHieF_4wk_4root and covidTHieF_8wk_4root after the downward winter21 change point.   
+For the states level aggregation, the same patterns are observed as for the US National level for one week ahead and four week ahead WIS and MAE, with strangely large four week ahead WIS values for the THieF_12wk_4root model. The weekly 95% PI coverage rate plots are more informative for the states level since they are an average across 52 locations, and they look like upside down versions of the weekly WIS plots. For the one week ahead horizon, the THieF_4wk models and the THieF_8wk_noTrans model show improved and fairly stable coverage starting in March 2021, likely due to smaller variance in incident values. For four week ahead horizon, all of the models without a data transformation seem to do the best starting from March 2021 with decent performance from THieF_4wk-4root and THieF_8wk-4root after the downward winter21 change point.   
 
-```{r, message=FALSE, warning=FALSE}  
+```{r, message=FALSE, warning=FALSE, fig.cap='Average h-week ahead metric by model (US)'}  
 # US National
 forecast_date_metrics_US <- scores_df %>%
-  rbind(score_baseline) %>%
   filter(horizon <= 28, 
          target_end_date <= as.Date("2021-07-05"),
          location == "US") %>%
+  select(model, horizon, forecast_date, target_end_date, true_value, abs_error, wis, coverage_50, coverage_95) %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    )
+  ) %>%
+  group_by(forecast_date, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  )
+
+baseline_fc_date_metrics_US <- score_baseline %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location == "US") %>%
+  select(model, horizon, forecast_date, target_end_date, 
+        true_value, abs_error, wis, coverage_50, coverage_95) %>%
   mutate(
     horizon_wk = case_when(
       horizon %in% c(1:7) ~ 1,
@@ -575,65 +596,101 @@ forecast_date_metrics_US <- scores_df %>%
   )
 
 # WIS
-wis_1wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 1) %>%
-  ggplot(aes(x = forecast_date + weeks(1), y = wis)) +
+wis_1wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = wis), alpha=0.5, size=0.5) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')
 
-wis_4wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 4) %>%
-ggplot(aes(x = forecast_date + weeks(1), y = wis)) +
+wis_4wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = wis), alpha=0.5, size=0.5) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')
 
 # MAE
-mae_1wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 1) %>%
-ggplot(aes(x = forecast_date + weeks(1), y = mae)) +
+mae_1wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = mae), alpha=0.5, size=0.5) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "MAE (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')
 
-mae_4wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 4) %>%
-  ggplot(aes(x = forecast_date + weeks(1), y = mae)) +
+mae_4wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = mae), alpha=0.5, size=0.5) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "MAE (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')
 
 # 95% PI Coverage
-cov95_1wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 1) %>%
-  ggplot(aes(x = forecast_date + weeks(1), y = cov_95)) +
+cov95_1wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = cov_95), alpha=0.5, size=0.5) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')  
 
-cov95_4wk_plot_US <- filter(forecast_date_metrics_US, horizon_wk == 4) %>%
-ggplot(aes(x = forecast_date + weeks(1), y = cov_95)) +
+cov95_4wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = cov_95), alpha=0.5, size=0.5) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
@@ -646,13 +703,35 @@ wis_1wk_plot_US + wis_4wk_plot_US +
   theme(legend.position='bottom')
 ```
 
-```{r, message=FALSE, warning=FALSE}  
+```{r, message=FALSE, warning=FALSE, fig.cap='Average h-week ahead metric by model (states)'}  
 # States Aggregated
 forecast_date_metrics_states <- scores_df %>%
-  rbind(score_baseline) %>%
   filter(horizon <= 28, 
          target_end_date <= as.Date("2021-07-05"),
          location != "US") %>%
+  select(model, horizon, forecast_date, target_end_date, 
+         true_value, abs_error, wis, coverage_50, coverage_95) %>%
+  mutate(
+    horizon_wk = case_when(
+      horizon %in% c(1:7) ~ 1,
+      horizon %in% c(8:14) ~ 2,
+      horizon %in% c(15:21) ~ 3,
+      horizon %in% c(22:28) ~ 4
+    )
+  ) %>%
+  group_by(forecast_date, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  )
+
+baseline_fc_date_metrics_states <- score_baseline %>%
+  filter(horizon <= 28, 
+         target_end_date <= as.Date("2021-07-05"),
+         location != "US") %>%
+  select(model, horizon, forecast_date, target_end_date, 
+        true_value, abs_error, wis, coverage_50, coverage_95) %>%
   mutate(
     horizon_wk = case_when(
       horizon %in% c(1:7) ~ 1,
@@ -669,69 +748,105 @@ forecast_date_metrics_states <- scores_df %>%
   )
 
 # WIS
-wis_1wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 1) %>%
-  ggplot(aes(x = forecast_date + weeks(1), y = wis)) +
+wis_1wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = wis), alpha=0.5, size=0.5) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')
 
-wis_4wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 4) %>%
-ggplot(aes(x = forecast_date + weeks(1), y = wis)) +
+wis_4wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = wis)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')
 
 # MAE
-mae_1wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 1) %>%
-ggplot(aes(x = forecast_date + weeks(1), y = mae)) +
+mae_1wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = mae)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "MAE (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')
 
-mae_4wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 4) %>%
+mae_4wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 1) %>%
   ggplot(aes(x = forecast_date + weeks(1), y = mae)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "MAE (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')
 
 # 95% PI Coverage
-cov95_1wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 1) %>%
+cov95_1wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 1) %>%
   ggplot(aes(x = forecast_date + weeks(1), y = cov_95)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
         legend.position = 'bottom')  
 
-cov95_4wk_plot_states <- filter(forecast_date_metrics_states, horizon_wk == 4) %>%
-ggplot(aes(x = forecast_date + weeks(1), y = cov_95)) +
+cov95_4wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date + weeks(1), y = cov_95)) +
   geom_line(aes(color=model)) +
   geom_point(aes(color=model)) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = c(models[4], models[1:3], models[5:7]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 7, hjust = -0.2),
-        legend.position = 'bottom')  
+        legend.position = 'bottom') 
 
 wis_1wk_plot_states + wis_4wk_plot_states + 
   cov95_1wk_plot_states + cov95_4wk_plot_states +
@@ -742,18 +857,16 @@ wis_1wk_plot_states + wis_4wk_plot_states +
 
 
 # Conclusions/Discussion
-Even as public health mandates lift and discussions of endemic COVID-19 become increasingly common, forecasting remains an important mode through which to gain information about COVID-19. Endemic diseases still see forecasting efforts due to their impact on hospitals, and these decisions can also impact the economy, especially through a loss of worker productivity. The path of COVID-19 also still sees shifting trends with each new variant, some of which could necessitate the reinstation of certain public health mandates. This paper provides an initial application of a novel forecasting method to COVID-19 incident hospitalizations in the US from July 2020 to July 2021 through the creation of six forecasting models.   
+Even as public health mandates lift and discussions of endemic COVID-19 become increasingly common, forecasting remains an important mode through which to gain information about COVID-19. Endemic diseases still see forecasting efforts due to their impact on hospitals, and these decisions can also impact the economy, especially through a loss of worker productivity. The path of COVID-19 also still sees shifting trends with each new variant, some of which could necessitate reinstating certain public health mandates. This paper provides an initial application of the THieF forecasting method to COVID-19 incident hospitalizations in the US from July 2020 to July 2021 through the creation and comparison of six distinct forecast combination approaches.   
 
-The covidTHieF_4wk_4root model emerges as the overall best performing model across all evaluations regardless of stratofication. This model consistently performs better or equal to the baseline for most metrics, horizons, and forecast dates at both the US National level as well as the state level. The covidTHieF_4wk_noTrans model is the second best performing model of the THieF models overall and shows slightly better coverage rates at the US National level than that of covidTHieF_4wk_4root. This model also shows consistently good performance compared to the baseline, although its the majority of its improvements are slightly smaller than that of covidTHieF_4wk_4root. These two models show the most gains over the baseline in terms of WIS and 50% PI calibration, as can be seen in Figure [FIX_ME] which displays the generally much narrower prediction intervals of the THieF models compared to those of the baseline.   
+The THieF_4wk_4root model emerges as the overall best performing model across all evaluations regardless of stratification. This model consistently performs better or equal to the baseline for most metrics, horizons, and forecast dates at both the US National level as well as the state level. The THieF_4wk_noTrans model is the second best performing model of the THieF models overall and shows slightly better coverage rates at the US National level than that of THieF_4wk_4root. This model also shows consistently good performance compared to the baseline, although its the majority of its improvements are slightly smaller than that of THieF_4wk_4root. These two models show the most gains over the baseline in terms of WIS and 50% PI calibration, as can be seen in Figure [FIX_ME] which displays the generally much narrower prediction intervals of the THieF models compared to those of the baseline.   
 
-For the most part, it seems that the additions of the 8 week and 12 week aggregation levels did not serve to improve model accuracy. These time lengths may have been too far ahead as a result of no useful trends appearing at that level. However, the two models that included the 12 week hierarchy showed improved WIS and MAE over the baseline during change points at longer horizons, two factors that the two covidTHieF_4wk models struggled to predict accurately, like many other existing forecasting models for COVID-19. Perhaps these two covidTHieF_12wk models might offer some insights with further exploration.   
+For the most part, it seems that the additions of the 8 week and 12 week aggregation levels did not serve to improve model accuracy. Since only 1 to 28 day ahead forecasts were evaluated, the higher levels may not have provided any additional insights about trends for these short-term horizons. However, the two models that included the 12 week hierarchy showed improved WIS and MAE over the baseline during change points at longer horizons, two settings that the two THieF_4wk models struggled to predict accurately, like many other existing forecasting models for COVID-19. Perhaps these two THieF_12wk models might offer some insights with further exploration.   
 
 While these results are promising, they are only initial results from the training phase. The performance of the subset of models that are passed onto the testing phase is still yet to be calculated, meaning the drawing of any definitive conclusions must be put on hold. Further investigation into model performance stratified by location would also serve to provide useful information to help determine which models perform the best under different circumstances, as well as an exploration of the prediction accuracy of a simple ARIMA model without the use of a temporal hierarchy.   
 
-In addition, there remain certain limitations of the THieF methodology in practice that may restrict its utility until further developments are made. The inherent structure of the temporal hierarchy only allows aggregation levels whose time scales are factors of the highest level’s time scale. This means that seasonality at any excluded timescales might be missed due to their exclusion, which is especially problematic when only limited data is available. Moreover, at the present, THieF lacks a simple probabilistic implementation, making it difficult to apply to areas in which probabilistic forecasting is the widely accepted standard. Future work points to applying the existing probabilistic implementation of THieF to forecasting COVID-19 incident hospitalizations. Still, the current work serves as indication that the THieF methodology performs well in an infectious disease setting and warrants further exploration.
+In addition, there remain certain limitations of the THieF methodology in practice that may restrict its utility until further developments are made. The inherent structure of the temporal hierarchy only allows aggregation levels whose time scales are factors of the highest level’s time scale. This means that seasonality at any excluded timescales might be missed due to their exclusion, which is especially problematic when only limited data is available. Moreover, at the present, THieF lacks a simple probabilistic implementation, making it difficult to apply to areas in which probabilistic forecasting is the widely accepted standard. Future work points to applying the existing probabilistic implementation of THieF to forecasting COVID-19 incident hospitalizations. This implementation would allow for generation of a complete probabilistic distribution instead of just quantiles, which could prove to be useful. Still, the current work serves as indication that the THieF methodology performs well in an infectious disease setting, even amid challenges like system complexity, data sparsity/quality, the forecasting feedback loop, and warrants further exploration.   
 
-
-Infectious disease forecasting faces four main challenges in terms of accuracy: system complexity, data sparsity/quality, the forecasting feedback loop, and public understanding of probabilistic forecasts. Although these obstacles may also be found in other disciplines, they are important to keep in mind when making forecasts about an infectious disease (Lauer, 2020; Moran, 2016). 
 
 # Supplemental Figures and Tables
 ```{r}
