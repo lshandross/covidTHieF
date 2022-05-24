@@ -68,18 +68,60 @@ for(i in seq_along(day_agg_))
    names(day_agg_)[[i]] <- agg.names[i]
 ```   
 
+```{r, message=FALSE, fig.width=12, fig.height=8}
+start_date <- as.Date("2020-07-27") # a monday
+end_date <- as.Date("2021-05-03")
+
+hosp_truth_asof <- load_truth("HealthData", 
+                         "inc hosp", 
+                         as_of = end_date,
+                         temporal_resolution="daily",
+                         data_location = "covidData")
+
+
+fips_code <- "48"
+
+hosp_truth <- hosp_truth_asof %>%
+  select(target_end_date, location, value) %>%
+  dplyr::filter(target_end_date >= start_date,
+                location == fips_code) %>%
+  arrange(target_end_date)
+
+ht_day <- hosp_truth$value
+
+# create list of aggregation levels
+agg_list <- list(56, 28, 14, 7, 1)
+
+# Construct aggregates
+time_period <- as.numeric(end_date - start_date) + 1
+periods <- floor(time_period / 56)
+remainder <- time_period - (periods * 56)
+ht_day_ts_ <- ts(pull(hosp_truth, "value"), start = c(1,1), end = c(periods+1, remainder), frequency = 56) 
+
+day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
+agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
+for(i in seq_along(day_agg_)) names(day_agg_)[[i]] <- agg.names[i]
+```
+
 ``` {r extended truth data}
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         temporal_resolution="weekly",
+                         data_location = "remote_hub_repo")
+                         
 # an extra 1*(top agg level) of truth data to plot against forecasts
+# using most up-to-date truth data
 extended_truth <- full_hosp_truth %>%
   select(target_end_date, location, value) %>%
   dplyr::filter(target_end_date >= end_date,
                 target_end_date <= end_date + weeks(4),
                 location == "US") %>%
-#  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-#  select(3:6, 12:13)
   arrange(target_end_date)
 
-long_truth <- rbind(hosp_truth, extended_truth)
+long_truth <- rbind(hosp_truth, extended_truth) 
+# this logic is now a little strange, should the truth line be entirely the most up-to-date truth data?
+# Or the truth data that was used, plus the later truth data for the forecasted period?
+# If so, maybe mark them as different with line type or color
 
 long_ts <- ts(long_truth$value, start = c(1,1), end = c(8, 29), frequency = 56) 
 
@@ -87,17 +129,17 @@ long_aggs <- tsaggregates(long_ts, m = 56, aggregatelist = agg_list)
 for(i in seq_along(long_aggs))
    names(long_aggs)[[i]] <- agg.names[i]
 
-for(i in seq_along(day_agg_))
-   names(day_agg_)[[i]] <- agg.names[i]
 
-periods <- as.double(diff.Date(c(start_date, end_date)))/28
+for(i in seq_along(day_agg_)) names(day_agg_)[[i]] <- agg.names[i]
+
+periods <- as.double(diff.Date(c(start_date, end_date)))/56
 
 dates_actual_agg <- rep(start_date - weeks(1), floor(periods))
 for (i in 1:length(dates_actual_agg)) {
   dates_actual_agg[i] <- start_date + (i-1)*weeks(8)
 }
 plot(day_agg_, main="Covid-19 Inc Hosp", xaxt = "n")
-axis(1, at=1:6, labels = dates_actual_agg, line = 1.1)
+axis(1, at=1:5, labels = dates_actual_agg, line = 1.1)
 ```
 
 
@@ -136,21 +178,23 @@ apply(sim, 2, median)
 # Reconcile forecasts - no need to write a new function for this
 reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = agg_list)
 
+#et <- extended_test
+
 # Plot forecasts before and after reconciliation
+# This code is not optimized for plotting when there are many levels
 par(mfrow=c(3,2), mai=c(0.35,0.5,0.35,0.35))
-for(i in seq_along(base_fc_day))
-{ # This code is not optimized for plotting when there are many levels
-  plot(reconciled_fc_day[[i]], main=agg.names[i], shadecols = c("light gray", "#C2DDEE", "#00458F") , 
+for(i in seq_along(base_fc_day)) { 
+  plot(reconciled_fc_day[[i]], main=agg.names[i], 
+       shadecols = c("light gray", "#C2DDEE", "#00458F") , 
        xaxt = "n", #axes = FALSE,
        ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper))) 
   lines(reconciled_fc_day[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
   lines(base_fc_day[[i]]$mean, col='red') # plots red mean line
-#  lines(long_aggs[[i]], col='black', lwd=1.5, lty = "dotted")
-#  axis(1, at=1:6, labels = dates_actual_forecast)
+  if(!is.null(et)) lines(et[[i]], col='black', lwd=1.5, lty = "dotted")
+  #  axis(1, at=1:6, labels = dates_actual_forecast)
   axis(2)
 }
 points(base_fc_day[[length(base_fc_day)]]$mean, col= 'red')
-
 ```
 
 Turn Reconciled Forecasts List into Tibble of Forecasts
@@ -241,9 +285,18 @@ end_date <- as.Date("2021-07-26")
 fips_code <- "US"
 
 aggregate_thief_df <- # aggregate levels list should be in order of smallest to largest level
-  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
-    # If df == NULL, stop "you have not provided a data frame"
-    # if df is not a a data frames, stop "Please provide a a data frames"
+  function(ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, df = NULL) {
+    # if df is not a a data frame, stop "Please provide a a data frame"
+    if (is.null(df)) {
+    df <- load_truth("HealthData", 
+                         "inc hosp", 
+                         as_of = end_date,
+                         temporal_resolution="daily",
+                         data_location = "covidData")
+    } else {
+      df <- df
+      warning("forecasts will be based on static truth data")
+    }
     ts_col <- ts_col
     # if aggregate_levels == NULL, stop "you have not provided any aggregate levels"
     fips_code <- fips_code
@@ -257,11 +310,10 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
     freq <- frequency
     
     hosp_truth <- df %>%
+      select(target_end_date, location, value) %>%
       dplyr::filter(target_end_date >= start_date,
                     target_end_date <= end_date,
-                    location == fips_code) %>%
-      mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-      select(3:6, 12:13)
+                    location == fips_code)
 
       # Construct time series      
       time_period <- as.numeric(end_date - start_date) + 1
@@ -278,7 +330,6 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
         names(day_agg_)[[i]] <- agg.names[i]
       }
       
-      # return(day_agg_)
       day_agg_
   }
 
@@ -323,6 +374,7 @@ compute_base_forecasts <-
 
 
 ``` {r plot_thief and extra data functions}
+# FIX ME: logic issue re what iteration of truth data to use
 extended_truth_data <-
   function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
     # an extra 1*(top agg level) of truth data to plot against forecasts
@@ -343,7 +395,7 @@ get_ts_dates <-
   }
   
 plot_thief <- 
-  function(base_forecasts, reconciled_forecasts, ts_dates, extended_truth) {
+  function(base_forecasts, reconciled_forecasts, ts_dates, extended_truth = NULL) {
     par(mfrow=c(ceiling(length(base_forecasts)/2), 2), mai=c(0.35,0.5,0.35,0.35))
     for(i in seq_along(base_forecasts))
     { # This code is not optimized for plotting when there are many levels
@@ -352,8 +404,8 @@ plot_thief <-
           ylim = c(0, max(reconciled_forecasts[[i]]$x, reconciled_forecasts[[i]]$upper))) 
       lines(reconciled_forecasts[[i]]$mean, col=4, lwd=2) # plots blue reconciled forecasts line
       lines(base_forecasts[[i]]$mean, col='red') # plots red mean line
-      lines(extended_truth[[i]], col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
-      axis(1, at=1:(periods + 3), labels = ts_dates) # changes axis labels to provided dates
+      if(!is.null(extended_truth)) lines(extended_truth[[i]], col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
+      axis(1, at=1:(periods + 4), labels = ts_dates) # changes axis labels to provided dates
       axis(2)
     }
     points(base_forecasts[[length(base_forecasts)]]$mean, col= 'red')
@@ -364,7 +416,7 @@ plot_thief <-
 ```{r transform_to_hub_df}
 # This function uses the most this aggregate level of forecasts
 
-transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) {
+transform_to_hub_df <- function(forecast_list, model_name = "model", end_date, fips_code) {
   # If forecast_list == NULL, stop "you have not provided any forecasts"
   # if forecast_list is not a a data frames, stop "Please provide a a data frames"
   # if fips_code == NULL, stop "you have not provided a"
@@ -423,56 +475,65 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", fips_code) 
     hub_df
 
 }
-
-transform_to_hub_df(reconciled_fc_day, "model", "US")
 ```
 
 
 ```{r func testing and thief_wrapper}
-test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+test <- aggregate_thief_df(ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
 plot_thief_agg(test, start_date)
 temp <- compute_base_forecasts(test, pi_levels)
 temp_reconciled <- reconcilethief(temp, aggregatelist = agg_list) # produces a warning
 
-extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(28, 14, 7, 1), frequency = 28)
-dates_test <- get_ts_dates(start_date, end_date, frequency = 28) 
-plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test) 
-temp_rec_df <- transform_to_hub_df(temp_reconciled, "model", end_date, "US", pi_levels)
+extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56)
+dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
+plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test)
+temp_rec_df <- transform_to_hub_df(temp_reconciled, "model", end_date, "US")
 
 thief_wrapper <- 
-  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, model_name, plot.aggregates = TRUE, plot.forecasts = TRUE) {
-    # If df == NULL, stop "you have not provided a data frame"
-    # if df is not a a data frames, stop "Please provide a a data frames"
+  function(ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, model_name, df=NULL, plot.aggregates = TRUE, plot.forecasts = TRUE) {
     ts_col <- ts_col
+    # if (start_date == NULL) # first target_end_date, else
+    if(!is.Date(start_date)) start_date <- as.Date(start_date)
+    # likewise for end_date, else
+    if(!is.Date(end_date)) end_date <- as.Date(end_date)
+    # if df is not a a data frame, stop "Please provide a a data frame"
     # if fips_code == NULL, stop "you have not provided a fips code", else
     fips_code <- fips_code
     # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
-    # if (start_date == NULL) # first target_end_date, else
-    start_date <- as.Date(start_date)
-    # likewise for end_date, else
-    end_date <- as.Date(end_date)
     # if aggregate_levels == NULL, stop "you have not provided any aggregate levels"
     # if pi_levels == NULL, warning "you have not provided any PI levels, using default levels"
     
-    thief_aggregation <- aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency) 
+    if (is.null(df)) {
+      df <- load_truth("HealthData", 
+                         "inc hosp", 
+                         as_of = end_date,
+                         temporal_resolution="daily",
+                         data_location = "covidData")
+    } else {
+      df <- df
+      warning("forecasts will be based on static truth data")
+    }
+
+    thief_aggregation <- suppressWarnings(aggregate_thief_df(ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, df))
+    
     if (plot.aggregates == TRUE) {plot_thief_agg(thief_aggregation, start_date) }
     base_fc <- compute_base_forecasts(thief_aggregation, pi_levels)
     reconciled_fc <- reconcilethief(base_fc, aggregatelist = aggregate_levels)
 
     if (plot.forecasts == TRUE) {
       extended_agg <- extended_truth_data(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency)
-      ts_dates <- get_ts_dates(start_date, end_date, frequency = 56)
+      ts_dates <- get_ts_dates(start_date, end_date, frequency = frequency)
       plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg)
     }
     
-    hub_df <- transform_to_hub_df(reconciled_fc, model_name, fips_code)
+    hub_df <- transform_to_hub_df(reconciled_fc, model_name, end_date, fips_code)
     
     return(hub_df) 
   }
   
-hub_test <- thief_wrapper(full_hosp_truth, ts_col = "value", 
-  start_date, end_date, fips_code = "US",
-  aggregate_levels = list(28, 14, 7, 1), frequency = 28,
+hub_test <- thief_wrapper(ts_col = "value",
+  start_date = start_date, end_date = end_date, fips_code = "US",
+  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
   pi_levels = pi_levels, model_name = "model",
   plot.aggregates = FALSE, plot.forecasts = FALSE)
 ```
@@ -480,24 +541,35 @@ hub_test <- thief_wrapper(full_hosp_truth, ts_col = "value",
 ```{r map}
 locations <- filter(hub_locations, geo_type == "state", population >= 500000) %>%
   pull(fips)
-fips_vec <- c("02", "01")
+fips_vec <- c("US", "01")
 # might want to perform another similar map_dfr over the dates
 
 # function
 covid_thief <- 
-  function(df, ts_col, start_date, end_date, fips_vec, aggregate_levels, frequency, pi_levels, model_name) {
+  function(df = NULL, ts_col, start_date, end_date, fips_vec, aggregate_levels, frequency, pi_levels, model_name) {
+    if (is.null(df)) {
+      df <- load_truth("HealthData", 
+                         "inc hosp", 
+                         as_of = end_date,
+                         temporal_resolution="daily",
+                         data_location = "covidData")
+    } else {
+      df <- df
+      warning("forecasts will be based on static truth data")
+    }
+    
     all_locs_df <- map_dfr(
       .x = fips_vec,
       .f = function(fips_code) {
-        thief_wrapper(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, model_name, plot.aggregates = FALSE, plot.forecasts = FALSE) 
+        suppressWarnings(thief_wrapper(ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, model_name, df=NULL,plot.aggregates = FALSE, plot.forecasts = FALSE))
       }
     )
     return(all_locs_df)
   }
   
-t4 <- covid_thief(full_hosp_truth, ts_col = "value", 
+t4 <- covid_thief(NULL, ts_col = "value", 
   start_date, end_date, fips_vec,
-  aggregate_levels = list(28, 14, 7, 1), frequency = 28,
+  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
   pi_levels = c(10 * (1:9), 95, 98), "model")
 
 full_locs_forecasts <- covid_thief(full_hosp_truth, ts_col = "value", 
@@ -505,7 +577,7 @@ full_locs_forecasts <- covid_thief(full_hosp_truth, ts_col = "value",
   aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
   pi_levels = pi_levels, "model")
 
-
+# Not needed for parallelizing
 covid_thief_period <-
   function(df, ts_col, start_date, end_date, fc_period, fips_vec, aggregate_levels, frequency, pi_levels, model_name) {
     all_locs_df <- map_dfr(
