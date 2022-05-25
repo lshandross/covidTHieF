@@ -30,45 +30,6 @@ source("forecast_fns.R")
 
 
 ```{r, message=FALSE, fig.width=12, fig.height=8}
-full_hosp_truth <- load_truth("HealthData", 
-                         "inc hosp", 
-                         temporal_resolution="weekly",
-                         data_location = "remote_hub_repo")
-
-
-start_date <- as.Date("2020-07-27") # a monday
-end_date <- as.Date("2021-05-03")
-
-fips_code <- "48"
-
-hosp_truth <- full_hosp_truth %>%
-  select(target_end_date, location, value) %>%
-  dplyr::filter(target_end_date >= start_date,
-                target_end_date <= end_date,
-                location == fips_code) %>%
-#  mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) %>%
-#  select(3:6, 12:13) %>%
-  arrange(target_end_date)
-
-ht_day <- hosp_truth$value
-#ts <- ts(pull(hosp_truth, value), start = c(4,1), end = c(10, 29), frequency = 56, class = "ts")
-
-# create list of aggregation levels
-agg_list <- list(56, 28, 14, 7, 1)
-
-# Construct aggregates
-time_period <- as.numeric(end_date - start_date) + 1
-periods <- floor(time_period / 56)
-remainder <- time_period - (periods * 56)
-ht_day_ts_ <- ts(pull(hosp_truth, "value"), start = c(1,1), end = c(periods+1, remainder), frequency = 56) 
-
-day_agg_ <- tsaggregates(ht_day_ts_, m = 56, aggregatelist = agg_list)
-agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
-for(i in seq_along(day_agg_))
-   names(day_agg_)[[i]] <- agg.names[i]
-```   
-
-```{r, message=FALSE, fig.width=12, fig.height=8}
 start_date <- as.Date("2020-07-27") # a monday
 end_date <- as.Date("2021-05-03")
 
@@ -527,9 +488,12 @@ thief_wrapper <-
     }
     
     hub_df <- transform_to_hub_df(reconciled_fc, model_name, end_date, fips_code)
+    model_info <- tibble(model = model_name, forecast_date = end_date, location = fips_code, base_fc_obj = base_fc, rec_fc_obj = reconciled_fc)
     
-    return(hub_df) 
+    return(list(hub_df, model_info)) 
   }
+
+model_info <- tibble(model = "mod", forecast_date = end_date, location = fips_code, base_fc_obj = base_fc_day, rec_fc_obj = reconciled_fc_day)
   
 hub_test <- thief_wrapper(ts_col = "value",
   start_date = start_date, end_date = end_date, fips_code = "US",
@@ -558,13 +522,17 @@ covid_thief <-
       warning("forecasts will be based on static truth data")
     }
     
-    all_locs_df <- map_dfr(
+    all_locs_list <- map(
       .x = fips_vec,
       .f = function(fips_code) {
         suppressWarnings(thief_wrapper(ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, model_name, df=NULL,plot.aggregates = FALSE, plot.forecasts = FALSE))
       }
     )
-    return(all_locs_df)
+    n <- length(all_locs_list)
+    all_locs_fc <- map_dfr(.x = 1:n, .f = function(i) {all_locs_list[[i]][[1]]})
+    all_locs_mod <- map_dfr(.x = 1:n, .f = function(i) {all_locs_list[[i]][[2]]})
+    
+    return(list(all_locs_fc, all_locs_mod))
   }
   
 t4 <- covid_thief(NULL, ts_col = "value", 
@@ -606,4 +574,3 @@ lapply(full_hosp_truth, aggregate_thief_df, ts_col = "value",
   
 test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
 ```
-
