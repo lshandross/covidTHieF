@@ -1,11 +1,9 @@
 aggregate_thief_df <- # aggregate levels list should be in order of smallest to largest level
-  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = FALSE) {
+  function(df = NULL, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
     library(thief)
     
-    # If df == NULL, stop "you have not provided a data frame"
-    # if df is not a a data frames, stop "Please provide a a data frames"
     ts_col <- ts_col
     # if fips_code == NULL, stop "you have not provided a fips code", else
     fips_code <- fips_code
@@ -14,6 +12,17 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
     start_date <- as.Date(start_date)
     # likewise for end_date, else
     end_date <- as.Date(end_date)
+    # if df is not a a data frame, stop "Please provide a a data frame"
+    if (is.null(df)) {
+    df <- load_truth("HealthData", 
+                         "inc hosp", 
+                         as_of = end_date,
+                         temporal_resolution="daily",
+                         data_location = "covidData")
+    } else {
+      df <- df
+      warning("forecasts will be based on static truth data")
+    }
     
     agg_list <- aggregate_levels
     freq <- frequency
@@ -34,8 +43,8 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
       } else {
         hosp_values <- pull(hosp_truth, ts_col)
       }
-      ht_day_ts_ <- ts(hosp_values, # difference
-                       start = c(1, 1), end = c(periods+1, remainder), # difference
+      ht_day_ts_ <- ts(hosp_values,
+                       start = c(1, 1), end = c(periods+1, remainder),
                        frequency = freq)
       
       # Construct temporal hierarchy
@@ -45,7 +54,7 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
         names(day_agg_)[[i]] <- agg.names[i] 
       }
       
-      return(day_agg_) # difference
+      return(day_agg_)
   }
 
 

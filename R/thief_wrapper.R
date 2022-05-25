@@ -1,10 +1,8 @@
 thief_wrapper <- 
-  function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, plot.aggregates = TRUE, plot.forecasts = TRUE, transform.4root = FALSE) {
+  function(df = NULL, ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, plot.aggregates = TRUE, plot.forecasts = TRUE, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
     
-    # If df == NULL, stop "you have not provided a data frame"
-    # if df is not a a data frames, stop "Please provide a a data frames"
     ts_col <- ts_col
     # if fips_code == NULL, stop "you have not provided a fips code", else
     fips_code <- fips_code
@@ -16,7 +14,19 @@ thief_wrapper <-
     # if aggregate_levels == NULL, stop "you have not provided any aggregate levels"
     # if pi_levels == NULL, warning "you have not provided any PI levels, using default levels"
     
-    thief_aggregation <- aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, transform.4root) 
+    if (is.null(df)) {
+      df <- load_truth("HealthData", 
+                         "inc hosp", 
+                         as_of = end_date,
+                         temporal_resolution="daily",
+                         data_location = "covidData")
+    } else {
+      df <- df
+      warning("forecasts will be based on static truth data")
+    }
+
+    thief_aggregation <- suppressWarnings(aggregate_thief_df(ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, df))
+    
     if (plot.aggregates == TRUE) {plot_thief_agg(thief_aggregation, start_date) }
     
     base_fc <- compute_base_forecasts(thief_aggregation, pi_levels)
@@ -29,6 +39,8 @@ thief_wrapper <-
     }
     
     hub_df <- transform_to_hub_df(reconciled_fc, end_date, fips_code, pi_levels, transform.4root)
+    model_info <- tibble(model = model_name, forecast_date = end_date, location = fips_code, 
+                         base_fc_obj = base_fc, rec_fc_obj = reconciled_fc)
     
-    return(hub_df) 
+    return(list(hub_df, model_info)) 
   }
