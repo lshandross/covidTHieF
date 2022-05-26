@@ -1,9 +1,24 @@
+#' Non-overlapping temporal aggregation of COVID-19 truth data stored as a data frame
+#'
+#' @param df A data frame containing the desired truth data as one of the columns. Defaults to NULL in which hospitalization truth data is sourced as of the user-specified \code{end_date}.
+#' @param ts_col The name of the column containing the truth data. This column is coerced into a time series object of class \code{ts} and thus should be a numeric type.
+#' @param start_date A date from which the data begins.
+#' @param end_date A date where the data ends. If \code{df=NULL}, also specifies the date from which the hospitalization truth data sourced.
+#' @param fips_code A 2-digit code specifying a United States state or territory of type \code{char}.
+#' @param aggregate_levels A user-selected list of aggregates to use.
+#' @param frequency Integer seasonal period.
+#' @param transform.4root \code{logical} that specifies whether a variance stabilizing fourth root transformation should be performed on the data.
+#'
+#' @return A list of time series. The first element is a \code{ts} object made by coercing the original truth data into a time series format, followed by series with increasing levels of aggregation.
+#' @export
+#'
+#' @examples
 aggregate_thief_df <- # aggregate levels list should be in order of smallest to largest level
   function(df = NULL, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
     library(thief)
-    
+
     ts_col <- ts_col
     # if fips_code == NULL, stop "you have not provided a fips code", else
     fips_code <- fips_code
@@ -14,8 +29,8 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
     end_date <- as.Date(end_date)
     # if df is not a a data frame, stop "Please provide a a data frame"
     if (is.null(df)) {
-    df <- load_truth("HealthData", 
-                         "inc hosp", 
+    df <- load_truth("HealthData",
+                         "inc hosp",
                          as_of = end_date,
                          temporal_resolution="daily",
                          data_location = "covidData")
@@ -23,17 +38,17 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
       df <- df
       warning("forecasts will be based on static truth data")
     }
-    
+
     agg_list <- aggregate_levels
     freq <- frequency
-    
+
     hosp_truth <- df %>%
       dplyr::filter(target_end_date >= start_date,
                     target_end_date <= end_date,
                     location == fips_code) %>%
       arrange(target_end_date)
 
-      # Construct time series      
+      # Construct time series
       time_period <- as.numeric(end_date - start_date) + 1
       periods <- floor(time_period / freq)
       remainder <- time_period - (periods * freq)
@@ -46,14 +61,14 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
       ht_day_ts_ <- ts(hosp_values,
                        start = c(1, 1), end = c(periods+1, remainder),
                        frequency = freq)
-      
+
       # Construct temporal hierarchy
       day_agg_ <- tsaggregates(ht_day_ts_, m = freq, aggregatelist = agg_list)
       agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
-      for(i in seq_along(day_agg_)) { 
-        names(day_agg_)[[i]] <- agg.names[i] 
+      for(i in seq_along(day_agg_)) {
+        names(day_agg_)[[i]] <- agg.names[i]
       }
-      
+
       return(day_agg_)
   }
 

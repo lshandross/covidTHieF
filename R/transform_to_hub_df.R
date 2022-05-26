@@ -1,41 +1,53 @@
+#' Transform temporal hierarchical COVID-19 forecasts to US COVID-19 Forecast Hub-formatted data frame
+#'
+#' @param forecast_list An object of class \code{forecast} to be transformed into a data frame
+#' @param end_date A date from which the forecasts begin. Used to set the \code{forecast_date} in the new data frame.
+#' @param fips_code A 2-digit code specifying a United States state or territory of type \code{char}. Used to set the \code{location} in the new data frame.
+#' @param pi_levels A vector of prediction interval levels to calculate. Used to obtain the corresponding \code{quantile} value in the new data frame.
+#' @param transform.4root \code{logical} that specifies whether a variance stabilizing fourth root transformation was performed on the data when creating the provided forecasts. If \code{TRUE}, the forecast values are raised to the fourth power to undo the initial transformation.
+#'
+#' @return A data frame containing the following columns: \code{forecast_date}, \code{location}, \code{target}, \code{target_end_date}, \code{type}, \code{quantile}, \code{value}
+#' @export
+#'
+#' @examples
 transform_to_hub_df <- function(forecast_list, end_date, fips_code, pi_levels, transform.4root = FALSE) {
   library(tidyverse)
   library(lubridate)
   library(forecast)
   library(thief)
   library(covidHubUtils)
-  
+
   # If forecast_list == NULL, stop "you have not provided any forecasts"
   # if forecast_list is not a a data frames, stop "Please provide a a data frames"
   # if fips_code == NULL, stop "you have not provided a"
   # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
-    
+
   thief_forecast <- forecast_list
   fips_code <- fips_code
 
   # Lower Forecasts
   low_fc <- as_tibble(thief_forecast[[1]][["lower"]]) # Change TS object to tibble
   low_fc[low_fc < 0] <- 0 # Ensure all negative values are changed to 0
-    
+
   old_col_names <- colnames(low_fc)
   new_col_names <- rep("string", length(old_col_names))
   for (i in 1:length(old_col_names)) {
     new_col_names[i] <- as.character(((100-pi_levels[i])/2)/100)
   }
   colnames(low_fc) <- c(new_col_names)
-  
+
   # Higher Forecasts
   high_fc <- as_tibble(thief_forecast[[1]][["upper"]]) # Change TS object to tibble
   high_fc[high_fc < 0] <- 0 # Ensure all negative values are changed to 0
-    
+
   old_col_names <- colnames(high_fc)
   new_col_names <- rep("string", length(old_col_names))
   for (i in 1:length(old_col_names)) {
     new_col_names[i] <- as.character((100-((100-pi_levels[i])/2))/100)
   }
   colnames(high_fc) <- c(new_col_names)
-  
-  
+
+
   # Point Forecasts
   point_fc <- as_tibble(thief_forecast[[1]][["mean"]]) %>% # Change TS object to tibble
     transmute(`0.5`= as.numeric(x))
@@ -51,12 +63,12 @@ transform_to_hub_df <- function(forecast_list, end_date, fips_code, pi_levels, t
     pivot_longer(1:(2*length(pi_levels) + 1), "quantile", "value") %>%
     filter(horizon <= 35) %>%
     arrange(target_end_date, quantile) %>%
-    mutate(location = fips_code, 
+    mutate(location = fips_code,
            type = "quantile",
            quantile = as.numeric(quantile)) %>%
-    select(forecast_date, location, target, target_end_date, type, quantile, value)  
+    select(forecast_date, location, target, target_end_date, type, quantile, value)
 
   if (transform.4root == TRUE) {hub_df <- mutate(hub_df, value=value^4)}
-  
+
   return (hub_df)
 }

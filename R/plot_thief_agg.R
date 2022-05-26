@@ -1,8 +1,17 @@
+#' Plot aggregated time series data
+#'
+#' @param temporal_hierarchy A list of (hierarchical) time series.
+#' @param start_date A date from which the data begins. Used to calculate date labels for the plot.
+#'
+#' @return A plot of the input time series stacked on top of each other, sharing an x-axis.
+#' @export
+#'
+#' @examples
 plot_thief_agg <- function(temporal_hierarchy, start_date) {
   library(lubridate)
   library(tidyverse)
   library(thief)
-  
+
   start_date <- as.Date(start_date)
 
   # Make actual date labels for plot
