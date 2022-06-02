@@ -1,7 +1,7 @@
 ---
 title: "plot_all_locations"
 author: "Li Shandross"
-date: "3/30/2022"
+date: "6/2/2022"
 output: pdf_document
 classoption: landscape
 ---
@@ -24,12 +24,13 @@ full_hosp_truth <- load_truth("HealthData",
 
 inc_hosp_targets <- paste(0:35, "day ahead inc hosp")
 
-load("../data/loadedfc_scores_df.RData")
+#load("../data/loadedfc_scores_df.RData")
+load("../data/versioned_fc_df.RData")
 
 fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)))
-locs <- distinct(forecasts_df, location) %>% pull()
+locs <- distinct(forecasts_ver, location) %>% pull()
 for (i in 1:53) {
-  fdat <-forecasts_df %>% 
+  fdat <-forecasts_ver %>% 
     filter(location == locs[i], 
            forecast_date %in% fc_dates,
            horizon <= 28)
@@ -41,7 +42,7 @@ for (i in 1:53) {
                       use_median_as_point = TRUE,
                       facet = model ~.,
                       facet_nrow = 3,
-#                      facet_scales = "free_y",
+                      facet_scales = "free_y",
                       fill_by_model = TRUE, 
                       plot=FALSE)
 
