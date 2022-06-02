@@ -19,14 +19,24 @@ library(covidHubUtils)
 func_list <- list.files(path = "../R", pattern=".R", full.names=TRUE)
 lapply(func_list, source)
 
+models <- c("THieF_4wk-4root", "THieF_4wk-noTrans",
+            "THieF_8wk-4root", "THieF_8wk-noTrans",
+            "THieF_12wk-4root", "THieF_12wk-noTrans")
+for (i in 1:6) {
+  load(file=paste("../data/", models[i], "/", models[i], ".RData", sep=""))
+}
+
+mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:29))
+
 full_hosp_truth <- load_truth("HealthData", 
                          "inc hosp", 
                          temporal_resolution="daily",
                          data_location = "remote_hub_repo")
-
 start_date = as.Date("2020-07-27"); end_date = as.Date("2021-05-03")
 pi_levels = c(10 * (1:9), 95, 98)
+```
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
 test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code = "48", aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
 plot_thief_agg(test, start_date)
 temp <- compute_base_forecasts(test, pi_levels)
@@ -37,11 +47,11 @@ dates_test <- get_ts_dates(start_date, end_date, frequency = 56)
 plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test) 
 temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "48", pi_levels)
 
-hub_test <- thief_wrapper(full_hosp_truth, ts_col = "value", 
+hub_test <- thief_wrapper(NULL, ts_col = "value", 
   start_date, end_date, fips_code = "US",
   aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
   pi_levels = pi_levels,
-  plot.aggregates = FALSE, plot.forecasts = FALSE)
+  plot.aggregates = TRUE, plot.forecasts = TRUE)
 ```
 
 ```{r}
@@ -50,4 +60,24 @@ full_hosp_truth %>%
     target_end_date %in% c(start_date:end_date)) %>%
   select(target_end_date, value) %>%
   plot()
+```
+
+
+```{r}
+truth_comparison_210104 <- full_hosp_truth %>%
+  filter(target_end_date <= as.Date("2021-01-02")) %>%
+  left_join(training_truth_list[[5]], by="location")
+    
+training_truth_summary <- c()
+for (i in 1:30) {
+  temp <- training_truth_list[[i]] %>%
+    group_by(location) %>%
+    summarize(total_days = n()) %>%
+    arrange(total_days) %>%
+    mutate(expected_days=mon_fc_dates[i]-as.Date("2020-07-27") - 1)
+  
+  training_truth_summary <- rbind(training_truth_summary, temp)
+}
+# US and Louisiana (22) are missing truth data (8/19-9/2) for the first 4 weeks of the training phase
+  
 ```
