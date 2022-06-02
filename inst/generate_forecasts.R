@@ -67,16 +67,19 @@ system.time({
   thief_fc_full <- c(parLapply(cl, mon_fc_dates[16:20], fun = generate_thief_wk))
 })
 
+models <- c("THieF_4wk-4root", "THieF_4wk-noTrans",
+            "THieF_8wk-4root", "THieF_8wk-noTrans",
+            "THieF_12wk-4root", "THieF_12wk-noTrans")
+            
 #modfc_12wk_noTrans <- c()
 #modfc_12wk_4root <- c()
 for (i in 1:5) {
-#  write_csv(thief_fc_full[[i]][[1]], file=paste("data/THieF_12wk-4root/", mon_fc_dates[i+28], "-THieF_12wk-4root.csv", sep=""))
-#  write_csv(thief_fc_full[[i]][[1]], file=paste("data/THieF_12wk-noTrans/", mon_fc_dates[i+28], "-THieF_12wk-noTrans.csv", sep=""))
+  write_csv(thief_fc_full[[i]][[1]], file=paste("data/", models[5], "/", mon_fc_dates[i+28], "-", models[5], ".csv", sep=""))
   modfc_12wk_4root <- rbind(modfc_12wk_4root, thief_fc_full[[i]][[2]])
 #  modfc_12wk_noTrans <- rbind(modfc_12wk_noTrans, thief_fc_full[[i]][[2]])
 }
 
-save(modfc_12wk_4root, file="data/THieF_12wk-4root/THieF_12wk-4root.RData")
+save(modfc_12wk_4root, file=paste("data/", models[5], "/", models[5], ".RData", sep=""))
 
 forecast_list <- list.files(path = "data/Base_arima_4root/", pattern=".csv", full.names=TRUE)
 for (i in 25:31) {
