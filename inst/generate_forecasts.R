@@ -12,10 +12,36 @@ cl <- makeCluster(num_cores-1)
 registerDoParallel(cl)
 
 # Create df to run through function
-full_hosp_truth <-
-  load_truth("HealthData", "inc hosp", temporal_resolution="daily", data_location = "remote_hub_repo")
+# full_hosp_truth <-
+#   load_truth("HealthData", "inc hosp", temporal_resolution="daily", data_location = "remote_hub_repo")
 
-mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:30))
+mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:29))
+
+# Save time by pre-loading as of truth data for all dates of interest in a list
+load_weekly_truth <- function(fc_dates) {
+  library(tidyverse)
+  library(lubridate)
+  library(covidHubUtils)
+  df <- load_truth("HealthData",
+                   "inc hosp",
+                   as_of = fc_dates,
+                   temporal_resolution="daily",
+                   data_location = "covidData")
+  df <- df %>%
+    filter(target_end_date <= as.Date("2020-07-25"),
+           geo_type == "state", population >= 500000)
+  return(df)
+}
+
+# Export our function on the cluster
+clusterExport(cl, list('load_weekly_truth', 'mon_fc_dates'))
+# Run function across previously specified number of cores
+system.time({
+  training_truth_list <- c(parLapply(cl, mon_fc_dates, fun = load_weekly_truth))
+})
+
+save(training_truth_list, file="data/versioned_truth_training.RData")
+
 
 # Create a function to process our data
 generate_thief_wk <-
@@ -28,28 +54,29 @@ generate_thief_wk <-
     lapply(func_list, source)
 
         covid_thief(NULL, "value",
-          as.Date("2020-07-27"), fc_dates, # change as needed 
+          as.Date("2020-07-27"), fc_dates, # change as needed
           fips_vec = filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips),
-          aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, # change as needed
-          pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
+          aggregate_levels = list(84, 42, 28, 21, 14, 7, 1), frequency = 84, # change as needed
+          pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
   }
 
 # Export our function on the cluster
 clusterExport(cl, list('generate_thief_wk', 'mon_fc_dates'))
 # Run function across previously specified number of cores
 system.time({
-  thief_fc_full <- c(parLapply(cl, mon_fc_dates[21:25], fun = generate_thief_wk))
+  thief_fc_full <- c(parLapply(cl, mon_fc_dates[16:20], fun = generate_thief_wk))
 })
 
 #modfc_12wk_noTrans <- c()
-#modfc_8wk_4root <- c()
+#modfc_12wk_4root <- c()
 for (i in 1:5) {
-#  write_csv(thief_fc_full[[i]][[1]], file=paste("data/THieF_12wk-4root/", mon_fc_dates[i+0], "-THieF_12wk-4root.csv", sep=""))
-  write_csv(thief_fc_full[[i]][[1]], file=paste("data/THieF_8wk-noTrans/", mon_fc_dates[i+20], "-THieF_8wk-noTrans.csv", sep=""))
-  modfc_8wk_noTrans <- rbind(modfc_8wk_noTrans, thief_fc_full[[i]][[2]])
+#  write_csv(thief_fc_full[[i]][[1]], file=paste("data/THieF_12wk-4root/", mon_fc_dates[i+28], "-THieF_12wk-4root.csv", sep=""))
+#  write_csv(thief_fc_full[[i]][[1]], file=paste("data/THieF_12wk-noTrans/", mon_fc_dates[i+28], "-THieF_12wk-noTrans.csv", sep=""))
+  modfc_12wk_4root <- rbind(modfc_12wk_4root, thief_fc_full[[i]][[2]])
+#  modfc_12wk_noTrans <- rbind(modfc_12wk_noTrans, thief_fc_full[[i]][[2]])
 }
 
-save(modfc_8wk_noTrans, file="data/THieF_8wk-noTrans/THieF_8wk-noTrans.RData")
+save(modfc_12wk_4root, file="data/THieF_12wk-4root/THieF_12wk-4root.RData")
 
 forecast_list <- list.files(path = "data/Base_arima_4root/", pattern=".csv", full.names=TRUE)
 for (i in 25:31) {
