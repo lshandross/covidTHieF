@@ -43,6 +43,14 @@ thief_wrapper <-
       warning("forecasts will be based on static truth data")
     }
 
+    # obtain most recent date truth data was obtained from
+    most_recent_date <- df %>%
+      slice_max(target_end_date, n=1, with_ties=FALSE) %>%
+      pull(target_end_date)
+    if (as.numeric(end_date - most_recent_date) > 1) {
+      warning(paste("Forecasts will be made as of", most_recent_date + 1, "due to insufficient truth data."))
+    }
+    
     thief_aggregation <- suppressWarnings(aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency))
 
     if (plot.aggregates == TRUE) {plot_thief_agg(thief_aggregation, start_date) }
@@ -52,12 +60,12 @@ thief_wrapper <-
 
     if (plot.forecasts == TRUE) {
       extended_agg <- extended_truth_data(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency)
-      ts_dates <- get_ts_dates(start_date, end_date, frequency = 56)
+      ts_dates <- get_ts_dates(start_date, most_recent_date, frequency = 56)
       plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg)
     }
 
-    hub_df <- transform_to_hub_df(reconciled_fc, end_date, fips_code, pi_levels, transform.4root)
-    model_info <- tibble(forecast_date = end_date, location = fips_code, level = aggregate_levels,
+    hub_df <- transform_to_hub_df(reconciled_fc, most_recent_date, fips_code, pi_levels, transform.4root)
+    model_info <- tibble(forecast_date = most_recent_date + 1, location = fips_code, level = aggregate_levels,
                          base_fc_obj = base_fc, rec_fc_obj = reconciled_fc)
 
     return(list(hub_df, model_info))

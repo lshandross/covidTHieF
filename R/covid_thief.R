@@ -29,6 +29,14 @@ covid_thief <-
       df <- df
       warning("forecasts will be based on static truth data")
     }
+    
+    # obtain most recent date truth data was obtained from
+    most_recent_date <- df %>%
+      slice_max(target_end_date, n=1, with_ties=FALSE) %>%
+      pull(target_end_date)
+    if (as.numeric(end_date - most_recent_date) > 1) {
+      warning(paste("Forecasts will be made as of", most_recent_date + 1, "due to insufficient truth data."))
+    }
 
     all_locs_list <- map(
       .x = fips_vec,
