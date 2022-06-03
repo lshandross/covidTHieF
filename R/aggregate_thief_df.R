@@ -14,7 +14,7 @@
 #'
 #' @examples
 aggregate_thief_df <- # aggregate levels list should be in order of smallest to largest level
-  function(df = NULL, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = FALSE) {
+  function(df = NULL, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), agg.names = c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly"), frequency = 56, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
     library(thief)
@@ -38,18 +38,25 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
       df <- df
       warning("forecasts will be based on static truth data")
     }
-
+    # obtain most recent date truth data was obtained from
+    most_recent_date <- df %>%
+      slice_max(target_end_date, n=1, with_ties=FALSE) %>%
+      pull(target_end_date)
+    if (as.numeric(end_date - most_recent_date) > 1) {
+      warning(paste("Forecasts will be made as of", most_recent_date + 1, "due to insufficient truth data."))
+    }
+    
     agg_list <- aggregate_levels
     freq <- frequency
 
     hosp_truth <- df %>%
       dplyr::filter(target_end_date >= start_date,
-                    target_end_date <= end_date,
+                    target_end_date <= most_recent_date,
                     location == fips_code) %>%
       arrange(target_end_date)
 
       # Construct time series
-      time_period <- as.numeric(end_date - start_date) + 1
+      time_period <- as.numeric(most_recent_date - start_date) + 1
       periods <- floor(time_period / freq)
       remainder <- time_period - (periods * freq)
 
@@ -64,12 +71,10 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
 
       # Construct temporal hierarchy
       day_agg_ <- tsaggregates(ht_day_ts_, m = freq, aggregatelist = agg_list)
-      agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
       for(i in seq_along(day_agg_)) {
         names(day_agg_)[[i]] <- agg.names[i]
       }
 
       return(day_agg_)
   }
-
 
