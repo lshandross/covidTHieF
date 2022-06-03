@@ -6,6 +6,7 @@
 #' @param end_date A date where the data ends. If \code{df=NULL}, also specifies the date from which the hospitalization truth data sourced.
 #' @param fips_code A 2-digit code specifying a United States state or territory of type \code{char}.
 #' @param aggregate_levels A user-selected list of aggregates to use.
+#' @param agg.names A vector of names for the aggregation levels. Will be used for any plots generated later split by aggregation level.
 #' @param frequency Integer seasonal period.
 #' @param transform.4root \code{logical} that specifies whether a variance stabilizing fourth root transformation should be performed on the data.
 #'
