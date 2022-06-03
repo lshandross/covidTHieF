@@ -1,7 +1,7 @@
 #' Transform temporal hierarchical COVID-19 forecasts to US COVID-19 Forecast Hub-formatted data frame
 #'
 #' @param forecast_list An object of class \code{forecast} to be transformed into a data frame
-#' @param end_date A date from which the forecasts begin. Used to set the \code{forecast_date} in the new data frame.
+#' @param most_recent_date A date from which the truth data ends and the day before the forecasts begin. Used to set the \code{forecast_date} in the new data frame.
 #' @param fips_code A 2-digit code specifying a United States state or territory of type \code{char}. Used to set the \code{location} in the new data frame.
 #' @param pi_levels A vector of prediction interval levels to calculate. Used to obtain the corresponding \code{quantile} value in the new data frame.
 #' @param transform.4root \code{logical} that specifies whether a variance stabilizing fourth root transformation was performed on the data when creating the provided forecasts. If \code{TRUE}, the forecast values are raised to the fourth power to undo the initial transformation.
@@ -10,7 +10,7 @@
 #' @export
 #'
 #' @examples
-transform_to_hub_df <- function(forecast_list, end_date, fips_code, pi_levels, transform.4root = FALSE) {
+transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_levels, transform.4root = FALSE) {
   library(tidyverse)
   library(lubridate)
   library(forecast)
@@ -56,7 +56,7 @@ transform_to_hub_df <- function(forecast_list, end_date, fips_code, pi_levels, t
 
   # Join forecasts together
   hub_df <- cbind(low_fc, point_fc, high_fc) %>%
-    mutate(forecast_date = end_date,
+    mutate(forecast_date = most_recent_date + 1,
            horizon = as.numeric(rownames(low_fc)),
            target = paste(horizon, " day ahead inc hosp"),
            target_end_date = forecast_date + days(horizon)) %>%

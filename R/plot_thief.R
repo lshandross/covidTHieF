@@ -12,17 +12,16 @@
 #' @export
 #'
 #' @examples
-# Additional data and date vectors for plotting - FIX ME
+# Additional data and date vectors for plotting (as of what date?) - FIX ME
 extended_truth_data <-
   function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
     # an extra 1*(top agg level) of truth data to plot against forecasts
     aggregate_thief_df(df, ts_col, start_date, end_date + days(frequency), fips_code, aggregate_levels, frequency)
   }
 
-#' Generate time series-associated dates
 #'
 #' @param start_date A date from which the data begins. Used to calculate the actual dates of the time series.
-#' @param end_date A date where the data ends. Used to calculate the actual dates of the time series.
+#' @param most_recent_date A date where the truth data ends. Used to calculate the actual dates of the time series.
 #' @param frequency Integer seasonal period. Specifies how many actual dates to calculate.
 #'
 #' @return A vector of dates of length \code{frequency}.
@@ -30,12 +29,12 @@ extended_truth_data <-
 #'
 #' @examples
 get_ts_dates <-
-  function(start_date, end_date, frequency = 56) {
+  function(start_date, most_recent_date, frequency = 56) {
     library(tidyverse)
     library(lubridate)
 
     freq <- frequency
-    time_period <- as.numeric(end_date - start_date) + 1
+    time_period <- as.numeric(most_recent_date - start_date)
     periods <- floor(time_period / freq)
     dates_actual_forecast <- rep(start_date - weeks(1), periods + 1)
     for (i in 1:length(dates_actual_forecast)) {
