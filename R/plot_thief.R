@@ -50,13 +50,14 @@ get_ts_dates <-
 #' @param reconciled_forecasts A \code{forecast} object containing reconciled forecasts. If prediction intervals are specified, two will be shown.
 #' @param ts_dates A vector of dates to be used as x-axis labels.
 #' @param extended_truth A list of time series to be plotted against the forecasts for comparison. Defaults to NULL in which no extended truth line is shown.
+#' @param agg.names A vector of titles for the plots of each aggregation level. Defaults to NULL in which the detected ARIMA model is used to name the plots.
 #'
 #' @return A collection of plots made at every aggregation level displaying base point forecasts, reconciled point forecasts, reconciled prediction intervals at two different levels, and the truth data used to make the forecasts. The user may provide extended truth data to plot against the forecasts for an accuracy comparison.
 #' @export
 #'
 #' @examples
 plot_thief <-
-  function(base_forecasts, reconciled_forecasts, ts_dates, extended_truth = NULL) {
+  function(base_forecasts, reconciled_forecasts, ts_dates, extended_truth = NULL, agg.names = NULL) {
     library(tidyverse)
     library(lubridate)
     library(forecast)
