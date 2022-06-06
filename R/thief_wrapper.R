@@ -51,7 +51,7 @@ thief_wrapper <-
       warning(paste("Forecasts will be made as of", most_recent_date + 1, "due to insufficient truth data."))
     }
     
-    thief_aggregation <- suppressWarnings(aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency))
+    thief_aggregation <- suppressWarnings(aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, transform.4root = transform.4root))
 
     if (plot.aggregates == TRUE) {plot_thief_agg(thief_aggregation, start_date) }
 
