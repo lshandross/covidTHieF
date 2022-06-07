@@ -17,14 +17,16 @@ transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_l
   library(thief)
   library(covidHubUtils)
 
-  # If forecast_list == NULL, stop "you have not provided any forecasts"
   # if forecast_list is not a a data frames, stop "Please provide a a data frames"
-  # if fips_code == NULL, stop "you have not provided a"
-  # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
 
   thief_forecast <- forecast_list
-  fips_code <- fips_code
 
+  if (fips_code %in% dplyr::pull(hub_locations, fips)) { 
+    fips_code <- fips_code
+  } else {
+    stop("Please provide a US location fips code.")
+  }
+    
   # Lower Forecasts
   low_fc <- as_tibble(thief_forecast[[1]][["lower"]]) # Change TS object to tibble
   low_fc[low_fc < 0] <- 0 # Ensure all negative values are changed to 0
