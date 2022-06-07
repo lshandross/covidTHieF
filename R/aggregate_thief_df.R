@@ -6,7 +6,7 @@
 #' @param end_date A date where the data ends. If \code{df=NULL}, also specifies the date from which the hospitalization truth data sourced.
 #' @param fips_code A 2-digit code specifying a United States state or territory of type \code{char}.
 #' @param aggregate_levels A user-selected list of aggregates to use.
-#' @param agg.names A vector of names for the aggregation levels. Will be used for any plots generated later split by aggregation level.
+#' @param agg.names A vector of names for the aggregation levels. Will be used for any plots generated later split by aggregation level. Defaults to NULL.
 #' @param frequency Integer seasonal period.
 #' @param transform.4root \code{logical} that specifies whether a variance stabilizing fourth root transformation should be performed on the data.
 #'
@@ -15,30 +15,39 @@
 #'
 #' @examples
 aggregate_thief_df <- # aggregate levels list should be in order of smallest to largest level
-  function(df = NULL, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), agg.names = c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly"), frequency = 56, transform.4root = FALSE) {
+  function(df = NULL, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), agg.names = NULL, frequency = 56, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
     library(thief)
+    library(covidHubUtils)
 
     ts_col <- ts_col
-    # if fips_code == NULL, stop "you have not provided a fips code", else
-    fips_code <- fips_code
-    # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
-    # if (start_date == NULL) # first target_end_date, else
+    
+    if (fips_code %in% dplyr::pull(hub_locations, fips)) { 
+      fips_code <- fips_code
+    } else {
+      stop("Please provide a US location fips code.")
+    }
+    
     start_date <- as.Date(start_date)
-    # likewise for end_date, else
     end_date <- as.Date(end_date)
-    # if df is not a a data frame, stop "Please provide a a data frame"
+
+    # if (!is.null(df) | !is.data.frame(df)) {
+    #   df <- NULL
+    #   warning(paste("You have not provided a data frame. Forecasts will be made using versioned truth data as of",
+    #                 end_date-1, "or the most recent date is available for."))
+    # } else
     if (is.null(df)) {
-    df <- load_truth("HealthData",
-                         "inc hosp",
-                         as_of = end_date,
-                         temporal_resolution="daily",
-                         data_location = "covidData")
+      df <- load_truth("HealthData",
+                           "inc hosp",
+                           as_of = end_date,
+                           temporal_resolution="daily",
+                           data_location = "covidData")
     } else {
       df <- df
-      warning("forecasts will be based on static truth data")
+      warning("Forecasts will be based on static truth data")
     }
+
     # obtain most recent date truth data was obtained from
     most_recent_date <- df %>%
       slice_max(target_end_date, n=1, with_ties=FALSE) %>%
@@ -46,8 +55,9 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
     if (as.numeric(end_date - most_recent_date) > 1) {
       warning(paste("Forecasts will be made as of", most_recent_date + 1, "due to insufficient truth data."))
     }
-    
+
     agg_list <- aggregate_levels
+    agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
     freq <- frequency
 
     hosp_truth <- df %>%
