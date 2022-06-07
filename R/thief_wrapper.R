@@ -22,9 +22,12 @@ thief_wrapper <-
     library(lubridate)
 
     ts_col <- ts_col
-    # if fips_code == NULL, stop "you have not provided a fips code", else
-    fips_code <- fips_code
-    # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
+    
+    if (fips_code %in% dplyr::pull(hub_locations, fips)) { 
+      fips_code <- fips_code
+    } else {
+      stop("Please provide a US location fips code.")
+    }
     # if (start_date == NULL) # first target_end_date, else
     start_date <- as.Date(start_date)
     # likewise for end_date, else
@@ -51,7 +54,8 @@ thief_wrapper <-
       warning(paste("Forecasts will be made as of", most_recent_date + 1, "due to insufficient truth data."))
     }
     
-    thief_aggregation <- suppressWarnings(aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, transform.4root = transform.4root))
+    thief_aggregation <- 
+      suppressWarnings(aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, NULL, frequency, transform.4root))
 
     if (plot.aggregates == TRUE) {plot_thief_agg(thief_aggregation, start_date) }
 
@@ -61,7 +65,7 @@ thief_wrapper <-
     if (plot.forecasts == TRUE) {
       extended_agg <- extended_truth_data(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency)
       ts_dates <- get_ts_dates(start_date, most_recent_date, frequency = 56)
-      plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg)
+      plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg, NULL)
     }
 
     hub_df <- transform_to_hub_df(reconciled_fc, most_recent_date, fips_code, pi_levels, transform.4root)
