@@ -18,12 +18,6 @@ covid_thief <-
   function(df = NULL, ts_col = "value", start_date, end_date, fips_vec, aggregate_levels, frequency, pi_levels, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
-
-    if (fips_code %in% dplyr::pull(hub_locations, fips)) { 
-      fips_code <- fips_code
-    } else {
-      stop("Please provide a US location fips code.")
-    }
     
     if (is.null(df)) {
       df <- load_truth("HealthData",
