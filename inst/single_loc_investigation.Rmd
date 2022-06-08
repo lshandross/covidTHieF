@@ -31,16 +31,22 @@ mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:29))
 full_hosp_truth <- load_truth("HealthData", 
                          "inc hosp", 
                          temporal_resolution="daily",
-                         data_location = "remote_hub_repo")
-start_date = as.Date("2020-07-27"); end_date = as.Date("2021-05-03")
+                         data_location = "remote_hub_repo") %>%
+                   arrange(location, target_end_date)
+load(file="../data/versioned_truth_training.RData")
+
+start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-04")
 pi_levels = c(10 * (1:9), 95, 98)
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
-test <- aggregate_thief_df(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code = "48", aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+test <- 
+  aggregate_thief_df(
+    training_truth_list[[5]], ts_col = "value", 
+    start_date, end_date, fips_code = "04", aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
 plot_thief_agg(test, start_date)
 temp <- compute_base_forecasts(test, pi_levels)
-temp_reconciled <- reconcilethief(temp, aggregatelist = agg_list) # produces a warning
+temp_reconciled <- reconcilethief(temp, aggregatelist = list(56, 28, 14, 7, 1)) # produces a warning
 
 extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56)
 dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
@@ -64,10 +70,38 @@ full_hosp_truth %>%
 
 
 ```{r}
-truth_comparison_210104 <- full_hosp_truth %>%
-  filter(target_end_date <= as.Date("2021-01-02")) %>%
-  left_join(training_truth_list[[5]], by="location")
-    
+truth_comparison_04_210104 <- full_hosp_truth %>%
+  filter(target_end_date >= as.Date("2020-07-27"),
+        target_end_date <= as.Date("2021-01-02"),
+        location == "04") %>%
+  arrange(target_end_date) %>%
+  rename(revised_value = "value") %>%
+  select(1, 3, 4, 6:7, 5) %>%
+  cbind(select(filter(training_truth_list[[5]], location == "04"), value)) %>%
+  mutate(difference=value-revised_value) %>%
+  filter(difference != 0)
+
+filter(training_truth_list[[5]], location == "04") %>%
+  ggplot(aes(x=target_end_date, y=value)) +
+  geom_point(color="blue") + geom_line(color="blue") +
+  geom_point(data=filter(full_hosp_truth, 
+                          target_end_date <= as.Date("2021-01-02"),
+                          target_end_date >=as.Date("2020-07-27"),
+                          location == "04"), 
+            aes(x=target_end_date, y=value)) +
+  geom_line(data=filter(full_hosp_truth, 
+                          target_end_date <= as.Date("2021-01-02"),
+                          target_end_date >=as.Date("2020-07-27"),
+                          location == "04"), 
+            aes(x=target_end_date, y=value))
+
+aggregate_04_210104 <- training_truth_list[[5]] %>%
+  aggregate_thief_df(
+    start_date=as.Date("2020-07-27"), end_date=as.Date("2021-01-04"),
+    fips_code="04", transform.4root=FALSE)
+
+plot_thief_agg(aggregate_04_210104, as.Date("2020-07-27"))
+  
 training_truth_summary <- c()
 for (i in 1:30) {
   temp <- training_truth_list[[i]] %>%
@@ -80,4 +114,110 @@ for (i in 1:30) {
 }
 # US and Louisiana (22) are missing truth data (8/19-9/2) for the first 4 weeks of the training phase
   
+
+
+```
+
+```{r}
+start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-04")
+
+base_fc_no_04_210104 <- modfc_8wk_noTrans %>%
+  filter(location == "04", forecast_date == as.Date("2021-01-04")) %>%
+  ungroup() %>%
+  pull(base_fc_obj)
+rec_fc_no_04_210104 <- modfc_8wk_noTrans %>%
+  filter(location == "04", forecast_date == as.Date("2021-01-04")) %>%
+  ungroup() %>%
+  pull(rec_fc_obj)
+
+dates_test <- get_ts_dates(start_date, end_date-2, frequency = 56) 
+plot_thief(base_forecasts= rec_fc_no_04_210104, reconciled_forecasts= rec_fc_no_04_210104, ts_dates = dates_test, agg.names = agg.names) 
+
+test <- 
+  aggregate_thief_df(
+    training_truth_list[[5]], ts_col = "value", 
+    start_date, end_date, fips_code = "04", 
+    aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = TRUE) 
+plot_thief_agg(test, start_date)
+temp <- compute_base_forecasts(test, pi_levels)
+temp_reconciled <- reconcilethief(temp, aggregatelist = list(56, 28, 14, 7, 1)) # produces a warning
+plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, agg.names = agg.names) 
+temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "04", pi_levels, TRUE)
+
+temp_reconciled2 <- transform_forecasts(forecasts=temp)
+temp_rec_df2 <- transform_to_hub_df(temp_reconciled2, end_date-2, "04", pi_levels, FALSE)
+temp_rec_df1 <- thd(temp_reconciled, end_date-2, "04", pi_levels, TRUE)
+
+  
+thief_wrapper(training_truth_list[[5]], ts_col = "value", 
+  start_date, end_date, fips_code = "04",
+  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
+  pi_levels = pi_levels,
+  plot.aggregates = TRUE, plot.forecasts = TRUE)
+```
+
+```{r}
+thd <- function(forecast_list, most_recent_date, fips_code, pi_levels, transform.4root = FALSE) {
+  library(tidyverse)
+  library(lubridate)
+  library(forecast)
+  library(thief)
+  library(covidHubUtils)
+
+  # If forecast_list == NULL, stop "you have not provided any forecasts"
+  # if forecast_list is not a a data frames, stop "Please provide a a data frames"
+  # if fips_code == NULL, stop "you have not provided a"
+  # if fips_code! %in% state_fips_codes, stop "Please provide the fips code of a US location"
+
+  thief_forecast <- forecast_list
+  fips_code <- fips_code
+
+  # Lower Forecasts
+  low_fc <- as_tibble(thief_forecast[[1]][["lower"]]) # Change TS object to tibble
+  low_fc[low_fc < 0] <- 0 # Ensure all negative values are changed to 0
+  if (transform.4root == TRUE) low_fc <- low_fc^4
+
+  old_col_names <- colnames(low_fc)
+  new_col_names <- rep("string", length(old_col_names))
+  for (i in 1:length(old_col_names)) {
+    new_col_names[i] <- as.character(((100-pi_levels[i])/2)/100)
+  }
+  colnames(low_fc) <- c(new_col_names)
+
+  # Higher Forecasts
+  high_fc <- as_tibble(thief_forecast[[1]][["upper"]]) # Change TS object to tibble
+  high_fc[high_fc < 0] <- 0 # Ensure all negative values are changed to 0
+  if (transform.4root == TRUE) high_fc <- high_fc^4
+
+  old_col_names <- colnames(high_fc)
+  new_col_names <- rep("string", length(old_col_names))
+  for (i in 1:length(old_col_names)) {
+    new_col_names[i] <- as.character((100-((100-pi_levels[i])/2))/100)
+  }
+  colnames(high_fc) <- c(new_col_names)
+
+
+  # Point Forecasts
+  point_fc <- as_tibble(thief_forecast[[1]][["mean"]]) %>% # Change TS object to tibble
+    transmute(`0.5`= as.numeric(x))
+  point_fc[point_fc < 0] <- 0 # Ensure all negative values are changed to 0
+  if (transform.4root == TRUE) point_fc <- point_fc^4
+
+
+  # Join forecasts together
+  hub_df <- cbind(low_fc, point_fc, high_fc) %>%
+    mutate(forecast_date = most_recent_date + 1,
+           horizon = as.numeric(rownames(low_fc)),
+           target = paste(horizon, " day ahead inc hosp"),
+           target_end_date = forecast_date + days(horizon)) %>%
+    pivot_longer(1:(2*length(pi_levels) + 1), "quantile", "value") %>%
+    filter(horizon <= 35) %>%
+    arrange(target_end_date, quantile) %>%
+    mutate(location = fips_code,
+           type = "quantile",
+           quantile = as.numeric(quantile)) %>%
+    select(forecast_date, location, target, target_end_date, type, quantile, value)
+
+  return (hub_df)
+}
 ```
