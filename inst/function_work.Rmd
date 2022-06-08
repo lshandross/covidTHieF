@@ -31,7 +31,7 @@ source("forecast_fns.R")
 
 ```{r, message=FALSE, fig.width=12, fig.height=8}
 start_date <- as.Date("2020-07-27") # a monday
-end_date <- as.Date("2021-05-03")
+end_date <- as.Date("2021-01-10")
 
 hosp_truth_asof <- load_truth("HealthData", 
                          "inc hosp", 
@@ -40,13 +40,18 @@ hosp_truth_asof <- load_truth("HealthData",
                          data_location = "covidData")
 
 
-fips_code <- "48"
+fips_code <- "04"
 
 hosp_truth <- hosp_truth_asof %>%
   select(target_end_date, location, value) %>%
   dplyr::filter(target_end_date >= start_date,
                 location == fips_code) %>%
   arrange(target_end_date)
+
+most_recent_date <- hosp_truth_asof %>%
+  slice_max(target_end_date, n=1, with_ties=FALSE) %>%
+  pull(target_end_date)
+end_date <- most_recent_date
 
 ht_day <- hosp_truth$value
 
@@ -138,6 +143,18 @@ apply(sim, 2, median)
 ``` {r reconciled forecasts}
 # Reconcile forecasts - no need to write a new function for this
 reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = agg_list)
+
+rec_test <- list()
+for (i in 1:length(reconciled_fc_day)) {
+  reconciled_fc_day[[i]][["mean"]][reconciled_fc_day[[i]][["mean"]] < 0] <- 0
+  reconciled_fc_day[[i]][["lower"]][reconciled_fc_day[[i]][["lower"]] < 0] <- 0
+  reconciled_fc_day[[i]][["upper"]][reconciled_fc_day[[i]][["upper"]] < 0] <- 0
+  reconciled_fc_day[[i]][["x"]][reconciled_fc_day[[i]][["x"]] < 0] <- 0
+  reconciled_fc_day[[i]][["fitted"]][reconciled_fc_day[[i]][["fitted"]] < 0] <- 0
+  rec_test[[i]] <- modify_at(reconciled_fc_day[[i]], .at = c("mean", "lower", "upper", "x", "fitted"), ~.^4)
+  rec_test[[i]] <- modify_at(rec_test[[i]], .at = "residuals", 
+             function(fit) fit = rec_test[[i]][["x"]]-rec_test[[i]][["fitted"]])
+}
 
 #et <- extended_test
 
@@ -333,7 +350,30 @@ compute_base_forecasts <-
   }
 ```
 
+```{r reconcile forecasts and adjust for forth root transformation}
+transform_forecasts <- function(forecasts) {
+  if (is.null(forecasts)) {stop('Please provide a forecast object to transform.')}
+  
+  fc_trans <- list()
+  for (i in 1:length(forecasts)) {
+    forecasts[[i]][["mean"]][forecasts[[i]][["mean"]] < 0] <- 0
+    forecasts[[i]][["lower"]][forecasts[[i]][["lower"]] < 0] <- 0
+    forecasts[[i]][["upper"]][forecasts[[i]][["upper"]] < 0] <- 0
+    forecasts[[i]][["x"]][forecasts[[i]][["x"]] < 0] <- 0
+    forecasts[[i]][["fitted"]][forecasts[[i]][["fitted"]] < 0] <- 0
+    forecasts[[i]][["mean"]] <- forecasts[[i]][["mean"]]^4
+    forecasts[[i]][["lower"]] <- forecasts[[i]][["lower"]]^4
+#    fc_trans[[i]] <- modify_at(forecasts[[i]], .at = c("mean", "lower", "upper", "x", "fitted"), ~.^4)
+#    fc_trans[[i]] <- modify_at(fc_trans[[i]], .at = "residuals", 
+#               function(fit) fit = fc_trans[[i]][["x"]]-fc_trans[[i]][["fitted"]])
+  }
+  return(forecasts)
+}
 
+transform_forecasts(forecasts=reconciled_fc_day)
+rec_test
+```
+  
 ``` {r plot_thief and extra data functions}
 # FIX ME: logic issue re what iteration of truth data to use
 extended_truth_data <-
@@ -440,7 +480,7 @@ transform_to_hub_df <- function(forecast_list, model_name = "model", end_date, f
 
 
 ```{r func testing and thief_wrapper}
-test <- aggregate_thief_df(ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+test <- aggregate_thief_df(NULL, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
 plot_thief_agg(test, start_date)
 temp <- compute_base_forecasts(test, pi_levels)
 temp_reconciled <- reconcilethief(temp, aggregatelist = agg_list) # produces a warning
@@ -448,7 +488,7 @@ temp_reconciled <- reconcilethief(temp, aggregatelist = agg_list) # produces a w
 extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56)
 dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
 plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test)
-temp_rec_df <- transform_to_hub_df(temp_reconciled, "model", end_date, "US")
+temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "US", pi_levels)
 
 thief_wrapper <- 
   function(ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, model_name, df=NULL, plot.aggregates = TRUE, plot.forecasts = TRUE) {
@@ -493,12 +533,12 @@ thief_wrapper <-
     return(list(hub_df, model_info)) 
   }
 
-model_info <- tibble(model = "mod", forecast_date = end_date, location = fips_code, base_fc_obj = base_fc_day, rec_fc_obj = reconciled_fc_day)
+model_info <- tibble(model = "mod", forecast_date = end_date, location = fips_code, base_fc_obj = base_fc_day, rec_fc_obj = reconciled_fc_day, level = agg_list)
   
-hub_test <- thief_wrapper(ts_col = "value",
+hub_test <- thief_wrapper(NULL, ts_col = "value",
   start_date = start_date, end_date = end_date, fips_code = "US",
   aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
-  pi_levels = pi_levels, model_name = "model",
+  pi_levels = pi_levels,
   plot.aggregates = FALSE, plot.forecasts = FALSE)
 ```
 
@@ -528,7 +568,7 @@ covid_thief <-
         suppressWarnings(thief_wrapper(ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, model_name, df=NULL,plot.aggregates = FALSE, plot.forecasts = FALSE))
       }
     )
-    n <- length(all_locs_list)
+    n <- length(fips_vec)
     all_locs_fc <- map_dfr(.x = 1:n, .f = function(i) {all_locs_list[[i]][[1]]})
     all_locs_mod <- map_dfr(.x = 1:n, .f = function(i) {all_locs_list[[i]][[2]]})
     
