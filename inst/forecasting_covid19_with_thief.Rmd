@@ -55,8 +55,9 @@ The data used in this analysis is the HealthData.gov COVID-19 Reported Patient I
 ```{r, message=FALSE, warning=FALSE}
 full_hosp_truth <- load_truth("HealthData", 
                          "inc hosp", 
+                         as_of=as.Date("2022-04-06"),
                          temporal_resolution="weekly",
-                         data_location = "remote_hub_repo")
+                         data_location = "covidData")
 ```
 
 ## Forecast quantiles
@@ -209,7 +210,7 @@ fdat <- forecasts_df %>%
         horizon <= 28,
         forecast_date %in% c(as.Date("2020-12-07") + weeks(4*(0:7))))
   
-p <- plot_forecasts(fdat, 
+p <-  plot_forecasts(fdat, 
                     target_variable = "inc hosp", 
                     models = c("THieF_4wk-4root", "COVIDhub-baseline", "THieF_12wk-noTrans"),
                     intervals = c(.5, .95), 
@@ -377,23 +378,23 @@ horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
 ```{r, message=FALSE, warning=FALSE, fig.cap='Average WIS by the horizon week for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week compared to being aggregated across horizon weeks. All models show worse performance relative to the baseline at the 1-week ahead horizon, likely a result of being overconfident at this horizon. Once again, the THieF-4wk-4root model performs the best for WIS. Plots for average MAE are not shown due to their similarity to the average WIS plots.'}  
 wis_hzn_plot_US <- horizon_wk_metrics_US %>%
 ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-  geom_point(mapping=aes(col=model), alpha=0.5) +
-  geom_line(mapping=aes(col=model), alpha=0.5) +
+  geom_point(mapping=aes(col=model), alpha = 0.8) +
+  geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title="US",
        x="Horizon Week", y="Average WIS")
               
 wis_hzn_plot_states <- horizon_wk_metrics_states %>%
   ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-  geom_point(mapping=aes(col=model), alpha=0.5) +
-  geom_line(mapping=aes(col=model), alpha=0.5) +
+  geom_point(mapping=aes(col=model), alpha = 0.8) +
+  geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title="States", 
        x="Horizon Week", y="Average WIS")
               
@@ -514,45 +515,45 @@ wave_metrics_states <- wave_metrics_states %>%
 wis_hzn_plot_winter21_US <- wave_metrics_US %>%
   filter(wave == "winter21") %>%
   ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-   geom_point(mapping=aes(col=model), alpha=0.5) +
-   geom_line(mapping=aes(col=model), alpha=0.5) +
+   geom_point(mapping=aes(col=model), alpha = 0.8) +
+   geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
    labs(title="Winter '21 Wave (US)", x="Horizon Week", y="Average WIS")
    
 wis_hzn_plot_alpha_US <- wave_metrics_US %>%
   filter(wave == "alpha") %>%
   ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-   geom_point(mapping=aes(col=model), alpha=0.5) +
-   geom_line(mapping=aes(col=model), alpha=0.5) +
+   geom_point(mapping=aes(col=model), alpha = 0.8) +
+   geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
    labs(title="Alpha Wave (US)", x="Horizon Week", y="Average WIS")
    
 wis_hzn_plot_winter21_states <- wave_metrics_states %>%
   filter(wave == "winter21") %>%
   ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-   geom_point(mapping=aes(col=model), alpha=0.5) +
-   geom_line(mapping=aes(col=model), alpha=0.5) +
+   geom_point(mapping=aes(col=model), alpha = 0.8) +
+   geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
    labs(title="Winter '21 Wave (states)", x="Horizon Week", y="Average WIS")
 
 wis_hzn_plot_alpha_states <- wave_metrics_states %>%
   filter(wave == "alpha") %>%
   ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-   geom_point(mapping=aes(col=model), alpha=0.5) +
-   geom_line(mapping=aes(col=model), alpha=0.5) +
+   geom_point(mapping=aes(col=model), alpha = 0.8) +
+   geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
    labs(title="Alpha Wave (states)", x="Horizon Week", y="Average WIS")
    
 wis_hzn_plot_winter21_US + wis_hzn_plot_alpha_US + 
@@ -617,13 +618,13 @@ wis_1wk_plot_US <- forecast_date_metrics_US %>%
   rbind(baseline_fc_date_metrics_US) %>%
   filter(horizon_wk == 1) %>%
   ggplot(aes(x = forecast_date, y = wis)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_line(aes(color=model), alpha = 0.8) +
+  geom_point(aes(color=model), alpha = 0.8, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title = "WIS (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -633,13 +634,13 @@ wis_4wk_plot_US <- forecast_date_metrics_US %>%
   rbind(baseline_fc_date_metrics_US) %>%
   filter(horizon_wk == 4) %>%
   ggplot(aes(x = forecast_date, y = wis)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_line(aes(color=model), alpha = 0.8) +
+  geom_point(aes(color=model), alpha = 0.8, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title = "WIS (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -651,14 +652,14 @@ cov95_1wk_plot_US <- forecast_date_metrics_US %>%
   rbind(baseline_fc_date_metrics_US) %>%
   filter(horizon_wk == 1) %>%
   ggplot(aes(x = forecast_date, y = cov_95)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_line(aes(color=model), alpha = 0.8) +
+  geom_point(aes(color=model), alpha = 0.8, size=0.75) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title = "95% PI Coverage (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -668,14 +669,14 @@ cov95_4wk_plot_US <- forecast_date_metrics_US %>%
   rbind(baseline_fc_date_metrics_US) %>%
   filter(horizon_wk == 4) %>%
   ggplot(aes(x = forecast_date, y = cov_95)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_line(aes(color=model), alpha = 0.8) +
+  geom_point(aes(color=model), alpha = 0.8, size=0.75) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title = "95% PI Coverage (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -736,13 +737,13 @@ wis_1wk_plot_states <- forecast_date_metrics_states %>%
   rbind(baseline_fc_date_metrics_states) %>%
   filter(horizon_wk == 1) %>%
   ggplot(aes(x = forecast_date, y = wis)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_line(aes(color=model), alpha = 0.8) +
+  geom_point(aes(color=model), alpha = 0.8, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title = "WIS (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -752,13 +753,13 @@ wis_4wk_plot_states <- forecast_date_metrics_states %>%
   rbind(baseline_fc_date_metrics_states) %>%
   filter(horizon_wk == 4) %>%
   ggplot(aes(x = forecast_date, y = wis)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_line(aes(color=model), alpha = 0.8) +
+  geom_point(aes(color=model), alpha = 0.8, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title = "WIS (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -770,14 +771,14 @@ cov95_1wk_plot_states <- forecast_date_metrics_states %>%
   rbind(baseline_fc_date_metrics_states) %>%
   filter(horizon_wk == 1) %>%
   ggplot(aes(x = forecast_date, y = cov_95)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_line(aes(color=model), alpha = 0.8) +
+  geom_point(aes(color=model), alpha = 0.8, size=0.75) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title = "95% PI Coverage (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -787,14 +788,14 @@ cov95_4wk_plot_states <- forecast_date_metrics_states %>%
   rbind(baseline_fc_date_metrics_states) %>%
   filter(horizon_wk == 4) %>%
   ggplot(aes(x = forecast_date, y = cov_95)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_line(aes(color=model), alpha = 0.8) +
+  geom_point(aes(color=model), alpha = 0.8, size=0.75) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
     breaks = c(models[4], models[1:3], models[5:7]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title = "95% PI Coverage (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
