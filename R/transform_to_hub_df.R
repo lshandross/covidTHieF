@@ -4,13 +4,14 @@
 #' @param most_recent_date A date from which the truth data ends and the day before the forecasts begin. Used to set the \code{forecast_date} in the new data frame.
 #' @param fips_code A 2-digit code specifying a United States state or territory of type \code{char}. Used to set the \code{location} in the new data frame.
 #' @param pi_levels A vector of prediction interval levels to calculate. Used to obtain the corresponding \code{quantile} value in the new data frame.
+#' @param h_ahead A number specifying how many time units ahead the longest horizon being forecast should be. Defaults to 35 with the assumption the unit is in days (4 total of 5 weeks ahead).
 #' @param transform.4root \code{logical} that specifies whether a variance stabilizing fourth root transformation was performed on the data when creating the provided forecasts. If \code{TRUE}, the forecast values are raised to the fourth power to undo the initial transformation.
 #'
 #' @return A data frame containing the following columns: \code{forecast_date}, \code{location}, \code{target}, \code{target_end_date}, \code{type}, \code{quantile}, \code{value}
 #' @export
 #'
 #' @examples
-transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_levels, transform.4root = FALSE) {
+transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_levels, h_ahead = 35, transform.4root = FALSE) {
   library(tidyverse)
   library(lubridate)
   library(forecast)
@@ -63,7 +64,7 @@ transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_l
            target = paste(horizon, " day ahead inc hosp"),
            target_end_date = forecast_date + days(horizon)) %>%
     pivot_longer(1:(2*length(pi_levels) + 1), "quantile", "value") %>%
-    filter(horizon <= 35) %>%
+    filter(horizon <= h_ahead) %>%
     arrange(target_end_date, quantile) %>%
     mutate(location = fips_code,
            type = "quantile",

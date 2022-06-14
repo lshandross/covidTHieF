@@ -20,6 +20,7 @@ thief_wrapper <-
   function(df = NULL, ts_col = "value", start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, plot.aggregates = TRUE, plot.forecasts = TRUE, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
+    library(covidHubUtils)
 
     ts_col <- ts_col
     
@@ -53,6 +54,7 @@ thief_wrapper <-
     if (as.numeric(end_date - most_recent_date) > 1) {
       warning(paste("Forecasts will be made as of", most_recent_date + 1, "due to insufficient truth data."))
     }
+    h_ahead <- 35 + (as.numeric(end_date - most_recent_date) + 1)
     
     thief_aggregation <- 
       suppressWarnings(aggregate_thief_df(df, ts_col, start_date, end_date, fips_code, aggregate_levels, NULL, frequency, transform.4root))
@@ -68,7 +70,7 @@ thief_wrapper <-
       plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg, NULL)
     }
 
-    hub_df <- transform_to_hub_df(reconciled_fc, most_recent_date, fips_code, pi_levels, transform.4root)
+    hub_df <- transform_to_hub_df(reconciled_fc, most_recent_date, fips_code, pi_levels, h_ahead, transform.4root)
     model_info <- tibble(forecast_date = most_recent_date + 1, location = fips_code, level = aggregate_levels,
                          base_fc_obj = base_fc, rec_fc_obj = reconciled_fc)
 
