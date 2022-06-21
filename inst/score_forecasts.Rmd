@@ -37,41 +37,6 @@ load("../data/baseline_fc_scores.RData")
 load("../data/versioned_truth_training.RData")
 
 ```
-```{r, message=FALSE, echo=FALSE, eval=FALSE}
-test <- forecasts_baseline %>%
-  mutate(
-    horizon_wk = case_when(
-      horizon %in% c(1:7) ~ 1,
-      horizon %in% c(8:14) ~ 2,
-      horizon %in% c(15:21) ~ 3,
-      horizon %in% c(22:28) ~ 4
-    )
-  ) %>%
-  select(1:4, 7:11, 17)
-  
-horizon_summary <- forecasts_baseline %>%
-  group_by(model, location, horizon) %>%
-  summarize(rows = n())
-  
-horizon_wk_summary <- forecasts_baseline %>%
-  mutate(
-    horizon_wk = case_when(
-      horizon %in% c(1:7) ~ 1,
-      horizon %in% c(8:14) ~ 2,
-      horizon %in% c(15:21) ~ 3,
-      horizon %in% c(22:28) ~ 4
-    )
-  ) %>%
-  group_by(model, location, horizon_wk) %>%
-  summarize(rows = n())
-
-horizon_scores <- score_baseline %>%
-  mutate(horizon = as.numeric(horizon)) %>%
-  filter(horizon <= 28,
-        target_end_date <= as.Date("2021-07-05")) %>%
-  group_by(model, horizon) %>%
-  summarize(rows = n())
-```
 
 ```{r, message=FALSE, echo=FALSE, eval=FALSE}
 # forecasts_baseline <- load_forecasts(models = "COVIDhub-baseline",
@@ -85,55 +50,41 @@ horizon_scores <- score_baseline %>%
 #                                         as_of=NULL,
 #                                         hub = c("US"))
 
-files <- rep("path", 30)
-df <- c()
-forecasts <- c()
-for (i in 2:3) {
-  files <- list.files(path=paste("../data/", models[i], "/", sep=""), pattern=".csv", full.names=TRUE)
-  for (j in 1:30) {
-    if(isTRUE(i + j != 2)) {
-      df <- read_csv(files[j]) %>%
-        mutate(model = models[i])
-      forecasts <- rbind(forecasts, df)
-    } else {
-        forecasts <- read_csv(files[j]) %>%
-        mutate(model = models[i])
-    }
-  }
-}
-
-forecasts_df <-
-  forecasts %>%
-    separate(target,
-      into=c("horizon", "temp"),
-      sep=" "
-    ) %>%
-    mutate(
-      horizon=as.numeric(horizon),
-      temporal_resolution="day",
-      target_variable="inc hosp"
-    ) %>%
-    select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
-    left_join(hub_locations, by=c("location"="fips"))
-
-forecasts_ver <-forecasts_df
-
-mon_dates_df <- distinct(forecasts_df, forecast_date) %>%
-  cbind(mon_fc_dates)
-#   
-# forecasts_ver <- forecasts_df %>%
-#   left_join(mon_dates_df, by = "forecast_date") %>%
-#   mutate(horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_dates)/7)) %>%
-#   filter(horizon_wk %in% 1:4, 
-#          target_end_date <= as.Date("2021-07-05")) %>%
-#   select(1:16,18)
+# files <- rep("path", 30)
+# df <- c()
+# forecasts <- c()
+# for (i in 1:6) {
+#   files <- list.files(path=paste("../data/", models[i], "/", sep=""), pattern=".csv", full.names=TRUE)
+#   for (j in 1:30) {
+#     if(isTRUE(i + j != 2)) {
+#       df <- read_csv(files[j]) %>%
+#         mutate(model = models[i])
+#       forecasts <- rbind(forecasts, df)
+#     } else {
+#         forecasts <- read_csv(files[j]) %>%
+#         mutate(model = models[i])
+#     }
+#   }
+# }
 # 
-# forecasts_baseline <- forecasts_baseline %>%
-#   mutate(horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
-#   filter(horizon_wk %in% 1:4, 
-#          target_end_date <= as.Date("2021-07-05"))
-
-#save(forecasts_ver, scores, file="../data/versioned_fc_df.RData")
+# forecasts_df <-
+#   forecasts %>%
+#     separate(target,
+#       into=c("horizon", "temp"),
+#       sep=" "
+#     ) %>%
+#     mutate(
+#       horizon=as.numeric(horizon),
+#       temporal_resolution="day",
+#       target_variable="inc hosp"
+#     ) %>%
+#     select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
+#     left_join(hub_locations, by=c("location"="fips"))
+# 
+# forecasts_ver <-forecasts_df
+# 
+# mon_dates_df <- distinct(forecasts_df, forecast_date) %>%
+#   cbind(mon_fc_dates)
 ```
 
 # Versioned Truth Results
@@ -163,7 +114,7 @@ fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)), pull(distinct(forecasts_ve
 fc_ver <- forecasts_ver %>% rbind(forecasts_baseline) 
 for (i in 1:3) {
   fdat <- fc_ver %>%
-    filter(location == locs[i], forecast_date %in% fc_dates)
+    filter(location == locs[i], forecast_date %in% fc_dates, horizon <= 28)
   
   p <- plot_forecasts(fdat, 
                       #models = c("COVIDhub-baseline", models[2]),  
@@ -173,7 +124,7 @@ for (i in 1:3) {
                       truth_source = "HealthData",
                       use_median_as_point = TRUE,
                       facet = model ~.,
-                      facet_nrow = 2,
+                      facet_nrow = 4,
                       facet_scales = "free_y",
                       fill_by_model = TRUE, 
                       plot=FALSE)
@@ -187,29 +138,6 @@ for (i in 1:3) {
           legend.position = "none")
           
    print(pt)
-#   
-#   p <- plot_forecasts(fdat, 
-#                       models = c("COVIDhub-baseline", models[2], models[4], models[6]),  
-# #                      truth_data = filter(full_hosp_truth, target_end_date <= as.Date("2021-05-03")),
-#                       target_variable = "inc hosp", 
-#                       intervals = c(.5, .95), 
-#                       truth_source = "HealthData",
-#                       use_median_as_point = TRUE,
-#                       facet = model ~.,
-#                       facet_nrow = 2,
-#                       facet_scales = "free_y",
-#                       fill_by_model = TRUE, 
-#                       plot=FALSE)
-# 
-#   pt <- p +
-#     scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-07-05")), 
-#               date_breaks = "2 months", date_labels = "%b") +
-# #    scale_y_continuous(limits=c(0, max(filter(full_hosp_truth, location==locs[i])$value) * 1.25)) +
-#     theme(axis.ticks.length.x = unit(0.5, "cm"),
-#           axis.text.x = element_text(vjust = 7, hjust = -0.2),
-#           legend.position = "none")
-#           
-#   print(pt)
 }
 ```
 
@@ -219,8 +147,10 @@ The plots don't show much difference between the 6 models (although this is part
 We calculate metrics for all three models, aggregating by horizon. Since hospitalizations are forecasted at a daily time scale, a new horizon week variable is created in which scoring metrics are averaged over from a single week Tuesday to the following Monday. We perform these calculations for the entire training phase as well as for each of the two waves that occurred during the training phase.   
 
 ```{r score forecasts, eval = FALSE, echo = FALSE}
-scores_df <- score_forecasts(forecasts=forecasts_ver, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
-score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
+scores_ver <- score_forecasts(forecasts=forecasts_ver, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
+#score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
+
+# if forecasts are too big for a single call
 scores_list <- list()
 for (i in 1:6) {
   scores_list[[i]] <- 
@@ -235,21 +165,24 @@ scores <- c()
 for (i in 1:6) {
   scores <- rbind(scores, scores_list[[i]])
 }
-scores_df <- scores
-scores <- scores_df
+
+scores_ver <- scores
+
+save(forecasts_ver, scores_ver, mon_dates_df, file="../data/versioned_fc_df.RData")
 ```
 
 ### Overall metrics
 ```{r}
-scores <- scores_df %>%
+scores <- scores_ver %>%
   left_join(mon_dates_df, by = "forecast_date") %>%
   mutate(horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_dates)/7)) %>%
   select(-mon_fc_dates) %>%
   filter(horizon_wk %in% 1:4)
 
-score_baseline <- base_score %>%
-  mutate(horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
-  filter(horizon_wk %in% 1:4)
+# score_baseline <- score_baseline %>%
+#   mutate(horizon=as.numeric(horizon),
+#     horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
+#   filter(horizon_wk %in% 1:4)
 
   
 # US National
@@ -278,8 +211,7 @@ knitr::kable(overall_metrics_US)
 # States
 overall_metrics_states <- scores %>%
   rbind(score_baseline) %>%
-  filter(target_end_date <= as.Date("2021-07-05"),
-         location != "US") %>%
+  filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US")) %>%
   group_by(model) %>%
   summarize(
     wis = mean(wis), mae=mean(abs_error),
@@ -346,9 +278,7 @@ knitr::kable(horizon_wk_metrics_US)
 # Aggregated for all states and territories
 horizon_wk_metrics_states <- scores %>%
   rbind(score_baseline) %>%
-  filter(target_end_date <= as.Date("2021-07-05"),
-         forecast_date >= as.Date("2021-01-11") & location == "22",
-         location != "US") %>%
+  filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US")) %>%
   group_by(model, horizon_wk) %>%
   summarize(
     wis = mean(wis), mae=mean(abs_error),
@@ -463,9 +393,7 @@ knitr::kable(wave_metrics_US)
 # Aggregated for all states and territories
 wave_metrics_states <- scores %>%
   rbind(score_baseline) %>%
-  filter(horizon <= 28, 
-         forecast_date >= as.Date("2021-01-11") & location == "22",
-         location != "US") %>%
+  filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US")) %>%
   mutate(
     wave = case_when(
       forecast_date <= as.Date("2021-03-17") ~"winter21",
@@ -534,16 +462,17 @@ For states during both waves, we again see noticeably better coverage rates that
 ### By forecast date (week)
 
 ```{r}  
-# Fix issue with no baseline model showing up
+#models <- c("COVIDhub-baseline", models)
 # Also the WIS graphs aren't readable for the models with smaller WIS
 # change to rWIS? log transform?
 
 # US National
 forecast_date_metrics_US <- scores %>%
+  left_join(mon_dates_df, by = "forecast_date") %>%
   filter(target_end_date <= as.Date("2021-07-05"),
-         forecast_date >= as.Date("2021-01-11"),
+         forecast_date > as.Date("2021-01-04"),
          location == "US") %>%
-  select(model, horizon, forecast_date, target_end_date, true_value, abs_error, wis, coverage_50, coverage_95) %>%
+  select(model, horizon, horizon_wk, forecast_date = mon_fc_dates, target_end_date, true_value, abs_error, wis, coverage_50, coverage_95) %>%
   group_by(forecast_date, model, horizon_wk) %>%
   summarize(
     wis = mean(wis), mae=mean(abs_error),
@@ -553,9 +482,9 @@ forecast_date_metrics_US <- scores %>%
 
 baseline_fc_date_metrics_US <- score_baseline %>%
   filter(target_end_date <= as.Date("2021-07-05"),
-         forecast_date >= as.Date("2021-01-11"),
+         forecast_date > as.Date("2021-01-11"),
          location == "US") %>%
-  select(model, horizon, forecast_date, target_end_date, 
+  select(model, horizon, horizon_wk, forecast_date, target_end_date, 
         true_value, abs_error, wis, coverage_50, coverage_95) %>%
   group_by(forecast_date, model, horizon_wk) %>%
   summarize(
@@ -573,7 +502,7 @@ wis_1wk_plot_US <- forecast_date_metrics_US %>%
   geom_point(aes(color=model), alpha=0.5, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = c(models[4], models[1:3], models[5:7]),
+    breaks = models[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (1-week)") +
@@ -589,7 +518,7 @@ wis_4wk_plot_US <- forecast_date_metrics_US %>%
   geom_point(aes(color=model), alpha=0.5, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = c(models[4], models[1:3], models[5:7]),
+    breaks = models[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (4-week)") +
@@ -608,7 +537,7 @@ cov95_1wk_plot_US <- forecast_date_metrics_US %>%
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = c(models[4], models[1:3], models[5:7]),
+    breaks = models[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (1-week)") +
@@ -625,7 +554,7 @@ cov95_4wk_plot_US <- forecast_date_metrics_US %>%
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = c(models[4], models[1:3], models[5:7]),
+    breaks = models[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (4-week)") +
@@ -639,6 +568,104 @@ wis_1wk_plot_US + wis_4wk_plot_US +
   theme(legend.position='bottom')
 ```
 
+```{r}  
+# States
+forecast_date_metrics_states <- scores %>%
+  left_join(mon_dates_df, by = "forecast_date") %>%
+  filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US")) %>%
+  select(model, horizon, horizon_wk, forecast_date = mon_fc_dates, target_end_date, 
+          true_value, abs_error, wis, coverage_50, coverage_95) %>%
+  group_by(forecast_date, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  )
+
+baseline_fc_date_metrics_states <- score_baseline %>%
+  select(model, horizon, horizon_wk, forecast_date, target_end_date, 
+        true_value, abs_error, wis, coverage_50, coverage_95) %>%
+  group_by(forecast_date, model, horizon_wk) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  )
+
+# WIS
+wis_1wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date, y = wis)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = models[1:7],
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "WIS (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')
+
+wis_4wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date, y = wis)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = models[1:7],
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "WIS (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')
+
+
+# 95% PI Coverage
+cov95_1wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date, y = cov_95)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_hline(aes(yintercept=0.95)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = models[1:7],
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "95% PI Coverage (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')  
+
+cov95_4wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date, y = cov_95)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
+  geom_hline(aes(yintercept=0.95)) +
+  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  scale_color_manual(
+    breaks = models[1:7],
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "95% PI Coverage (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')
+
+wis_1wk_plot_states + wis_4wk_plot_states + 
+  cov95_1wk_plot_states + cov95_4wk_plot_states +
+  plot_layout(ncol = 2, guides='collect') &
+  theme(legend.position='bottom')
+```
 
 ### Scoring Conclusions   
 It seems that the best three models that should be passed onto the testing phase are the Base_arima_noTrans, the Base_arima_4root, and the Topmost8_arima_noTrans models, which seem to take turns being most accurate depending on state or national level overall and during different waves.
