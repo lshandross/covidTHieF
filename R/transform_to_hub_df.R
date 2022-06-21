@@ -59,7 +59,7 @@ transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_l
 
   # Join forecasts together
   hub_df <- cbind(low_fc, point_fc, high_fc) %>%
-    mutate(forecast_date = most_recent_date + 1,
+    mutate(forecast_date = most_recent_date,
            horizon = as.numeric(rownames(low_fc)),
            target = paste(horizon, " day ahead inc hosp"),
            target_end_date = forecast_date + days(horizon)) %>%

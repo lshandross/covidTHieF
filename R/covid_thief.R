@@ -18,6 +18,7 @@ covid_thief <-
   function(df = NULL, ts_col = "value", start_date, end_date, fips_vec, aggregate_levels, frequency, pi_levels, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
+    library(covidHubUtils)
     
     if (is.null(df)) {
       df <- load_truth("HealthData",

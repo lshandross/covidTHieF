@@ -66,12 +66,12 @@ thief_wrapper <-
 
     if (plot.forecasts == TRUE) {
       extended_agg <- extended_truth_data(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency)
-      ts_dates <- get_ts_dates(start_date, most_recent_date, frequency = 56)
+      ts_dates <- get_ts_dates(start_date, most_recent_date, frequency)
       plot_thief(base_fc, reconciled_fc, ts_dates, extended_agg, NULL)
     }
 
     hub_df <- transform_to_hub_df(reconciled_fc, most_recent_date, fips_code, pi_levels, h_ahead, transform.4root)
-    model_info <- tibble(forecast_date = most_recent_date + 1, location = fips_code, level = aggregate_levels,
+    model_info <- tibble(forecast_date = most_recent_date, location = fips_code, level = aggregate_levels,
                          base_fc_obj = base_fc, rec_fc_obj = reconciled_fc)
 
     return(list(hub_df, model_info))
