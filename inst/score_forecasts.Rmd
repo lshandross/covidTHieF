@@ -152,7 +152,7 @@ The plots don't show much difference between the 6 models (although this is part
 We calculate metrics for all three models, aggregating by horizon. Since hospitalizations are forecasted at a daily time scale, a new horizon week variable is created in which scoring metrics are averaged over from a single week Tuesday to the following Monday. We perform these calculations for the entire training phase as well as for each of the two waves that occurred during the training phase.   
 
 ```{r score forecasts, eval = FALSE, echo = FALSE}
-scores_ver <- score_forecasts(forecasts=forecasts_ver, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
+#scores_ver <- score_forecasts(forecasts=forecasts_ver, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
 #score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
 
 # if forecasts are too big for a single call
@@ -177,7 +177,7 @@ save(forecasts_ver, scores_ver, mon_dates_df, file="../data/versioned_fc_df.RDat
 ```
 
 ### Overall metrics
-```{r}
+```{r, warning=FALSE, message=FALSE}
 scores <- scores_ver %>%
   left_join(mon_dates_df, by = "forecast_date") %>%
   mutate(horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_dates)/7)) %>%
@@ -236,7 +236,7 @@ knitr::kable(overall_metrics_states)
 ```
 
 ### Horizon week metrics
-```{r}
+```{r, warning=FALSE, message=FALSE}
 # US National
 horizon_wk_metrics_US <- scores %>%
   rbind(score_baseline) %>%
@@ -323,7 +323,7 @@ knitr::kable(horizon_wk_metrics_states)
 ```
 
 ```{r, message=FALSE, warning=FALSE}  
-#models <- c("COVIDhub-baseline", models)
+models <- c("COVIDhub-baseline", models)
 
 wis_hzn_plot_US <- horizon_wk_metrics_US %>%
 ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
@@ -358,7 +358,7 @@ For the state level, we see noticeably better coverage rates that approach the n
 
 
 ### Metrics by wave
-```{r}  
+```{r, warning=FALSE, message=FALSE}
 # US National
 wave_metrics_US <- scores %>%
   rbind(score_baseline) %>%
@@ -547,7 +547,7 @@ For states during both waves, we again see noticeably better coverage rates that
 
 ### By forecast date (week)
 
-```{r}  
+```{r, warning=FALSE, message=FALSE}
 # Also the WIS graphs aren't readable for the models with smaller WIS
 # change to rWIS? log transform?
 
@@ -760,7 +760,6 @@ It seems that the best three models that should be passed onto the testing phase
 We plot forecasts for three locations (Us National, Texas, and Vermont) for each of the three models. The two state locations were chosen as the highest and lowest hospitalization count locations. The plotted forecasts are spaced 4 weeks apart with 1 - 28 day ahead horizons, starting with the first forecast date, 12/07/20, until the end of the training period, 07/05/21.   
 
 ```{r, warning=FALSE, message=FALSE}
-# What date for truth data? As of the final forecast date?
 full_hosp_truth <- load_truth("HealthData", 
                          "inc hosp", 
                          temporal_resolution="daily",
@@ -811,29 +810,12 @@ The plots don't show much difference between the 6 models (although this is part
 ## Score forecasts
 We calculate metrics for all three models, aggregating by horizon. Since hospitalizations are forecasted at a daily time scale, a new horizon week variable is created in which scoring metrics are averaged over from a single week Tuesday to the following Monday. We perform these calculations for the entire training phase as well as for each of the two waves that occurred during the training phase.   
 
-```{r}
-scores_df <- score_forecasts(forecasts=forecasts_df, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
-scores_list <- list()
-for (i in 1:6) {
-  scores_list[[i]] <- 
-    score_forecasts(
-      forecasts=filter(forecasts_df, model==models[i]),
-      return_format="wide",
-      truth=full_hosp_truth,
-      use_median_as_point=TRUE
-    )
-}
-scores <- c()
-for (i in 1:6) {
-  scores <- rbind(scores, scores_list[[i]])
-}
-#save(scores_df, file="../data/loadedfc_df.RData")
-# score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth)
-#save(forecasts_baseline, score_baseline, file="../data/baseline_fc_scores.RData")
-```
 
 ### Overall metrics
-```{r}
+```{r, warning=FALSE, message=FALSE}
+score_baseline <- select(score_baseline, 1:49)
+models <- c("COVIDhub-baseline", pull(distinct(scores_df, model), 1))
+
 # US National
 overall_metrics_US <- scores_df %>%
   rbind(score_baseline) %>%
@@ -882,7 +864,7 @@ knitr::kable(overall_metrics_states)
 ```
 
 ### Horizon week metrics
-```{r}
+```{r, warning=FALSE, message=FALSE}
 # US National
 horizon_wk_metrics_US <- scores_df %>%
   rbind(score_baseline) %>%
@@ -986,13 +968,43 @@ horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
 knitr::kable(horizon_wk_metrics_states)
 ```
 
+```{r, message=FALSE, warning=FALSE}  
+models <- c("COVIDhub-baseline", models)
+
+wis_hzn_plot_US <- horizon_wk_metrics_US %>%
+ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  geom_point(mapping=aes(col=model), alpha = 0.8) +
+  geom_line(mapping=aes(col=model), alpha = 0.8) +
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
+  labs(title="US",
+       x="Horizon Week", y="Average WIS")
+              
+wis_hzn_plot_states <- horizon_wk_metrics_states %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+  geom_point(mapping=aes(col=model), alpha = 0.8) +
+  geom_line(mapping=aes(col=model), alpha = 0.8) +
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
+  labs(title="States", 
+       x="Horizon Week", y="Average WIS")
+              
+wis_hzn_plot_US + wis_hzn_plot_states +
+  plot_layout(ncol = 2, guides='collect') &
+  theme(legend.position='bottom')
+```
+
 When splitting the results so that US National is separate, we find that for US National the two models that use the base set hierarchy tended to perform the best, with improvements seen over a naive baseline in all metrics except for 95%PI Coverage. These two models are followed by the Topmost8_arima_noTrans model, which showed more comparable performance to the baseline. The Base_arima_noTrans model performed the best in terms of PI Coverage, followed by the Base_arima_4root and Topmost8_arima_noTrans models (with the latter being more consistent with coverage rates for all horizons). In terms of WIS and MAE, the Base_arima_4root model performed the best, followed by the Base_arima_noTrans model. Overall, for the US National level, it seems that there is a pattern that for coverage rates, the models without transformations perform better (and these tend to have smaller prediction intervals) while for WIS and MAE the fourth root transform models perform better; these patterns hold at all horizons. Further, there is a general order to model accuracy in terms of hierarchical structure used: the Base set performs the best, followed by the Topmost8 set, and finally the Multiple3 set.   
 
 For the state level, we see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models. (We also see shrunken WIS and MAE values, although this is likely partially due to the fact that the states have smaller scale values than the National level.) Interestingly, we see fewer improvements to MAE over the baseline but more substantial improvements in terms of coverage rates. It's a little harder to definitively say which models have the best coverage rates, as the results differ between the 50% and 95% intervals and the models are quite similar in coverage rates, especially for the 95% intervals. However, it seems that the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model.   
 
 
 ### Metrics by wave
-```{r}  
+```{r, warning=FALSE, message=FALSE}
 # US National
 wave_metrics_US <- scores_df %>%
   rbind(score_baseline) %>%
@@ -1138,13 +1150,64 @@ wave_metrics_states <- wave_metrics_states %>%
 knitr::kable(wave_metrics_states)
 ```
 
+```{r, message=FALSE, warning=FALSE}
+wis_hzn_plot_winter21_US <- wave_metrics_US %>%
+  filter(wave == "winter21") %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+   geom_point(mapping=aes(col=model), alpha = 0.8) +
+   geom_line(mapping=aes(col=model), alpha = 0.8) +
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
+   labs(title="Winter '21 Wave (US)", x="Horizon Week", y="Average WIS")
+   
+wis_hzn_plot_alpha_US <- wave_metrics_US %>%
+  filter(wave == "alpha") %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+   geom_point(mapping=aes(col=model), alpha = 0.8) +
+   geom_line(mapping=aes(col=model), alpha = 0.8) +
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
+   labs(title="Alpha Wave (US)", x="Horizon Week", y="Average WIS")
+   
+wis_hzn_plot_winter21_states <- wave_metrics_states %>%
+  filter(wave == "winter21") %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+   geom_point(mapping=aes(col=model), alpha = 0.8) +
+   geom_line(mapping=aes(col=model), alpha = 0.8) +
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
+   labs(title="Winter '21 Wave (states)", x="Horizon Week", y="Average WIS")
+
+wis_hzn_plot_alpha_states <- wave_metrics_states %>%
+  filter(wave == "alpha") %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+   geom_point(mapping=aes(col=model), alpha = 0.8) +
+   geom_line(mapping=aes(col=model), alpha = 0.8) +
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
+   labs(title="Alpha Wave (states)", x="Horizon Week", y="Average WIS")
+   
+wis_hzn_plot_winter21_US + wis_hzn_plot_alpha_US + 
+  wis_hzn_plot_winter21_states + wis_hzn_plot_alpha_states +
+  plot_layout(ncol = 2, guides='collect') &
+  theme(legend.position='bottom')
+```
+
 For US National during the alpha wave, the Base_arima_noTrans model performed the best for coverage rates and second best for WIS and MAE at every horizon. The Base_arima_4root model performed best in terms of WIS and MAE but was third for coverage rate while the Topmost8_arima_noTrans model had the second best coverage rates and third best WIS and MAE. During the alpha wave, these models performed the best and tended to have more consistent values for their metrics. The winter21 wave saw noticeably worse values for all metrics at every horizon. Generally, the two models that use the base set hierarchy tended to perform the best for all metrics, although the coverage rates varied a lot by horizon, with the Topmost8_arima_4root and Multiple3_arima_noTrans achieving closer to nominal coverage rates for the 95% interval than even the Base models at horizons greater than 1 week ahead. These results are pretty consistent with improvements over the base-line, which ranged from modest to significant for the best performing models during the alpha wave, especially for WIS and 50% PI coverage. The winter21 wave saw fairly comparable or worse performance compared to the baseline for WIS and MAE. The 50% coverage was better than the baseline for all models, the greatest improvements for the best models, but the 95% coverage could be better or worse for the best models.   
 
 For states during both waves, we again see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models, compared to those of the US National level when broken into waves. During the alpha wave, the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model. During the winter21 wave, the Base_arima_4root model is again generally the best for all metrics at all horizon weeks but sometimes loses out in terms of 95% coverage at longer horizons to other models. Notably during this wave, there are much greater similarities in coverage rates and certain models have better coverage rates for the 50% interval while others have better coverage reads for the 95% one. Similar patterns to the ones described above for the US national level when compared to the baseline were observed.   
 
 ### By forecast date (week)
 
-```{r}  
+```{r, warning=FALSE, message=FALSE}
 # US National
 forecast_date_metrics_US <- scores_df %>%
   rbind(score_baseline) %>%
@@ -1168,66 +1231,82 @@ forecast_date_metrics_US <- scores_df %>%
 
 
 # WIS
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = wis)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
+wis_1wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date, y = wis)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead WIS by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "WIS (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')
 
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = wis)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
+wis_4wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date, y = wis)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead WIS by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "WIS (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')
 
-# MAE
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = mae)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead MAE by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
-
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = mae)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead MAE by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
 
 # 95% PI Coverage
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = cov_95)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
+cov95_1wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date, y = cov_95)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead 95% PI Coverage by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "95% PI Coverage (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')  
 
-ggplot(filter(forecast_date_metrics_US, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = cov_95)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
+cov95_4wk_plot_US <- forecast_date_metrics_US %>%
+  rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date, y = cov_95)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead 95% PI Coverage by model (US)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "95% PI Coverage (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')
 
-      
-# Aggregated for all states and territories
+wis_1wk_plot_US + wis_4wk_plot_US + 
+  cov95_1wk_plot_US + cov95_4wk_plot_US +
+  plot_layout(ncol = 2, guides='collect') &
+  theme(legend.position='bottom')
+```
+
+```{r, warning=FALSE, message=FALSE}
+# States
 forecast_date_metrics_states <- scores_df %>%
   rbind(score_baseline) %>%
   filter(horizon <= 28, 
@@ -1239,7 +1318,8 @@ forecast_date_metrics_states <- scores_df %>%
       horizon %in% c(8:14) ~ 2,
       horizon %in% c(15:21) ~ 3,
       horizon %in% c(22:28) ~ 4
-    )) %>%
+    )
+  ) %>%
   group_by(forecast_date, model, horizon_wk) %>%
   summarize(
     wis = mean(wis), mae=mean(abs_error),
@@ -1247,67 +1327,81 @@ forecast_date_metrics_states <- scores_df %>%
     cov_95 = mean(coverage_95)
   )
 
+
 # WIS
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = wis)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
+wis_1wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date, y = wis)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead WIS by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "WIS (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')
 
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = wis)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
+wis_4wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date, y = wis)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead WIS by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "WIS (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')
 
-# MAE
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = mae)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead MAE by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
-
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = mae)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead MAE by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
 
 # 95% PI Coverage
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 1), 
-        aes(x = forecast_date + weeks(1), y = cov_95)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
+cov95_1wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 1) %>%
+  ggplot(aes(x = forecast_date, y = cov_95)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 1-week ahead 95% PI Coverage by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "95% PI Coverage (1-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')  
 
-ggplot(filter(forecast_date_metrics_states, horizon_wk == 4), 
-        aes(x = forecast_date + weeks(1), y = cov_95)) +
-  geom_line(aes(color=model)) +
-  geom_point(aes(color=model)) +
+cov95_4wk_plot_states <- forecast_date_metrics_states %>%
+  rbind(baseline_fc_date_metrics_states) %>%
+  filter(horizon_wk == 4) %>%
+  ggplot(aes(x = forecast_date, y = cov_95)) +
+  geom_line(aes(color=model), alpha = 0.5) +
+  geom_point(aes(color=model), alpha=0.5, size=0.75) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  labs(title = "Average 4-week ahead 95% PI Coverage by model (states)") +
-  theme(axis.ticks.length.x = unit(0.5, "cm"),
-        axis.text.x = element_text(vjust = 7, hjust = -0.2))  
+  scale_color_manual(
+    breaks = c(models[1:3], models[6:7], models[4:5]),
+    values = c("black", "red", "darkorange",
+      "green", "blue", "purple", "magenta")) +
+  labs(title = "95% PI Coverage (4-week)") +
+  theme(axis.ticks.length.x = unit(0.1, "cm"),
+        axis.text.x = element_text(vjust = 2, hjust = -0.2),
+        legend.position = 'bottom')
 
+wis_1wk_plot_states + wis_4wk_plot_states + 
+  cov95_1wk_plot_states + cov95_4wk_plot_states +
+  plot_layout(ncol = 2, guides='collect') &
+  theme(legend.position='bottom')
 ```
-
 
 ### Scoring Conclusions   
 It seems that the best three models that should be passed onto the testing phase are the Base_arima_noTrans, the Base_arima_4root, and the Topmost8_arima_noTrans models, which seem to take turns being most accurate depending on state or national level overall and during different waves.
