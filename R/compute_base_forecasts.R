@@ -17,10 +17,13 @@ compute_base_forecasts <-
     temporal_hierarchy <- temporal_hierarchy
     pi_levels <- pi_levels
     base_forecasts <- list()
+    max_frequency <- max(unlist(lapply(temporal_hierarchy, frequency), use.names=FALSE))
     for(i in seq_along(temporal_hierarchy)){
       base_forecasts[[i]] <-
         forecast(auto.arima(temporal_hierarchy[[i]]),
-                 h=frequency(temporal_hierarchy[[i]])*2, # necessary to avoid top-level producing NAs
+                 h=ifelse(max_frequency > 28, 
+                          frequency(temporal_hierarchy[[i]])*2,
+                          56/(max_frequency(frequency(temporal_hierarchy[[i]])))),
                  level = pi_levels)
     }
     return(base_forecasts)
