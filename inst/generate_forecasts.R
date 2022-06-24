@@ -1,5 +1,4 @@
 library(doParallel)
-library(parallel)
 library(covidHubUtils)
 library(lubridate)
 library(readr)
@@ -64,37 +63,44 @@ generate_thief_wk <-
     lapply(func_list, source)
 
     truth_df <- training_truth_df %>%
-      filter(forecast_date == fc_dates) %>%
-      pull(2) %>% pluck(1)
+       filter(forecast_date == fc_dates) %>%
+       pull(2) %>% pluck(1)
 
     covid_thief(truth_df, "value",
       as.Date("2020-07-27"), fc_dates, # change as needed
       fips_vec = states53,
-      aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, # change as needed
-      pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
+      aggregate_levels = list(28, 14, 7, 1), frequency = 28, # change as needed
+      pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
   }
 
 # Export our function on the cluster
 clusterExport(cl, list('generate_thief_wk', 'states53', 'sun_fc_dates', 'training_truth_df'))
-#clusterExport(cl, list('generate_thief_wk', 'mon_fc_dates'))
 
 # Run function across previously specified number of cores
 system.time({
-  thief_fc_full <- c(parLapply(cl, sun_fc_dates[6:9], fun = generate_thief_wk))
+  thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:6], fun = generate_thief_wk))
 })
 
 #models <- c("THieF_4wk-4root", "THieF_4wk-noTrans", "THieF_8wk-4root", "THieF_8wk-noTrans", "THieF_12wk-4root", "THieF_12wk-noTrans")
 
-#modfc_4wk_noTrans <- c()
-#modfc_8wk_4root <- c()
-for (i in 1:4) {
-  write_csv(thief_fc_full[[i]][[1]], file=paste("data/", models[3], "/", mon_fc_dates[i+5], "-", models[3], ".csv", sep=""))
-  modfc_8wk_4root <- rbind(modfc_8wk_4root, thief_fc_full[[i]][[2]])
-#  modfc_4wk_noTrans <- rbind(modfc_4wk_noTrans, thief_fc_full[[i]][[2]])
+#modfc_12wk_noTrans <- c()
+#modfc_12wk_4root <- c()
+#load(file=paste("data/", models[4], "/", models[4], ".RData", sep=""))
+for (i in 1:3) {
+#  thief_fc_full[[i]][[1]] <- thief_fc_full[[i]][[1]] %>%
+#    mutate(forecast_date = forecast_date - 1, target_end_date = target_end_date - 1)
+  write_csv(thief_fc_full[[i]][[1]], file=paste("data/", models[5], "/", mon_fc_dates[i+27], "-", models[5], ".csv", sep=""))
+#  modfc_4wk_4root <- rbind(modfc_4wk_4root, thief_fc_full[[i]][[2]])
+  modfc_12wk_4root <- rbind(modfc_12wk_4root, thief_fc_full[[i]][[2]])
 }
 
-save(modfc_8wk_4root, file=paste("data/", models[3], "/", models[3], ".RData", sep=""))
+#modfc_12wk_4root <- rbind(modfc_8wk_4root, filter(modfc_4wk_noTrans, forecast_date == as.Date("2021-06-06"))) %>% arrange(forecast_date, location, level)
+save(modfc_12wk_4root, file=paste("data/", models[5], "/", models[5], ".RData", sep=""))
 
+for (i in 1:21) {
+  csv.temp <- read_csv(file=paste("data/", models[2], "/", mon_fc_dates[i], "-", models[2], ".csv", sep=""))
+  write_csv(csv.temp, file=paste("data/", models[3], "/", mon_fc_dates[i], "-", models[3], ".csv", sep=""))
+}
 
 # Pull forecasts from other models
 #hub_models <- # eligible models
