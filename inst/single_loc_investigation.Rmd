@@ -15,7 +15,7 @@ library(zoltr)
 library(covidHubUtils)
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
+```{r load in data, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
 func_list <- list.files(path = "../R", pattern=".R", full.names=TRUE)
 lapply(func_list, source)
 
@@ -35,39 +35,30 @@ full_hosp_truth <- load_truth("HealthData",
                    arrange(location, target_end_date)
 load(file="../data/versioned_truth_training.RData")
 
-start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-04")
+start_date = as.Date("2020-07-27"); end_date_ = as.Date("2021-01-03")
 pi_levels = c(10 * (1:9), 95, 98)
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
+```{r basic function testing, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
 test <- 
   aggregate_thief_df(
-    training_truth_list[[5]], ts_col = "value", 
-    start_date, end_date, fips_code = "04", aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) 
+    NULL, ts_col = "value", 
+    start_date, end_date_, fips_code = "04", aggregate_levels = list(28, 14, 7, 1), frequency = 28) 
 plot_thief_agg(test, start_date)
 temp <- compute_base_forecasts(test, pi_levels)
-temp_reconciled <- reconcilethief(temp, aggregatelist = list(56, 28, 14, 7, 1)) # produces a warning
+temp_reconciled <- reconcilethief(temp, aggregatelist = list(28, 14, 7, 1)) # produces a warning
 
-extended_test <- extended_truth_data(full_hosp_truth, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56)
-dates_test <- get_ts_dates(start_date, end_date, frequency = 56) 
+extended_test <- extended_truth_data(NULL, ts_col = "value", start_date, end_date_, fips_code = "04", aggregate_levels = list(28, 14, 7, 1), frequency = 14)
+dates_test <- get_ts_dates(start_date, end_date_, frequency = 28) 
 plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test) 
-temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "48", pi_levels)
+trd <- transform_to_hub_df(temp_reconciled, end_date_, "04", pi_levels, h_ahead = 35)
 
 hub_test <- thief_wrapper(NULL, ts_col = "value", 
-  start_date, end_date, fips_code = "US",
-  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
+  start_date, end_date_, fips_code = "04",
+  aggregate_levels = list(14, 7, 1), frequency = 14,
   pi_levels = pi_levels,
   plot.aggregates = TRUE, plot.forecasts = TRUE)
 ```
-
-```{r}
-full_hosp_truth %>%
-  filter(location == "48", 
-    target_end_date %in% c(start_date:end_date)) %>%
-  select(target_end_date, value) %>%
-  plot()
-```
-
 
 ```{r}
 truth_comparison_04_210104 <- full_hosp_truth %>%
@@ -119,7 +110,7 @@ for (i in 1:30) {
 ```
 
 ```{r}
-start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-04")
+start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-29")
 
 base_fc_no_04_210104 <- modfc_8wk_noTrans %>%
   filter(location == "04", forecast_date == as.Date("2021-01-04")) %>%
@@ -142,19 +133,57 @@ plot_thief_agg(test, start_date)
 temp <- compute_base_forecasts(test, pi_levels)
 temp_reconciled <- reconcilethief(temp, aggregatelist = list(56, 28, 14, 7, 1)) # produces a warning
 plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, agg.names = agg.names) 
-temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "04", pi_levels, TRUE)
+temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "04", pi_levels, transform.4root = TRUE)
 
 temp_reconciled2 <- transform_forecasts(forecasts=temp)
 temp_rec_df2 <- transform_to_hub_df(temp_reconciled2, end_date-2, "04", pi_levels, FALSE)
 temp_rec_df1 <- thd(temp_reconciled, end_date-2, "04", pi_levels, TRUE)
 
   
-thief_wrapper(training_truth_list[[5]], ts_col = "value", 
-  start_date, end_date, fips_code = "04",
-  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
+thief_wrapper(NULL, ts_col = "value", 
+  start_date, end_date, fips_code = "US",
+  aggregate_levels = list(14, 7, 1), frequency = 14,
   pi_levels = pi_levels,
   plot.aggregates = TRUE, plot.forecasts = TRUE)
 ```
 
-```{r}
+```{r turn stored model info into forecast csv's}
+plot_thief(base_fc_no_04_210104, rec_fc_no_04_210104, dates_test)
+rec_fc_no_04_210104 %>% transform_to_hub_df(end_date-1, "04", pi_levels, FALSE)
+
+load(paste("../data/", models[3], "/", models[3], "2.RData", sep=""))
+sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:29))
+fips_vec <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
+
+thief_df <- map_dfr(
+  .x = fips_vec,
+  .f = function(fips_code) {
+    modfc_8wk_4root %>%
+      filter(location == fips_code, # will have to iterate through locations
+            forecast_date == sun_fc_dates[27]) %>%
+      ungroup() %>%
+      pull(rec_fc_obj) %>%
+      #as.list() %>%
+      transform_to_hub_df(sun_fc_dates[27]-1, fips_code, pi_levels, TRUE)
+  }
+)
+
+write_csv(thief_df, file=paste("../data/", models[3], "/", mon_fc_dates[27], "-", models[3], ".csv", sep=""))
+```
+
+```{r sarima covid fc}
+ts <- get_truth_ts(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 1, transform.4root = FALSE)
+base_forecasts <- forecast(auto.arima(ts), h=45, level = pi_levels)
+extended_truth <- suppressWarnings(get_truth_ts(df=sun_training_truth_list[[5]], ts_col="value", start_date, end_date + 45, fips_code = "04", frequency = 1))
+#ts_dates <- get_ts_dates(start_date, end_date, frequency=1)
+
+plot(base_forecasts, shadecols = c("light gray", "#EEC2C2", "#900000"),
+    xaxt = "n", #axes = FALSE,
+    ylim = c(0, max(base_forecasts$x, base_forecasts$upper)))
+lines(base_forecasts$mean, col="red", lwd=2) # plots red base forecasts line
+if(!is.null(extended_truth)) lines(extended_truth, col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
+#axis(1, at=1:(periods + 1), labels = ts_dates) # changes axis labels to provided dates
+axis(2)
+
+sarima_wrapper(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 1, pi_levels, plot.forecasts = TRUE, transform.4root = FALSE)
 ```
