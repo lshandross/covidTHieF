@@ -84,15 +84,15 @@ get_truth_ts <-
 #' @param pi_levels A vector of prediction interval levels to calculate.
 #' @param plot.ts \code{logical} that specifies whether a plot of the original time series should be generated.
 #' @param plot.forecasts \code{logical} that specifies whether a plot of the forecasts should be generated.
-#' @param transform.4root \code{logical} that specifies whether a variance stabilizing fourth root transformation should be performed on the data. (This data transformation is undone after all of the forecasts are reconciled and re-formatted into a data frame.)
+#' @param transform.4root \code{logical} that specifies whether a variance stabilizing fourth root transformation should be performed on the data. (This data transformation is undone after all of the forecasts are re-formatted into a data frame.)
 #'
-#' @return A list containing two items: a data frame containing COVID-19 incident hospitalization forecasts with a US COVID-19 Forecast Hub format and a data frame containing the base forecast object and the reconciled forecast object with other relevant identifying information.
+#' @return A list containing two items: a data frame containing COVID-19 incident hospitalization forecasts with a US COVID-19 Forecast Hub format and a data frame containing the base forecast object with other relevant identifying information.
 #' @export
 #'
 #' @examples
 
-thief_wrapper <-
-  function(df = NULL, ts_col = "value", start_date, end_date, fips_code, frequency = 1, pi_levels, plot.ts = TRUE, plot.forecasts = TRUE, transform.4root = FALSE) {
+sarima_wrapper <-
+  function(df = NULL, ts_col = "value", start_date, end_date, fips_code, frequency = 1, pi_levels, plot.forecasts = TRUE, transform.4root = FALSE) {
     library(tidyverse)
     library(lubridate)
     library(covidHubUtils)
@@ -128,19 +128,27 @@ thief_wrapper <-
     if (as.numeric(end_date - most_recent_date) > 1) {
       warning(paste("Forecasts will be made as of", most_recent_date + 1, "due to insufficient truth data."))
     }
-    h_ahead <- 35 + (as.numeric(end_date - most_recent_date) + 1)
+    h_ahead <- 42 + (as.numeric(end_date - most_recent_date) + 1)
+    periods <- floor((as.numeric(most_recent_date - start_date) + 1) / frequency)
     
-    thief_aggregation <- 
+    time_series <- 
       suppressWarnings(get_truth_ts(df, ts_col, start_date, end_date, fips_code, frequency, transform.4root))
       
     #if (plot.ts == TRUE) {plot_thief_agg(thief_aggregation, start_date) }
 
-    base_forecasts <- forecast(auto.arima(ht_day_ts_, h=h_ahead, level = pi_levels))
+    base_forecasts <- forecast(auto.arima(time_series), h=h_ahead, level = pi_levels)
 
     if (plot.forecasts == TRUE) {
-      extended_agg <- extended_truth_data(df, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency)
+      extended_truth <- 
+        suppressWarnings(get_truth_ts(df, ts_col, start_date, end_date + days(h_ahead), fips_code, frequency))
       ts_dates <- get_ts_dates(start_date, most_recent_date, frequency)
-#      plot_thief(base_fc, forecasts, ts_dates, extended_agg, NULL)
+      plot(base_forecasts, shadecols = c("light gray", "#EEC2C2", "#900000"),
+          xaxt = "n", #axes = FALSE,
+          ylim = c(0, max(base_forecasts$x, base_forecasts$upper)))
+      lines(base_forecasts$mean, col="red", lwd=2) # plots red base forecasts line
+      if(!is.null(extended_truth)) lines(extended_truth, col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
+      axis(1, at=1: ifelse(periods != length(time_series), periods + 1, periods), labels = ts_dates) # changes axis labels to provided dates
+      axis(2)
     }
 
     hub_df <- transform_to_hub_df(forecasts, most_recent_date, fips_code, pi_levels, h_ahead, transform.4root)
