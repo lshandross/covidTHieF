@@ -1,6 +1,6 @@
 #' Transform temporal hierarchical COVID-19 forecasts to US COVID-19 Forecast Hub-formatted data frame
 #'
-#' @param forecast_list An object of class \code{forecast} to be transformed into a data frame
+#' @param forecasts An object of class \code{forecast} to be transformed into a data frame
 #' @param most_recent_date A date from which the truth data ends and the day before the forecasts begin. Used to set the \code{forecast_date} in the new data frame.
 #' @param fips_code A 2-digit code specifying a United States state or territory of type \code{char}. Used to set the \code{location} in the new data frame.
 #' @param pi_levels A vector of prediction interval levels to calculate. Used to obtain the corresponding \code{quantile} value in the new data frame.
@@ -11,16 +11,12 @@
 #' @export
 #'
 #' @examples
-transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_levels, h_ahead = 35, transform.4root = FALSE) {
+transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_levels, h_ahead = 56, transform.4root = FALSE) {
   library(tidyverse)
   library(lubridate)
   library(forecast)
   library(thief)
   library(covidHubUtils)
-
-  # if forecast_list is not a a data frames, stop "Please provide a a data frames"
-
-  thief_forecast <- forecast_list
 
   if (fips_code %in% dplyr::pull(hub_locations, fips)) { 
     fips_code <- fips_code
@@ -29,7 +25,11 @@ transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_l
   }
     
   # Lower Forecasts
-  low_fc <- as_tibble(thief_forecast[[1]][["lower"]]) # Change TS object to tibble
+  if (is.list(forecasts)) {
+    low_fc <- as_tibble(forecasts[[1]][["lower"]])
+  } else {
+    low_fc <- as_tibble(forecasts[["lower"]])
+  }
   low_fc[low_fc < 0] <- 0 # Ensure all negative values are changed to 0
 
   old_col_names <- colnames(low_fc)
@@ -40,7 +40,11 @@ transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_l
   colnames(low_fc) <- c(new_col_names)
 
   # Higher Forecasts
-  high_fc <- as_tibble(thief_forecast[[1]][["upper"]]) # Change TS object to tibble
+  if (is.list(forecasts)) {
+    high_fc <- as_tibble(forecasts[[1]][["upper"]])
+  } else {
+    high_fc <- as_tibble(forecasts[["upper"]])
+  }
   high_fc[high_fc < 0] <- 0 # Ensure all negative values are changed to 0
 
   old_col_names <- colnames(high_fc)
@@ -52,8 +56,13 @@ transform_to_hub_df <- function(forecast_list, most_recent_date, fips_code, pi_l
 
 
   # Point Forecasts
-  point_fc <- as_tibble(thief_forecast[[1]][["mean"]]) %>% # Change TS object to tibble
-    transmute(`0.5`= as.numeric(x))
+  if (is.list(forecasts)) {
+    point_fc <- as_tibble(forecasts[[1]][["mean"]]) %>%
+      transmute(`0.5`= as.numeric(x))
+  } else {
+    point_fc <- as_tibble(forecasts[["mean"]]) %>%
+      transmute(`0.5`= as.numeric(x))
+  }
   point_fc[point_fc < 0] <- 0 # Ensure all negative values are changed to 0
 
 
