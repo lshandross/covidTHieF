@@ -129,10 +129,10 @@ sarima_wrapper <-
       warning(paste("Forecasts will be made as of", most_recent_date + 1, "due to insufficient truth data."))
     }
     h_ahead <- 42 + (as.numeric(end_date - most_recent_date) + 1)
-    periods <- floor((as.numeric(most_recent_date - start_date) + 1) / frequency)
+    periods_extended <- floor((as.numeric(most_recent_date + h_ahead - start_date) + 1) / frequency)
     
     time_series <- 
-      suppressWarnings(get_truth_ts(df, ts_col, start_date, end_date, fips_code, frequency, transform.4root))
+      suppressWarnings(get_truth_ts(df, ts_col, start_date, most_recent_date, fips_code, frequency, transform.4root))
       
     #if (plot.ts == TRUE) {plot_thief_agg(thief_aggregation, start_date) }
 
@@ -141,13 +141,13 @@ sarima_wrapper <-
     if (plot.forecasts == TRUE) {
       extended_truth <- 
         suppressWarnings(get_truth_ts(df, ts_col, start_date, end_date + days(h_ahead), fips_code, frequency))
-      ts_dates <- get_ts_dates(start_date, most_recent_date, frequency)
+      ts_dates <- get_ts_dates(start_date, most_recent_date + days(h_ahead), frequency)
       plot(forecasts, shadecols = c("light gray", "#EEC2C2", "#900000"),
           xaxt = "n", #axes = FALSE,
           ylim = c(0, max(forecasts$x, forecasts$upper)))
       lines(forecasts$mean, col="red", lwd=2) # plots red base forecasts line
       if(!is.null(extended_truth)) lines(extended_truth, col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
-      axis(1, at=1: ifelse(periods != length(time_series), periods + 1, periods), labels = ts_dates) # changes axis labels to provided dates
+      axis(1, at=1:periods_extended+1, labels = ts_dates) # changes axis labels to provided dates
       axis(2)
     }
 
