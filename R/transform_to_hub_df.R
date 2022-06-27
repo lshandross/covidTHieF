@@ -24,7 +24,7 @@ transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_level
     stop("Please provide a US location fips code.")
   }
     
-  if (is.list(forecasts)) {
+  if (!is.forecast(forecasts)) {
     num_fc <- c()
     for (i in 1:length(forecasts)) {
       num_fc[i] <- length(forecasts[[i]][["mean"]])
@@ -33,7 +33,7 @@ transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_level
   }
     
   # Lower Forecasts
-  if (is.list(forecasts)) {
+  if (!is.forecast(forecasts)) {
     low_fc <- as_tibble(forecasts[[index]][["lower"]])
   } else {
     low_fc <- as_tibble(forecasts[["lower"]])
@@ -48,7 +48,7 @@ transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_level
   colnames(low_fc) <- c(new_col_names)
 
   # Higher Forecasts
-  if (is.list(forecasts)) {
+  if (!is.forecast(forecasts)) {
     high_fc <- as_tibble(forecasts[[index]][["upper"]])
   } else {
     high_fc <- as_tibble(forecasts[["upper"]])
@@ -64,7 +64,7 @@ transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_level
 
 
   # Point Forecasts
-  if (is.list(forecasts)) {
+  if (!is.forecast(forecasts)) {
     point_fc <- as_tibble(forecasts[[index]][["mean"]]) %>%
       transmute(`0.5`= as.numeric(x))
   } else {
