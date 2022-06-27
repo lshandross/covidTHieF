@@ -136,23 +136,24 @@ sarima_wrapper <-
       
     #if (plot.ts == TRUE) {plot_thief_agg(thief_aggregation, start_date) }
 
-    base_forecasts <- forecast(auto.arima(time_series), h=h_ahead, level = pi_levels)
+    forecasts <- forecast(auto.arima(time_series), h=h_ahead, level = pi_levels)
 
     if (plot.forecasts == TRUE) {
       extended_truth <- 
         suppressWarnings(get_truth_ts(df, ts_col, start_date, end_date + days(h_ahead), fips_code, frequency))
       ts_dates <- get_ts_dates(start_date, most_recent_date, frequency)
-      plot(base_forecasts, shadecols = c("light gray", "#EEC2C2", "#900000"),
+      plot(forecasts, shadecols = c("light gray", "#EEC2C2", "#900000"),
           xaxt = "n", #axes = FALSE,
-          ylim = c(0, max(base_forecasts$x, base_forecasts$upper)))
-      lines(base_forecasts$mean, col="red", lwd=2) # plots red base forecasts line
+          ylim = c(0, max(forecasts$x, forecasts$upper)))
+      lines(forecasts$mean, col="red", lwd=2) # plots red base forecasts line
       if(!is.null(extended_truth)) lines(extended_truth, col='black', lwd=1.5, lty = "dotted") # plots extended truth data against forecasts
       axis(1, at=1: ifelse(periods != length(time_series), periods + 1, periods), labels = ts_dates) # changes axis labels to provided dates
       axis(2)
     }
 
     hub_df <- transform_to_hub_df(forecasts, most_recent_date, fips_code, pi_levels, h_ahead, transform.4root)
-    model_info <- tibble(forecast_date = most_recent_date, location = fips_code, fc_obj = forecasts)
+    model_info <- tibble(forecast_date = most_recent_date, location = fips_code, fc_obj = list(forecasts))
+      # tibble objects can't have forecasts as a column data type (would have to use tsibble instead)
 
     return(list(hub_df, model_info))
   }
