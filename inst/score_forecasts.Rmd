@@ -156,24 +156,24 @@ We calculate metrics for all three models, aggregating by horizon. Since hospita
 #score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
 
 # if forecasts are too big for a single call
-scores_list <- list()
-for (i in 1:6) {
-  scores_list[[i]] <- 
-    score_forecasts(
-      forecasts=filter(forecasts_ver, model==models[i]),
-      return_format="wide",
-      truth=full_hosp_truth,
-      use_median_as_point=TRUE
-    )
-}
-scores <- c()
-for (i in 1:6) {
-  scores <- rbind(scores, scores_list[[i]])
-}
-
-scores_ver <- scores
-
-save(forecasts_ver, scores_ver, mon_dates_df, file="../data/versioned_fc_df.RData")
+# scores_list <- list()
+# for (i in 1:6) {
+#   scores_list[[i]] <- 
+#     score_forecasts(
+#       forecasts=filter(forecasts_ver, model==models[i]),
+#       return_format="wide",
+#       truth=full_hosp_truth,
+#       use_median_as_point=TRUE
+#     )
+# }
+# scores <- c()
+# for (i in 1:6) {
+#   scores <- rbind(scores, scores_list[[i]])
+# }
+# 
+# scores_ver <- scores
+# 
+# save(forecasts_ver, scores_ver, mon_dates_df, file="../data/versioned_fc_df.RData")
 ```
 
 ### Overall metrics
@@ -751,6 +751,179 @@ wis_1wk_plot_states + wis_4wk_plot_states +
   plot_layout(ncol = 2, guides='collect') &
   theme(legend.position='bottom')
 ```
+
+### Metrics By Location
+```{r}
+library(surveillance)
+library(tidytext)
+
+#reorder states, reorder models 
+theme_set(theme_bw())
+data("hub_locations")
+
+model_levels <- pull(overall_metrics_states, model)
+
+inc_scores <- rbind(scores, score_baseline) %>%
+  filter(target_end_date <= as.Date("2021-07-05"),
+         ifelse(location == "22" | location == "US", 
+                forecast_date > as.Date("2021-01-04"), 
+                forecast_date >= as.Date("2020-12-05")))
+
+###################################################################################################
+# Calculate pairwise WIS
+
+# helper function
+next_monday <- function(date){
+  nm <- rep(NA, length(date))
+  for(i in seq_along(date)){
+    nm[i] <- date[i] + (0:6)[weekdays(date[i] + (0:6)) == "Monday"]
+  }
+  return(as.Date(nm, origin = "1970-01-01"))
+}
+
+
+# bring all forecast_dates to Monday:
+inc_scores$forecast_date <- next_monday(inc_scores$forecast_date)
+
+# select relevant columns:
+heat_scores <- inc_scores %>% 
+  left_join(hub_locations[1:2], by = c("location" = "fips")) %>%
+  select("model", "forecast_date", "location", "location_name", "horizon", "abs_error", "wis") %>% 
+  droplevels()
+
+# the included models and locations:
+models <- unique(heat_scores$model)
+locations <- unique(heat_scores$location)
+location_names <- unique(heat_scores$location_name)
+
+# function for pairwise comparison of models
+pairwise_comparison <- function(heat_scores, mx, my, subset = rep(TRUE, nrow(heat_scores)),
+                                permutation_test = FALSE){
+  
+  ############## This line had been deleted, but needs to be included ##########################
+  # apply subset:
+  heat_scores <- heat_scores[subset, ]
+  
+  # subsets of available heat_scores for both models:
+  subx <- subset(heat_scores, model == mx)
+  suby <- subset(heat_scores, model == my)
+  
+  # merge together and restrict to overlap:
+  sub <- merge(subx, suby, by = c("forecast_date", "location", "horizon"),
+               all.x = FALSE, all.y = FALSE)
+  
+  # compute ratio:
+  ratio <- sum(sub$wis.x) / sum(sub$wis.y)
+  
+  # perform permutation tests:
+  if(permutation_test){
+    pval <- permutationTest(sub$wis.x, sub$wis.y,
+                            nPermutation = 999)$pVal.permut
+    
+    # aggregate by forecast date:
+    sub_fcd <- aggregate(cbind(wis.x, wis.y) ~ forecast_date, data = sub, FUN = mean) 
+    pval_fcd <- permutationTest(sub_fcd$wis.x, sub_fcd$wis.y,
+                                nPermutation = 999)$pVal.permut
+  }else{
+    pval <- NULL
+    pval_fcd <- NULL
+  }
+  
+  return(list(ratio = ratio, pval = pval, pval_fcd = pval_fcd, mx = mx, my = my))
+}
+
+
+
+
+# compute pairwise and relative WIS for each location separately:
+for(i in seq_along(locations)){
+  
+  # select location:
+  loc <- locations[i]
+  loc_name <- location_names[i]
+  
+  # matrix to store:
+  results_ratio_temp <- matrix(ncol = length(models),
+                               nrow = length(models),
+                               dimnames = list(models, models)) 
+  
+  # run pairwise comparison for chosen location:
+  for(mx in seq_along(models)){
+    for(my in 1:mx){
+      pwc <- pairwise_comparison(heat_scores = heat_scores, mx = models[mx], my = models[my],
+                                 permutation_test = FALSE, # disable permutation test to speed up things
+                                 subset = heat_scores$location == loc) # this will subset to the respective location inside the function
+      results_ratio_temp[mx, my] <- pwc$ratio
+      results_ratio_temp[my, mx] <- 1/pwc$ratio
+    }
+  }
+  
+  # compute the geometric means etc
+  ind_baseline <- which(rownames(results_ratio_temp) == "COVIDhub-baseline")
+  geom_mean_ratios_temp <- exp(rowMeans(log(results_ratio_temp[, -ind_baseline]), na.rm = TRUE))
+  ratios_baseline_temp <- results_ratio_temp[, "COVIDhub-baseline"]
+  ratios_baseline2_temp <- geom_mean_ratios_temp/geom_mean_ratios_temp["COVIDhub-baseline"]
+  
+  # summarize results:
+  to_add <- data.frame(model = names(ratios_baseline2_temp),
+                       location = loc,
+                       location_name = loc_name,
+                       relative_wis = ratios_baseline2_temp,
+                       log_relative_wis = log(ratios_baseline2_temp))
+  
+  # append to already stored:
+  if(i == 1){ # initialize at first location
+    average_by_loc <- to_add
+  }else{
+    average_by_loc <- rbind(average_by_loc, to_add)
+  }
+  
+  cat("Finished", loc_name, "\n")
+}
+
+
+
+## plot of true data by state, tiled
+truth_dat <- full_hosp_truth %>%
+  filter(target_end_date <= as.Date("2021-07-05")) %>%
+  group_by(location, location_name) %>%
+  summarize(cum_value=sum(value)) %>%
+  ungroup() %>%
+  mutate(location_name = reorder(location_name, cum_value)) %>%
+  pull(location_name)
+
+
+average_by_loc_to_plot <- average_by_loc %>%
+  mutate(location_name = fct_relevel(location_name, levels(truth_dat)),
+         relative_wis_text = sprintf("%.2f", round(relative_wis, 2)),
+         log_relative_wis = log2(relative_wis),
+         model = fct_relevel(model, model_levels)) %>%
+  filter(!is.na(relative_wis)) 
+
+
+# plot:
+fig_wis_loc <- ggplot(average_by_loc_to_plot, 
+                      aes(x=model, y=location_name, 
+                          fill= scales::oob_squish(log_relative_wis, range = c(- 2.584963, 2.584963)))) +
+  geom_tile() +
+  geom_text(aes(label = relative_wis_text), size = 2.5) + # I adapted the rounding
+  scale_fill_gradient2(low = "steelblue", high = "red", midpoint = 0, na.value = "grey50", 
+                       name = "Relative WIS", 
+                       breaks = c(-2,-1,0,1,2), 
+                       labels =c("0.25", 0.5, 1, 2, 4)) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+        #                            color=ifelse(
+        #                              levels(average_by_loc_to_plot$model) %in% models_to_highlight,
+        #                              "red", "black")),
+        axis.title.x = element_text(size = 9),
+        axis.text.y = element_text(size = 9),
+        title = element_text(size = 9))
+
+#pdf(file = "figures/fig-wis-location.pdf",width=8, height=8)
+print(fig_wis_loc)
+```
+
 
 ### Scoring Conclusions   
 It seems that the best three models that should be passed onto the testing phase are the Base_arima_noTrans, the Base_arima_4root, and the Topmost8_arima_noTrans models, which seem to take turns being most accurate depending on state or national level overall and during different waves.
@@ -1402,6 +1575,123 @@ wis_1wk_plot_states + wis_4wk_plot_states +
   plot_layout(ncol = 2, guides='collect') &
   theme(legend.position='bottom')
 ```
+
+### Metrics By Location
+```{r}
+#reorder states, reorder models 
+model_levels <- pull(overall_metrics_states, model)
+
+inc_scores <- score_baseline %>%
+  select(-horizon_wk) %>%
+  rbind(scores_df) %>%
+  filter(target_end_date <= as.Date("2021-07-05"), horizon <= 28)
+
+###################################################################################################
+# Calculate pairwise WIS
+
+# bring all forecast_dates to Monday:
+inc_scores$forecast_date <- next_monday(inc_scores$forecast_date)
+
+# select relevant columns:
+heat_scores <- inc_scores %>% 
+  left_join(hub_locations[1:2], by = c("location" = "fips")) %>%
+  select("model", "forecast_date", "location", "location_name", "horizon", "abs_error", "wis") %>% 
+  droplevels()
+
+# the included models and locations:
+models <- unique(heat_scores$model)
+locations <- unique(heat_scores$location)
+location_names <- unique(heat_scores$location_name)
+
+
+# compute pairwise and relative WIS for each location separately:
+for(i in seq_along(locations)){
+  
+  # select location:
+  loc <- locations[i]
+  loc_name <- location_names[i]
+  
+  # matrix to store:
+  results_ratio_temp <- matrix(ncol = length(models),
+                               nrow = length(models),
+                               dimnames = list(models, models)) 
+  
+  # run pairwise comparison for chosen location:
+  for(mx in seq_along(models)){
+    for(my in 1:mx){
+      pwc <- pairwise_comparison(heat_scores = heat_scores, mx = models[mx], my = models[my],
+                                 permutation_test = FALSE, # disable permutation test to speed up things
+                                 subset = heat_scores$location == loc) # this will subset to the respective location inside the function
+      results_ratio_temp[mx, my] <- pwc$ratio
+      results_ratio_temp[my, mx] <- 1/pwc$ratio
+    }
+  }
+  
+  # compute the geometric means etc
+  ind_baseline <- which(rownames(results_ratio_temp) == "COVIDhub-baseline")
+  geom_mean_ratios_temp <- exp(rowMeans(log(results_ratio_temp[, -ind_baseline]), na.rm = TRUE))
+  ratios_baseline_temp <- results_ratio_temp[, "COVIDhub-baseline"]
+  ratios_baseline2_temp <- geom_mean_ratios_temp/geom_mean_ratios_temp["COVIDhub-baseline"]
+  
+  # summarize results:
+  to_add <- data.frame(model = names(ratios_baseline2_temp),
+                       location = loc,
+                       location_name = loc_name,
+                       relative_wis = ratios_baseline2_temp,
+                       log_relative_wis = log(ratios_baseline2_temp))
+  
+  # append to already stored:
+  if(i == 1){ # initialize at first location
+    average_by_loc <- to_add
+  }else{
+    average_by_loc <- rbind(average_by_loc, to_add)
+  }
+  
+  cat("Finished", loc_name, "\n")
+}
+
+
+
+## plot of true data by state, tiled
+truth_dat <- full_hosp_truth %>%
+  filter(target_end_date <= as.Date("2021-07-05")) %>%
+  group_by(location, location_name) %>%
+  summarize(cum_value=sum(value)) %>%
+  ungroup() %>%
+  mutate(location_name = reorder(location_name, cum_value)) %>%
+  pull(location_name)
+
+
+average_by_loc_to_plot <- average_by_loc %>%
+  mutate(location_name = fct_relevel(location_name, levels(truth_dat)),
+         relative_wis_text = sprintf("%.2f", round(relative_wis, 2)),
+         log_relative_wis = log2(relative_wis),
+         model = fct_relevel(model, model_levels)) %>%
+  filter(!is.na(relative_wis)) 
+
+
+# plot:
+fig_wis_loc <- ggplot(average_by_loc_to_plot, 
+                      aes(x=model, y=location_name, 
+                          fill= scales::oob_squish(log_relative_wis, range = c(- 2.584963, 2.584963)))) +
+  geom_tile() +
+  geom_text(aes(label = relative_wis_text), size = 2.5) + # I adapted the rounding
+  scale_fill_gradient2(low = "steelblue", high = "red", midpoint = 0, na.value = "grey50", 
+                       name = "Relative WIS", 
+                       breaks = c(-2,-1,0,1,2), 
+                       labels =c("0.25", 0.5, 1, 2, 4)) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
+        #                            color=ifelse(
+        #                              levels(average_by_loc_to_plot$model) %in% models_to_highlight,
+        #                              "red", "black")),
+        axis.title.x = element_text(size = 9),
+        axis.text.y = element_text(size = 9),
+        title = element_text(size = 9))
+
+print(fig_wis_loc)
+```
+
 
 ### Scoring Conclusions   
 It seems that the best three models that should be passed onto the testing phase are the Base_arima_noTrans, the Base_arima_4root, and the Topmost8_arima_noTrans models, which seem to take turns being most accurate depending on state or national level overall and during different waves.
