@@ -23,7 +23,7 @@ compute_base_forecasts <-
         forecast(auto.arima(temporal_hierarchy[[i]]),
                  h=ifelse(max_frequency >= 28, 
                           frequency(temporal_hierarchy[[i]])*2,
-                          56/(max_frequency/frequency(temporal_hierarchy[[i]]))),
+                          42/(max_frequency/frequency(temporal_hierarchy[[i]]))),
                  level = pi_levels)
     }
     return(base_forecasts)
