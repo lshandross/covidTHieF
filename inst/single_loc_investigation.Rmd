@@ -41,15 +41,14 @@ pi_levels = c(10 * (1:9), 95, 98)
 
 ```{r basic function testing, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
 test <- 
-  aggregate_thief_df(
-    NULL, ts_col = "value", 
-    start_date, end_date_, fips_code = "04", aggregate_levels = list(28, 14, 7, 1), frequency = 28) 
+  aggregate_thief_df(NULL, ts_col = "value", 
+    start_date, end_date_, fips_code = "04", aggregate_levels = list(14, 7, 1), frequency = 14) 
 plot_thief_agg(test, start_date)
 temp <- compute_base_forecasts(test, pi_levels)
-temp_reconciled <- reconcilethief(temp, aggregatelist = list(28, 14, 7, 1)) # produces a warning
+temp_reconciled <- reconcilethief(temp, aggregatelist = list(14, 7, 1)) # produces a warning
 
-extended_test <- extended_truth_data(NULL, ts_col = "value", start_date, end_date_, fips_code = "04", aggregate_levels = list(28, 14, 7, 1), frequency = 14)
-dates_test <- get_ts_dates(start_date, end_date_, frequency = 28) 
+extended_test <- extended_truth_data(NULL, ts_col = "value", start_date, end_date_, fips_code = "04", aggregate_levels = list(14, 7, 1), frequency = 14)
+dates_test <- get_ts_dates(start_date, end_date_, frequency = 14) 
 plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, extended_truth = extended_test) 
 trd <- transform_to_hub_df(temp_reconciled, end_date_, "04", pi_levels, h_ahead = 35)
 
@@ -172,10 +171,11 @@ write_csv(thief_df, file=paste("../data/", models[3], "/", mon_fc_dates[27], "-"
 ```
 
 ```{r sarima covid fc}
-ts <- get_truth_ts(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 1, transform.4root = FALSE)
+end_date <- end_date_
+ts <- get_truth_ts(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 7, transform.4root = FALSE)
 base_forecasts <- forecast(auto.arima(ts), h=45, level = pi_levels)
-extended_truth <- suppressWarnings(get_truth_ts(df=sun_training_truth_list[[5]], ts_col="value", start_date, end_date + 45, fips_code = "04", frequency = 1))
-#ts_dates <- get_ts_dates(start_date, end_date, frequency=1)
+extended_truth <- suppressWarnings(get_truth_ts(df=sun_training_truth_list[[5]], ts_col="value", start_date, end_date + 45, fips_code = "04", frequency = 7))
+ts_dates <- get_ts_dates(start_date, end_date, frequency=7)
 
 plot(base_forecasts, shadecols = c("light gray", "#EEC2C2", "#900000"),
     xaxt = "n", #axes = FALSE,
@@ -185,5 +185,13 @@ if(!is.null(extended_truth)) lines(extended_truth, col='black', lwd=1.5, lty = "
 #axis(1, at=1:(periods + 1), labels = ts_dates) # changes axis labels to provided dates
 axis(2)
 
-sarima_wrapper(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 1, pi_levels, plot.forecasts = TRUE, transform.4root = FALSE)
+hub_df <- transform_to_hub_df(base_forecasts, end_date-1, fips_code="04", pi_levels, 35, FALSE)
+
+
+fi <- sarima_wrapper(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 1, pi_levels, plot.forecasts = TRUE, transform.4root = FALSE)
+fc_info <- sarima_wrapper(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 7, pi_levels, plot.forecasts = TRUE, transform.4root = FALSE)
+```
+
+```{r testing}
+model_info <- tibble(forecast_date = end_date-1, location = "04", fc_obj = base_forecasts)
 ```
