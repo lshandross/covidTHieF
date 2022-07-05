@@ -16,7 +16,8 @@
 extended_truth_data <-
   function(df, ts_col = "value", start_date, end_date, fips_code, aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56) {
     # an extra 1*(top agg level) of truth data to plot against forecasts
-    aggregate_thief_df(df, ts_col, start_date, end_date + days(frequency), fips_code, aggregate_levels, frequency)
+    extra_days <- max(frequency, 28)*2
+    aggregate_thief_df(df, ts_col, start_date, end_date + days(extra_days), fips_code, aggregate_levels, frequency)
   }
 
 #'
