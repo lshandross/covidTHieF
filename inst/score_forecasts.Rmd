@@ -16,6 +16,8 @@ library(tidyverse)
 library(zoltr)
 library(covidHubUtils)
 library(patchwork)
+library(surveillance)
+library(tidytext)
 ```
 
 ## Load in truth data and forecasts
@@ -29,13 +31,14 @@ fips <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pul
 models <- c("THieF_4wk-4root", "THieF_4wk-noTrans",
             "THieF_8wk-4root", "THieF_8wk-noTrans",
             "THieF_12wk-4root", "THieF_12wk-noTrans")
+#main6_models <- c("THieF_4wk-4root", "THieF_4wk-noTrans", "THieF_8wk-4root", "THieF_8wk-noTrans", "THieF_12wk-4root", "THieF_12wk-noTrans")
+#all_models <- c("THieF_1wk-4root", "THieF_1wk-noTrans", "THieF_2wk-4root", "THieF_2wk-noTrans", "THieF_3wk-4root", "THieF_3wk-noTrans", main6_models)
             
 load("../data/loadedfc_scores_df.RData")
 load("../data/versioned_fc_df.RData")
 load("../data/baseline_fc_scores.RData")
 
 load("../data/versioned_truth_training.RData")
-
 ```
 
 ```{r, message=FALSE, echo=FALSE, eval=FALSE}
@@ -53,7 +56,7 @@ load("../data/versioned_truth_training.RData")
 # files <- rep("path", 30)
 # df <- c()
 # forecasts <- c()
-# for (i in 1:6) {
+# for (i in 1:length(models)) {
 #   files <- list.files(path=paste("../data/", models[i], "/", sep=""), pattern=".csv", full.names=TRUE)
 #   for (j in 1:30) {
 #     if(isTRUE(i + j != 2)) {
@@ -82,9 +85,16 @@ load("../data/versioned_truth_training.RData")
 #     left_join(hub_locations, by=c("location"="fips"))
 # 
 # forecasts_ver <-forecasts_df
-# 
-# mon_dates_df <- distinct(forecasts_df, forecast_date) %>%
-#   cbind(mon_fc_dates)
+
+actual_fc_dates <- distinct(forecasts_ver, forecast_date) %>% pull(1)
+mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
+
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         as_of=as.Date("2022-04-06"),
+                         temporal_resolution="weekly",
+                         data_location = "covidData")
+# save(full_hosp_truth, sun_training_truth_list, sun_testing_truth_list, file = "all_truth_data.RData")
 ```
 
 # Versioned Truth Results
@@ -93,13 +103,6 @@ load("../data/versioned_truth_training.RData")
 We plot forecasts for three locations (US National, Texas, and Vermont) for each of the three models. The two state locations were chosen as the highest and lowest hospitalization count locations. The plotted forecasts are spaced 4 weeks apart with 1 - 28 day ahead horizons, starting with the first forecast date, 12/07/20, until the end of the training period, 07/05/21.   
 
 ```{r, warning=FALSE, message=FALSE}
-# What date for truth data? As of the final forecast date?
-full_hosp_truth <- load_truth("HealthData", 
-                         "inc hosp", 
-                         as_of=as.Date("2022-04-06"),
-                         temporal_resolution="weekly",
-                         data_location = "covidData")
-                         
 locs <- full_hosp_truth %>%
   filter(target_end_date <= as.Date("2021-07-05")) %>%
   group_by(location) %>%
@@ -109,7 +112,7 @@ locs <- full_hosp_truth %>%
   filter(row_number() %in% c(1, 2, 53)) %>%
   pull(location)
 
-fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)), pull(distinct(forecasts_ver, forecast_date))[1+4*(0:7)])
+fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)), actual_fc_dates[1+4*(0:7)])
 
 fc_ver <- forecasts_ver %>% rbind(forecasts_baseline) 
 for (i in 1:3) {
@@ -122,7 +125,7 @@ for (i in 1:3) {
   }
   
   p <- plot_forecasts(fdat, 
-                      models = models[1:6],
+                      models = models,
 #                      truth_data = filter(full_hosp_truth, target_end_date <= as.Date("2021-05-03")),
                       target_variable = "inc hosp", 
                       intervals = c(.5, .95), 
@@ -136,7 +139,7 @@ for (i in 1:3) {
 
   pt <- p +
     scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-07-05")), 
-              date_breaks = "2 months", date_labels = "%b") +
+              date_breaks = "2 months", date_labels = "%b %y") +
 #    scale_y_continuous(limits=c(0, max(filter(full_hosp_truth, location==locs[i])$value) * 1.25)) +
     theme(axis.ticks.length.x = unit(0.5, "cm"),
           axis.text.x = element_text(vjust = 7, hjust = -0.2),
@@ -157,7 +160,7 @@ We calculate metrics for all three models, aggregating by horizon. Since hospita
 
 # if forecasts are too big for a single call
 # scores_list <- list()
-# for (i in 1:6) {
+# for (i in 1:length(models)) {
 #   scores_list[[i]] <- 
 #     score_forecasts(
 #       forecasts=filter(forecasts_ver, model==models[i]),
@@ -167,7 +170,7 @@ We calculate metrics for all three models, aggregating by horizon. Since hospita
 #     )
 # }
 # scores <- c()
-# for (i in 1:6) {
+# for (i in 1:length(models)) {
 #   scores <- rbind(scores, scores_list[[i]])
 # }
 # 
@@ -753,10 +756,7 @@ wis_1wk_plot_states + wis_4wk_plot_states +
 ```
 
 ### Metrics By Location
-```{r}
-library(surveillance)
-library(tidytext)
-
+```{r, message=FALSE, warning=FALSE}
 #reorder states, reorder models 
 theme_set(theme_bw())
 data("hub_locations")
@@ -877,10 +877,7 @@ for(i in seq_along(locations)){
   }else{
     average_by_loc <- rbind(average_by_loc, to_add)
   }
-  
-  cat("Finished", loc_name, "\n")
 }
-
 
 
 ## plot of true data by state, tiled
@@ -920,7 +917,6 @@ fig_wis_loc <- ggplot(average_by_loc_to_plot,
         axis.text.y = element_text(size = 9),
         title = element_text(size = 9))
 
-#pdf(file = "figures/fig-wis-location.pdf",width=8, height=8)
 print(fig_wis_loc)
 ```
 
@@ -1577,12 +1573,12 @@ wis_1wk_plot_states + wis_4wk_plot_states +
 ```
 
 ### Metrics By Location
-```{r}
+```{r, warning=FALSE, message=FALSE}
 #reorder states, reorder models 
 model_levels <- pull(overall_metrics_states, model)
 
 inc_scores <- score_baseline %>%
-  select(-horizon_wk) %>%
+#  select(-horizon_wk) %>%
   rbind(scores_df) %>%
   filter(target_end_date <= as.Date("2021-07-05"), horizon <= 28)
 
@@ -1646,8 +1642,6 @@ for(i in seq_along(locations)){
   }else{
     average_by_loc <- rbind(average_by_loc, to_add)
   }
-  
-  cat("Finished", loc_name, "\n")
 }
 
 
