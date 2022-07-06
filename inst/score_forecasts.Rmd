@@ -1,7 +1,7 @@
 ---
 title: "Score Forecasts"
 author: "Li Shandross"
-date: "6/01/2022"
+date: "7/05/2022"
 output:
   pdf_document: default
   html_document: default
@@ -31,11 +31,12 @@ fips <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pul
 models <- c("THieF_4wk-4root", "THieF_4wk-noTrans",
             "THieF_8wk-4root", "THieF_8wk-noTrans",
             "THieF_12wk-4root", "THieF_12wk-noTrans")
+#models <-c("Base_arima_4root", "Base_arima_noTrans", "Multiple3_arima_4root", "Multiple3_arima_noTrans", "Topmost8_arima_4root", "Topmost8_arima_noTrans")
 #main6_models <- c("THieF_4wk-4root", "THieF_4wk-noTrans", "THieF_8wk-4root", "THieF_8wk-noTrans", "THieF_12wk-4root", "THieF_12wk-noTrans")
 #all_models <- c("THieF_1wk-4root", "THieF_1wk-noTrans", "THieF_2wk-4root", "THieF_2wk-noTrans", "THieF_3wk-4root", "THieF_3wk-noTrans", main6_models)
             
 load("../data/loadedfc_scores_df.RData")
-load("../data/versioned_fc_df.RData")
+#load("../data/versioned_fc_df.RData")
 load("../data/baseline_fc_scores.RData")
 
 load("../data/versioned_truth_training.RData")
@@ -52,7 +53,7 @@ load("../data/versioned_truth_training.RData")
 #                                         verbose = FALSE,
 #                                         as_of=NULL,
 #                                         hub = c("US"))
-
+# 
 # files <- rep("path", 30)
 # df <- c()
 # forecasts <- c()
@@ -326,7 +327,7 @@ knitr::kable(horizon_wk_metrics_states)
 ```
 
 ```{r, message=FALSE, warning=FALSE}  
-models <- c("COVIDhub-baseline", models)
+#models <- c("COVIDhub-baseline", models)
 
 wis_hzn_plot_US <- horizon_wk_metrics_US %>%
 ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
@@ -350,6 +351,33 @@ wis_hzn_plot_states <- horizon_wk_metrics_states %>%
   labs(title="States", 
        x="Horizon Week", y="Average WIS")
               
+wis_hzn_plot_US + wis_hzn_plot_states +
+  plot_layout(ncol = 2, guides='collect') &
+  theme(legend.position='bottom')
+
+# log transform
+wis_hzn_plot_US <- horizon_wk_metrics_US %>%
+ggplot(mapping=aes(x=horizon_wk, y=log(wis, 10), group=model)) +
+  geom_point(mapping=aes(col=model), alpha = 0.8) +
+  geom_line(mapping=aes(col=model), alpha = 0.8) +
+  scale_color_manual(
+    breaks = models,
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
+  labs(title="US",
+       x="Horizon Week", y="Average WIS")
+              
+wis_hzn_plot_states <- horizon_wk_metrics_states %>%
+  ggplot(mapping=aes(x=horizon_wk, y=log(wis, 10), group=model)) +
+  geom_point(mapping=aes(col=model), alpha = 0.8) +
+  geom_line(mapping=aes(col=model), alpha = 0.8) +
+  scale_color_manual(
+    breaks = models,
+    values = c("black", "#F8766D", "#B79F00",
+      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
+  labs(title="States", 
+       x="Horizon Week", y="Average WIS")
+       
 wis_hzn_plot_US + wis_hzn_plot_states +
   plot_layout(ncol = 2, guides='collect') &
   theme(legend.position='bottom')
