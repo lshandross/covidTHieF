@@ -36,7 +36,7 @@ for (i in 1:53) {
   fdat <-forecasts_ver %>% 
     filter(location == locs[i], 
            forecast_date %in% fc_dates,
-           horizon <= 28)
+           horizon %in% c(3:30))
   
   if (locs[i] %in% c("US", "22")) {
   fdat <- fdat %>%
@@ -50,13 +50,13 @@ for (i in 1:53) {
                       use_median_as_point = TRUE,
                       facet = model ~.,
                       facet_nrow = 3,
-                      facet_scales = "free_y",
                       fill_by_model = TRUE, 
                       plot=FALSE)
 
   pt <- p +
     scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-07-05")), 
-              date_breaks = "2 months", date_labels = "%b") +
+              date_breaks = "2 months", date_labels = "%b %y") +
+    coord_cartesian(ylim = c(0, max(filter(full_hosp_truth, location==locs[i], target_end_date <= as.Date("2021-07-05"))$value * 1.15))) +
     theme(axis.ticks.length.x = unit(0.5, "cm"),
           axis.text.x = element_text(vjust = 7, hjust = -0.2),
           legend.position = "none")
