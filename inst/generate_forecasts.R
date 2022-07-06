@@ -39,7 +39,7 @@ load_weekly_truth <- function(fc_dates) {
 }
 
 # Export our function on the cluster
-clusterExport(cl, list('load_weekly_truth', 'mon_fc_dates'))
+clusterExport(cl, list('load_weekly_truth', 'sun_fc_dates'))
 # Run function across previously specified number of cores
 system.time({
   sun_training_truth_list <- c(parLapply(cl, sun_fc_dates, fun = load_weekly_truth))
@@ -75,26 +75,48 @@ generate_thief_wk <-
       pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
   }
 
+generate_sarima_wk <-
+  function(fc_dates) {
+    library(tidyverse)
+    library(lubridate)
+    library(covidHubUtils)
+#    setwd("C:/Users/lshan/Documents/UMass Amherst/04 Senior/covidTHieF")
+    func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+    lapply(func_list, source)
+
+    truth_df <- training_truth_df %>%
+       filter(forecast_date == fc_dates) %>%
+       pull(2) %>% pluck(1)
+
+    covid_sarima(truth_df, "value",
+      as.Date("2020-07-27"), fc_dates, # change as needed
+      fips_vec = states53, frequency = 1, # change as needed
+      pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
+  }
+
 # Export our function on the cluster
-clusterExport(cl, list('generate_thief_wk', 'states53', 'sun_fc_dates', 'training_truth_df'))
+clusterExport(cl, list('generate_thief_wk', 'generate_sarima_wk', 'states53', 'sun_fc_dates', 'training_truth_df'))
 
 # Run function across previously specified number of cores
 system.time({
-  thief_fc_full <- c(parLapply(cl, sun_fc_dates[28:30], fun = generate_thief_wk))
+#  thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:10], fun = generate_thief_wk))
+  thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:10], fun = generate_sarima_wk))
 })
 
 #main6_models <- c("THieF_4wk-4root", "THieF_4wk-noTrans", "THieF_8wk-4root", "THieF_8wk-noTrans", "THieF_12wk-4root", "THieF_12wk-noTrans")
 #all_models <- c("THieF_1wk-4root", "THieF_1wk-noTrans", "THieF_2wk-4root", "THieF_2wk-noTrans", "THieF_3wk-4root", "THieF_3wk-noTrans", main6_models)
+sarima_models <- c("sarima_s1-4root", "sarima_s1-noTrans", "sarima_s7-4root", "sarima_s7-noTrans")
 
 #modfc_3wk_noTrans <- c()
 #modfc_3wk_4root <- c()
 #load(file=paste("data/", all_models[3], "/", all_models[3], ".RData", sep=""))
-for (i in 1:3) {
-  write_csv(thief_fc_full[[i]][[1]], file=paste("data/", all_models[5], "/", actual_fc_dates[i+27], "-", all_models[5], ".csv", sep=""))
-  modfc_3wk_4root <- rbind(modfc_3wk_4root, thief_fc_full[[i]][[2]])
-#  modfc_3wk_Trans <- rbind(modfc_3wk_noTrans, thief_fc_full[[i]][[2]])
+for (i in 1:10) {
+  write_csv(thief_fc_full[[i]][[1]], file=paste("data/", all_models[5], "/", actual_fc_dates[i+20], "-", all_models[5], ".csv", sep=""))
+#  modfc_3wk_4root <- rbind(modfc_3wk_4root, thief_fc_full[[i]][[2]])
+  modfc_3wk_noTrans <- rbind(modfc_3wk_noTrans, thief_fc_full[[i]][[2]])
 }
 
+#modfc_3wk_4root <-rbind(modfc_3wk_noTrans, modfc_3wk_4root)
 save(modfc_3wk_4root, file=paste("data/", all_models[5], "/", all_models[5], ".RData", sep=""))
 
 for (i in 1:10) {
