@@ -16,9 +16,9 @@ registerDoParallel(cl)
 #   load_truth("HealthData", "inc hosp", temporal_resolution="daily", data_location = "remote_hub_repo")
 
 # Date Vectors
-mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:29))
-sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:29))
-sun_testing_dates <- c(as.Date("2020-12-06") + weeks(0:29))
+mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
+sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
+sun_testing_dates <- c(as.Date("2021-10-31") + weeks(0:21))
 
 # Save time by pre-loading as of truth data for all dates of interest in a list
 load_weekly_truth <- function(fc_dates) {
@@ -49,8 +49,7 @@ system.time({
 load(file="data/versioned_truth_training.RData")
 
 training_truth_df <- tibble(forecast_date=sun_fc_dates, truth_data=sun_training_truth_list)
-actual_fc_dates <-
-  map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
+actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
   pull(target_end_date)
 states53 <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
 
@@ -80,7 +79,6 @@ generate_sarima_wk <-
     library(tidyverse)
     library(lubridate)
     library(covidHubUtils)
-#    setwd("C:/Users/lshan/Documents/UMass Amherst/04 Senior/covidTHieF")
     func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
     lapply(func_list, source)
 
@@ -100,28 +98,31 @@ clusterExport(cl, list('generate_thief_wk', 'generate_sarima_wk', 'states53', 's
 # Run function across previously specified number of cores
 system.time({
 #  thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:10], fun = generate_thief_wk))
-  thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:10], fun = generate_sarima_wk))
+  thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:30], fun = generate_sarima_wk))
 })
 
-#main6_models <- c("THieF_4wk-4root", "THieF_4wk-noTrans", "THieF_8wk-4root", "THieF_8wk-noTrans", "THieF_12wk-4root", "THieF_12wk-noTrans")
-#all_models <- c("THieF_1wk-4root", "THieF_1wk-noTrans", "THieF_2wk-4root", "THieF_2wk-noTrans", "THieF_3wk-4root", "THieF_3wk-noTrans", main6_models)
-sarima_models <- c("sarima_s1-4root", "sarima_s1-noTrans", "sarima_s7-4root", "sarima_s7-noTrans")
+#main6_models <- c("THieF_4wk-4root", "THieF_4wk-noTransform", "THieF_8wk-4root", "THieF_8wk-noTransform", "THieF_12wk-4root", "THieF_12wk-noTransform")
+#all_thief <- sort(paste("THieF_", c(1:4, 8, 12), "wk-", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
+sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
+#models <- c(all_thief, sarima_models)
 
-#modfc_3wk_noTrans <- c()
-#modfc_3wk_4root <- c()
+thief_info <- sort(paste("modfc_", c(1:4, 8, 12), "wk_", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
+sarima_info <- sort(paste("modfc_s", c(1, 7), c(rep("_4root", 2), rep("_noTransform", 2)), sep=""))
+model_info <- c(thief_info, sarima_info)
+for (i in 1:length(model_info)) assign(model_info[i], NULL)
+
 #load(file=paste("data/", all_models[3], "/", all_models[3], ".RData", sep=""))
-for (i in 1:10) {
-  write_csv(thief_fc_full[[i]][[1]], file=paste("data/", all_models[5], "/", actual_fc_dates[i+20], "-", all_models[5], ".csv", sep=""))
-#  modfc_3wk_4root <- rbind(modfc_3wk_4root, thief_fc_full[[i]][[2]])
-  modfc_3wk_noTrans <- rbind(modfc_3wk_noTrans, thief_fc_full[[i]][[2]])
+for (i in 1:30) {
+#  write_csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
+  assign(model_info[1], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
 }
 
-#modfc_3wk_4root <-rbind(modfc_3wk_noTrans, modfc_3wk_4root)
-save(modfc_3wk_4root, file=paste("data/", all_models[5], "/", all_models[5], ".RData", sep=""))
+#modfc_3wk_4root <-rbind(modfc_3wk_noTransform, modfc_3wk_4root)
+save(modfc_s1_noTransform, file=paste("data/", sarima_models[2], "/", sarima_models[2], ".RData", sep=""))
 
-for (i in 1:10) {
-  csv.temp <- read_csv(file=paste("data/", all_models[5], "/", actual_fc_dates[i+20], "-", all_models[5], ".csv", sep=""))
-  write_csv(csv.temp, file=paste("data/", all_models[5], "/", actual_fc_dates[i], "-", all_models[5], ".csv", sep=""))
+for (i in 1:30) {
+  csv.temp <- read_csv(file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
+  write_csv(csv.temp, file=paste("data/", sarima_models[3], "/", actual_fc_dates[i], "-", sarima_models[3], ".csv", sep=""))
 }
 
 # Pull forecasts from other models
