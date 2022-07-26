@@ -144,12 +144,13 @@ if (system == "linux") {
 
     # Run function across previously specified number of cores
     system.time({
+      mon_training_truth_list <- mclapply(mon_fc_dates[date_indices], mc.cores = num_cores, FUN = load_weekly_truth)
       sun_training_truth_list <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = load_weekly_truth)
     })
 
     save(mon_training_truth_list, sun_training_truth_list, file="data/versioned_truth_training.RData")
 
-  } else if (load_testing_forecasts == TRUE) {
+  } else if (action == "load_testing_forecasts") {
     # Pull forecasts from other models
     system.time({
       forecast_testing_list <- mclapply(sun_testing_dates[date_indices], mc.cores = num_cores, FUN = pull_forecasts)
