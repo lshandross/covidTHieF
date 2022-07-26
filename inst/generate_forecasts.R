@@ -1,24 +1,42 @@
 library(doParallel)
 library(covidHubUtils)
+library(covidData)
 library(lubridate)
 library(readr)
 library(tidyverse)
+
+# Set If Statement Arguments
+system <- "windows" # c("linux", "windows")
+num_cores <- 0 # NA if system == "windows"
+action <- "generate_forecasts" # c("load_truth", "load_testing_forecasts", "generate_forecasts")
+model_type <- "sarima" # c("thief", "sarima")
+date_indices <- 1:length(sun_fc_dates)
 
 # Get Command Line Arguments
 args = commandArgs(trailingOnly = TRUE) # system, num_cores, action
 
 # test if there is at least one argument: if not, return an error
-if (length(args)==0) {
-  stop("At least one argument must be supplied (input file).n", call.=FALSE)
-} else if (length(args)==1) {
-  # default output file
-  args[2] = "out.txt"
+if (length(args) < 2) {
+  stop("At least 2 arguments must be supplied (input file).n", call.=FALSE)
+} else if (length(args) == 2) { # generate_forecasts, sarima, fc_dates[1:47]
+  system <- args[1]
+  num_cores <- args[2]
+} else if (length(args) == 3) { # sarima, fc_dates[1:47]
+  system <- args[1]
+  num_cores <- args[2]
+  action <- args[3]
+} else if (length(args == 4)) { # fc_dates[1:47]
+  system <- args[1]
+  num_cores <- args[2]
+  action <- args[3]
+  model_type <- args[4]
+} else if (length(args == 4)) {
+  system <- args[1]
+  num_cores <- args[2]
+  action <- args[3]
+  model_type <- args[4]
+  data_indices <- args[5]
 }
-
-# Set If Statement Arguments
-system <- NULL # c("linux", "windows")
-num_cores <- 0
-action <- "generate_forecasts" # c("load_truth", "load_testing_forecasts", "generate_forecasts")
 
 # Date Vectors
 mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
@@ -96,7 +114,7 @@ generate_sarima_wk <-
     covid_sarima(truth_df, "value",
       as.Date("2020-07-27"), fc_dates, # change as needed
       fips_vec = states53, frequency = 1, # change as needed
-      pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
+      pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
   }
 
 # Pull forecasts from other models
@@ -116,7 +134,7 @@ pull_forecasts <- function(fc_dates) {
 
 
 if (system == "linux") {
-  # library(parallel)
+  library(parallel)
   # dataList <- list(dat1, dat2, dat3, dat4, dat5)
   # mclapply(dataList, mc.cores = num_cores, function(dat) {   some_code_doing_something_with_dat })
 
@@ -126,7 +144,7 @@ if (system == "linux") {
 
     # Run function across previously specified number of cores
     system.time({
-      sun_training_truth_list <- mclapply(sun_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
+      sun_training_truth_list <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = load_weekly_truth)
     })
 
     save(mon_training_truth_list, sun_training_truth_list, file="data/versioned_truth_training.RData")
@@ -134,7 +152,7 @@ if (system == "linux") {
   } else if (load_testing_forecasts == TRUE) {
     # Pull forecasts from other models
     system.time({
-      forecast_testing_list <- mclapply(sun_testing_dates, mc.cores = num_cores, FUN = pull_forecasts)
+      forecast_testing_list <- mclapply(sun_testing_dates[date_indices], mc.cores = num_cores, FUN = pull_forecasts)
     })
 
     save(forecast_testing_list, file=paste("data/", forecast_testing_list, ".RData", sep=""))
@@ -152,20 +170,22 @@ if (system == "linux") {
 
     # Run function across previously specified number of cores
     system.time({
-      if (model_type <- "thief") {
-        thief_fc_full <- mclapply(sun_fc_dates[1:10], mc.cores = num_cores, FUN = generate_thief_wk)
+      if (model_type == "sarima") {
+        thief_fc_full <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = generate_sarima_wk)
       } else {
-        thief_fc_full <- mclapply(sun_fc_dates[1:30], mc.cores = num_cores, FUN = generate_sarima_wk)
+        thief_fc_full <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = generate_thief_wk)
       }
     })
-    
+
     # write and save forecasts
-    for (i in 1:length(sun_fc_dates)) {
-      write_csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
-      assign(model_info[1], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
+      # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7
+    for (i in 1:(length(date_indices)+1)) {
+      #write_csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
+      write_csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
+      #assign(model_info[1], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
     }
 
-    save(modfc_s1_noTransform, file=paste("data/", sarima_models[2], "/", sarima_models[2], ".RData", sep=""))
+    #save(modfc_s1_noTransform, file=paste("data/", sarima_models[2], "/", sarima_models[2], ".RData", sep=""))
   }
 
 } else {
@@ -208,28 +228,29 @@ if (system == "linux") {
 
     # Run function across previously specified number of cores
     system.time({
-      if (model_type <- "thief") {
-        thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:10], fun = generate_thief_wk))
+      # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7
+      if (model_type == "sarima") {
+        thief_fc_full <- c(parLapply(cl, sun_fc_dates[36:47], fun = generate_sarima_wk))
       } else {
-        thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:30], fun = generate_sarima_wk))
+        thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:length(sun_fc_dates)], fun = generate_thief_wk))
       }
     })
 
     # Write and Save forecasts
-    #load(file=paste("data/", all_models[3], "/", all_models[3], ".RData", sep=""))
-    for (i in 1:length(sun_fc_dates)) {
-      write_csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
-      assign(model_info[1], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
+#    load(file=paste("data/", models[13], "/", models[13], ".RData", sep=""))
+    for (i in 1:12) {
+      write_csv(thief_fc_full[[i]][[1]], file=paste("data/", models[14], "/", actual_fc_dates[i+35], "-", models[14], ".csv", sep=""))
+      assign(model_info[14], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
     }
 
     #modfc_3wk_4root <-rbind(modfc_3wk_noTransform, modfc_3wk_4root)
-    save(modfc_s1_noTransform, file=paste("data/", sarima_models[2], "/", sarima_models[2], ".RData", sep=""))
+    save(modfc_s1_noTransform, file=paste("data/", models[14], "/", models[14], ".RData", sep=""))
   }
 }
 
 
-# for (i in 1: length(sun_fc_dates)) {
-#   csv.temp <- read_csv(file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
-#   write_csv(csv.temp, file=paste("data/", sarima_models[3], "/", actual_fc_dates[i], "-", sarima_models[3], ".csv", sep=""))
+# for (i in 1:20) {
+#   csv.temp <- read_csv(file=paste("data/", actual_fc_dates[i+0], "-", models[13], ".csv", sep=""))
+#   write_csv(csv.temp, file=paste("data/", models[14], "/", actual_fc_dates[i], "-", models[14], ".csv", sep=""))
 # }
 
