@@ -96,6 +96,7 @@ sarima_wrapper <-
     library(tidyverse)
     library(lubridate)
     library(covidHubUtils)
+    library(forecast)
 
     ts_col <- ts_col
     
