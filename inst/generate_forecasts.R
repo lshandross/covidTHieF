@@ -149,7 +149,7 @@ if (system == "linux") {
 
     save(mon_training_truth_list, sun_training_truth_list, file="data/versioned_truth_training.RData")
 
-  } else if (load_testing_forecasts == TRUE) {
+  } else if (action == "load_testing_forecasts") {
     # Pull forecasts from other models
     system.time({
       forecast_testing_list <- mclapply(sun_testing_dates[date_indices], mc.cores = num_cores, FUN = pull_forecasts)
