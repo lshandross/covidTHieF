@@ -181,8 +181,8 @@ if (system == "linux") {
     # write and save forecasts
       # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7
     for (i in 1:length(date_indices)) {
-      #write_csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
-      write_csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
+      #write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
+      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
       #assign(model_info[1], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
     }
 
