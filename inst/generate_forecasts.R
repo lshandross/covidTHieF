@@ -10,7 +10,7 @@ system <- "windows" # c("linux", "windows")
 num_cores <- 0 # NA if system == "windows"
 action <- "generate_forecasts" # c("load_truth", "load_testing_forecasts", "generate_forecasts")
 model_type <- "sarima" # c("thief", "sarima")
-date_indices <- 1:length(sun_fc_dates)
+date_indices <- 1:47
 
 # Get Command Line Arguments
 args = commandArgs(trailingOnly = TRUE) # system, num_cores, action
