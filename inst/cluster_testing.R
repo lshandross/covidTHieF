@@ -28,10 +28,12 @@ sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
 # #plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, agg.names = agg.names)
 # temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "04", pi_levels, transform.4root = FALSE)
 
-hub_test <- thief_wrapper(sun_training_truth_list[[5]], ts_col = "value", 
-  start_date, end_date, fips_code = "04",
-  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
-  pi_levels = pi_levels,
-  plot.aggregates = FALSE, plot.forecasts = FALSE)
-  
-write.csv(hub_test[[1]], file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
+# hub_test <- thief_wrapper(sun_training_truth_list[[5]], ts_col = "value",
+#   start_date, end_date, fips_code = "04",
+#   aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
+#   pi_levels = pi_levels,
+#   plot.aggregates = FALSE, plot.forecasts = FALSE)
+
+sarima_test <- sarima_wrapper(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 1, pi_levels, plot.forecasts = FALSE, transform.4root = FALSE)
+
+write.csv(sarima_test[[1]], file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
