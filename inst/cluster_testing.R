@@ -5,10 +5,10 @@ library(tidyverse)
 library(zoltr)
 library(covidHubUtils)
 
-func_list <- list.files(path = "../R", pattern=".R", full.names=TRUE)
+func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
 lapply(func_list, source)
 
-load(file="../data/versioned_truth_training.RData")
+load(file="data/versioned_truth_training.RData")
 
 start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-02")
 pi_levels = c(10 * (1:9), 95, 98)
