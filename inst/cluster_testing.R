@@ -27,4 +27,4 @@ temp_reconciled <- reconcilethief(temp, aggregatelist = list(56, 28, 14, 7, 1)) 
 #plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, agg.names = agg.names) 
 temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "04", pi_levels, transform.4root = FALSE)
 
-write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
+write.csv(temp_rec_df, file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
