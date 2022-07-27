@@ -78,46 +78,6 @@ load_weekly_truth <- function(fc_dates) {
 }
 
 
-# Generate THieF Forecasts
-generate_thief_wk <-
-  function(fc_dates) {
-    library(tidyverse)
-    library(lubridate)
-    library(covidHubUtils)
-#    setwd("C:/Users/lshan/Documents/UMass Amherst/04 Senior/covidTHieF")
-    func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
-    lapply(func_list, source)
-
-    truth_df <- training_truth_df %>%
-       filter(forecast_date == fc_dates) %>%
-       pull(2) %>% pluck(1)
-
-    covid_thief(truth_df, "value",
-      as.Date("2020-07-27"), fc_dates, # change as needed
-      fips_vec = states53,
-      aggregate_levels = list(21, 7, 1), frequency = 21, # change as needed
-      pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
-  }
-
-# Generate Sarima Forecasts
-generate_sarima_wk <-
-  function(fc_dates) {
-    library(tidyverse)
-    library(lubridate)
-    library(covidHubUtils)
-    func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
-    lapply(func_list, source)
-
-    truth_df <- training_truth_df %>%
-       filter(forecast_date == fc_dates) %>%
-       pull(2) %>% pluck(1)
-
-    covid_sarima(truth_df, "value",
-      as.Date("2020-07-27"), fc_dates, # change as needed
-      fips_vec = states53, frequency = 1, # change as needed
-      pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
-  }
-
 # Pull forecasts from other models
 #hub_models <- # eligible models
 pull_forecasts <- function(fc_dates) {
@@ -166,6 +126,47 @@ if (system == "linux") {
     actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
       pull(target_end_date)
     states53 <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
+
+  # FUNCTIONS
+  # Generate THieF Forecasts
+  generate_thief_wk <-
+    function(fc_dates) {
+      library(tidyverse)
+      library(lubridate)
+      library(covidHubUtils)
+  #    setwd("C:/Users/lshan/Documents/UMass Amherst/04 Senior/covidTHieF")
+      func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+      lapply(func_list, source)
+
+      truth_df <- training_truth_df %>%
+         filter(forecast_date == fc_dates) %>%
+         pull(2) %>% pluck(1)
+
+      covid_thief(truth_df, "value",
+        as.Date("2020-07-27"), fc_dates, # change as needed
+        fips_vec = states53,
+        aggregate_levels = list(21, 7, 1), frequency = 21, # change as needed
+        pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
+    }
+
+  # Generate Sarima Forecasts
+  generate_sarima_wk <-
+    function(fc_dates) {
+      library(tidyverse)
+      library(lubridate)
+      library(covidHubUtils)
+      func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+      lapply(func_list, source)
+
+      truth_df <- training_truth_df %>%
+         filter(forecast_date == fc_dates) %>%
+         pull(2) %>% pluck(1)
+
+      covid_sarima(truth_df, "value",
+        as.Date("2020-07-27"), fc_dates, # change as needed
+        fips_vec = states53, frequency = 1, # change as needed
+        pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
+    }
 
     # # Export our function on the cluster
     # clusterExport(cl, list('generate_thief_wk', 'generate_sarima_wk', 'states53', 'sun_fc_dates', 'training_truth_df'))
@@ -224,6 +225,47 @@ if (system == "linux") {
     actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
       pull(target_end_date)
     states53 <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
+
+    # FUNCTIONS
+    # Generate THieF Forecasts
+    generate_thief_wk <-
+      function(fc_dates) {
+        library(tidyverse)
+        library(lubridate)
+        library(covidHubUtils)
+    #    setwd("C:/Users/lshan/Documents/UMass Amherst/04 Senior/covidTHieF")
+        func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+        lapply(func_list, source)
+
+        truth_df <- training_truth_df %>%
+           filter(forecast_date == fc_dates) %>%
+           pull(2) %>% pluck(1)
+
+        covid_thief(truth_df, "value",
+          as.Date("2020-07-27"), fc_dates, # change as needed
+          fips_vec = states53,
+          aggregate_levels = list(21, 7, 1), frequency = 21, # change as needed
+          pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
+      }
+
+    # Generate Sarima Forecasts
+    generate_sarima_wk <-
+      function(fc_dates) {
+        library(tidyverse)
+        library(lubridate)
+        library(covidHubUtils)
+        func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+        lapply(func_list, source)
+
+        truth_df <- training_truth_df %>%
+           filter(forecast_date == fc_dates) %>%
+           pull(2) %>% pluck(1)
+
+        covid_sarima(truth_df, "value",
+          as.Date("2020-07-27"), fc_dates, # change as needed
+          fips_vec = states53, frequency = 1, # change as needed
+          pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
+      }
 
     # Export our function on the cluster
     clusterExport(cl, list('generate_thief_wk', 'generate_sarima_wk', 'states53', 'sun_fc_dates', 'training_truth_df'))
