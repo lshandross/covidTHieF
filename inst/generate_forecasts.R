@@ -4,6 +4,7 @@ library(covidData)
 library(lubridate)
 library(readr)
 library(tidyverse)
+library(thief)
 
 # Set If Statement Arguments
 system <- "windows" # c("linux", "windows")
