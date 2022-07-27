@@ -18,7 +18,7 @@ sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
 
 test <- 
   aggregate_thief_df(
-    training_truth_list[[5]], ts_col = "value", 
+    sun_training_truth_list[[5]], ts_col = "value", 
     start_date, end_date, fips_code = "04", 
     aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = FALSE) 
 #plot_thief_agg(test, start_date)

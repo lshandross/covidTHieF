@@ -67,11 +67,11 @@ truth_comparison_04_210104 <- full_hosp_truth %>%
   arrange(target_end_date) %>%
   rename(revised_value = "value") %>%
   select(1, 3, 4, 6:7, 5) %>%
-  cbind(select(filter(training_truth_list[[5]], location == "04"), value)) %>%
+  cbind(select(filter(sun_training_truth_list[[5]], location == "04"), value)) %>%
   mutate(difference=value-revised_value) %>%
   filter(difference != 0)
 
-filter(training_truth_list[[5]], location == "04") %>%
+filter(sun_training_truth_list[[5]], location == "04") %>%
   ggplot(aes(x=target_end_date, y=value)) +
   geom_point(color="blue") + geom_line(color="blue") +
   geom_point(data=filter(full_hosp_truth, 
@@ -85,7 +85,7 @@ filter(training_truth_list[[5]], location == "04") %>%
                           location == "04"), 
             aes(x=target_end_date, y=value))
 
-aggregate_04_210104 <- training_truth_list[[5]] %>%
+aggregate_04_210104 <- sun_training_truth_list[[5]] %>%
   aggregate_thief_df(
     start_date=as.Date("2020-07-27"), end_date=as.Date("2021-01-04"),
     fips_code="04", transform.4root=FALSE)
@@ -125,7 +125,7 @@ plot_thief(base_forecasts= rec_fc_no_04_210104, reconciled_forecasts= rec_fc_no_
 
 test <- 
   aggregate_thief_df(
-    training_truth_list[[5]], ts_col = "value", 
+    sun_training_truth_list[[9]], ts_col = "value", 
     start_date, end_date, fips_code = "04", 
     aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = TRUE) 
 plot_thief_agg(test, start_date)
@@ -189,9 +189,16 @@ hub_df <- transform_to_hub_df(base_forecasts, end_date-1, fips_code="04", pi_lev
 
 
 fi <- sarima_wrapper(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 1, pi_levels, plot.forecasts = TRUE, transform.4root = FALSE)
-fc_info <- sarima_wrapper(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 7, pi_levels, plot.forecasts = TRUE, transform.4root = FALSE)
+fc_info <- sarima_wrapper(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 7, pi_levels, plot.forecasts = FALSE, transform.4root = FALSE)
 ```
 
 ```{r testing}
 model_info <- tibble(forecast_date = end_date-1, location = "04", fc_obj = base_forecasts)
+
+truth_data_dates <- map_dfr(sun_training_truth_list, slice_max, order_by=desc(forecast_date), n=1)
+
+thief_dates <- c()
+for (i in 1: length (thief_fc_full)) {
+    thief_dates[i] <- slice_max(thief_fc_full[[i]][[1]], order_by=forecast_date, n=1) %>% distinct(forecast_date)
+}
 ```
