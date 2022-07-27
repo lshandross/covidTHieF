@@ -34,4 +34,4 @@ hub_test <- thief_wrapper(sun_training_truth_list[[5]], ts_col = "value",
   pi_levels = pi_levels,
   plot.aggregates = FALSE, plot.forecasts = FALSE)
   
-write.csv(temp_rec_df, file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
+write.csv(hub_test, file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
