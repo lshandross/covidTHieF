@@ -79,10 +79,10 @@ generate_thief_wk <-
         pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
     }
 
-test <- covid_sarima(sun_training_truth_list[[5]], "value",
-  as.Date("2020-07-27"), end_date, # change as needed
-  fips_vec = states53, frequency = 1, # change as needed
-  pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
+# test <- covid_sarima(sun_training_truth_list[[5]], "value",
+#   as.Date("2020-07-27"), end_date, # change as needed
+#   fips_vec = states53, frequency = 1, # change as needed
+#   pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
 
 # thief_test <- covid_thief(sun_training_truth_list[[5]], "value",
 #   as.Date("2020-07-27"), end_date, # change as needed
@@ -91,6 +91,7 @@ test <- covid_sarima(sun_training_truth_list[[5]], "value",
 #   pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
 
 #thief_fc_full <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = generate_thief_wk)
-#thief_fc_full <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = generate_sarima_wk)
+thief_fc_full <- mclapply(sun_fc_dates[5:6], mc.cores = 7, FUN = generate_sarima_wk)
 
-write.csv(test[[1]], file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
+write.csv(thief_fc_full[[1]][[1]], file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
+write.csv(thief_fc_full[[2]][[1]], file=paste("data/", sun_fc_dates[6], "-", sarima_models[2], ".csv", sep=""))
