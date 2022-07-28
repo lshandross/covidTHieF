@@ -4,6 +4,7 @@ library(lubridate)
 library(tidyverse)
 library(zoltr)
 library(covidHubUtils)
+library(parallel)
 
 func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
 lapply(func_list, source)
@@ -89,9 +90,8 @@ generate_thief_wk <-
 #   fips_vec = states53,
 #   aggregate_levels = list(21, 7, 1), frequency = 21, # change as needed
 #   pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
-
-#thief_fc_full <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = generate_thief_wk)
-thief_fc_full <- mclapply(sun_fc_dates[5:6], mc.cores = 7, FUN = generate_sarima_wk)
+thief_fc_full <- mclapply(sun_fc_dates[5:6], mc.cores = 7, FUN = generate_thief_wk)
+# thief_fc_full <- mclapply(sun_fc_dates[5:6], mc.cores = 7, FUN = generate_sarima_wk)
 
 write.csv(thief_fc_full[[1]][[1]], file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
 write.csv(thief_fc_full[[2]][[1]], file=paste("data/", sun_fc_dates[6], "-", sarima_models[2], ".csv", sep=""))
