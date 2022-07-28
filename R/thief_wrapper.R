@@ -21,6 +21,7 @@ thief_wrapper <-
     library(tidyverse)
     library(lubridate)
     library(covidHubUtils)
+    library(thief)
 
     ts_col <- ts_col
     
