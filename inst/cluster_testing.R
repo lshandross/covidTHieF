@@ -9,7 +9,7 @@ library(parallel)
 load(file="data/versioned_truth_training.RData")
 
 args = commandArgs(trailingOnly = TRUE)
-model_type <- args[1]
+model_type <- args[1]; date_indices <- args[2]
 
 sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
 
@@ -93,11 +93,11 @@ generate_thief_wk <-
 #   pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
 
 if (model_type == "sarima") {
-  thief_fc_full <- mclapply(sun_fc_dates[args[2]], mc.cores = 7, FUN = generate_sarima_wk)
+  thief_fc_full <- mclapply(sun_fc_dates[date_indices], mc.cores = 7, FUN = generate_sarima_wk)
 } else {
-  thief_fc_full <- mclapply(sun_fc_dates[args[2]], mc.cores = 7, FUN = generate_thief_wk)
+  thief_fc_full <- mclapply(sun_fc_dates[date_indices], mc.cores = 7, FUN = generate_thief_wk)
 }
 
-for (i in 1:length(args[2])) {
+for (i in 1:length(date_indices)) {
   write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i], "-", sarima_models[2], ".csv", sep=""))
 }
