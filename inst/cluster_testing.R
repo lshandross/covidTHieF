@@ -6,8 +6,6 @@ library(zoltr)
 library(covidHubUtils)
 library(parallel)
 
-func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
-lapply(func_list, source)
 
 load(file="data/versioned_truth_training.RData")
 
