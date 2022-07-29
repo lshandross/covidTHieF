@@ -6,17 +6,20 @@ library(zoltr)
 library(covidHubUtils)
 library(parallel)
 
-
 load(file="data/versioned_truth_training.RData")
 
-start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-02")
-pi_levels = c(10 * (1:9), 95, 98)
+args = commandArgs(trailingOnly = TRUE)
+model_type <- args[1]
+
+sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
 
 all_thief <- sort(paste("THieF_", c(1:4, 8, 12), "wk-", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
 sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
-sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
 
 # <Basic Functions No Errors>
+# start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-02")
+# pi_levels = c(10 * (1:9), 95, 98)
+#
 # test <-
 #   aggregate_thief_df(
 #     sun_training_truth_list[[5]], ts_col = "value",
@@ -88,8 +91,13 @@ generate_thief_wk <-
 #   fips_vec = states53,
 #   aggregate_levels = list(21, 7, 1), frequency = 21, # change as needed
 #   pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
-thief_fc_full <- mclapply(sun_fc_dates[5:6], mc.cores = 7, FUN = generate_thief_wk)
-# thief_fc_full <- mclapply(sun_fc_dates[5:6], mc.cores = 7, FUN = generate_sarima_wk)
 
-write.csv(thief_fc_full[[1]][[1]], file=paste("data/", sun_fc_dates[5], "-", sarima_models[2], ".csv", sep=""))
-write.csv(thief_fc_full[[2]][[1]], file=paste("data/", sun_fc_dates[6], "-", sarima_models[2], ".csv", sep=""))
+if (model_type == "sarima") {
+  thief_fc_full <- mclapply(sun_fc_dates[args[2]], mc.cores = 7, FUN = generate_sarima_wk)
+} else {
+  thief_fc_full <- mclapply(sun_fc_dates[args[2]], mc.cores = 7, FUN = generate_thief_wk)
+}
+
+for (i in 1:length(args[2])) {
+  write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i], "-", sarima_models[2], ".csv", sep=""))
+}
