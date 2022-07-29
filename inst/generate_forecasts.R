@@ -11,7 +11,7 @@ system <- "windows" # c("linux", "windows")
 num_cores <- 0 # NA if system == "windows"
 action <- "generate_forecasts" # c("load_truth", "load_testing_forecasts", "generate_forecasts")
 model_type <- "sarima" # c("thief", "sarima")
-date_indices <- 1:47
+date_indices <- c(1, 47)
 
 # Get Command Line Arguments
 args = commandArgs(trailingOnly = TRUE) # system, num_cores, action
@@ -26,17 +26,17 @@ if (length(args) < 2) {
   system <- args[1]
   num_cores <- args[2]
   action <- args[3]
-} else if (length(args == 4)) { # fc_dates[1:47]
+} else if (length(args %in% 4:5)) { # fc_dates[1:47]
   system <- args[1]
   num_cores <- args[2]
   action <- args[3]
   model_type <- args[4]
-} else if (length(args == 4)) {
+} else if (length(args == 6)) {
   system <- args[1]
   num_cores <- args[2]
   action <- args[3]
   model_type <- args[4]
-  data_indices <- args[5]
+  date_indices <- c(as.numeric(args[5]), as.numeric(args[6]))
 }
 
 # Date Vectors
@@ -105,8 +105,8 @@ if (system == "linux") {
 
     # Run function across previously specified number of cores
     system.time({
-      mon_training_truth_list <- mclapply(mon_fc_dates[date_indices], mc.cores = num_cores, FUN = load_weekly_truth)
-      sun_training_truth_list <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = load_weekly_truth)
+      mon_training_truth_list <- mclapply(mon_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
+      sun_training_truth_list <- mclapply(sun_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
     })
 
     save(mon_training_truth_list, sun_training_truth_list, file="data/versioned_truth_training.RData")
@@ -174,15 +174,15 @@ if (system == "linux") {
     # Run function across previously specified number of cores
     system.time({
       if (model_type == "sarima") {
-        thief_fc_full <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = generate_sarima_wk)
+        thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_sarima_wk)
       } else {
-        thief_fc_full <- mclapply(sun_fc_dates[date_indices], mc.cores = num_cores, FUN = generate_thief_wk)
+        thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_thief_wk)
       }
     })
 
     # write and save forecasts
       # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7
-    for (i in 1:length(date_indices)) {
+    for (i in 1:([date_indices[2]-date_indices[1]])) {
       #write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
       write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
       #assign(model_info[1], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
