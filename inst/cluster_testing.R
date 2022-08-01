@@ -9,7 +9,7 @@ library(parallel)
 load(file="data/versioned_truth_training.RData")
 
 args = commandArgs(trailingOnly = TRUE)
-model_type <- args[1]; date_indices <- args[2]
+model_type <- args[1]; date_indices <- as.numeric(args[2])
 
 sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
 
