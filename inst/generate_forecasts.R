@@ -15,6 +15,7 @@ date_indices <- c(1, 47)
 
 # Get Command Line Arguments
 args = commandArgs(trailingOnly = TRUE) # system, num_cores, action
+args[2] = as.numeric(args[2])
 
 # test if there is at least one argument: if not, return an error
 if (length(args) < 2) {
@@ -182,7 +183,7 @@ if (system == "linux") {
 
     # write and save forecasts
       # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7
-    for (i in 1:([date_indices[2]-date_indices[1]])) {
+    for (i in 1:(date_indices[2]-date_indices[1])) {
       #write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
       write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
       #assign(model_info[1], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
