@@ -166,7 +166,7 @@ if (system == "linux") {
       covid_sarima(truth_df, "value",
         as.Date("2020-07-27"), fc_dates, # change as needed
         fips_vec = states53, frequency = 1, # change as needed
-        pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
+        pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
     }
 
     # # Export our function on the cluster
@@ -182,14 +182,13 @@ if (system == "linux") {
     })
 
     # write and save forecasts
-      # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7
+      # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7 (4 > no)
     for (i in 1:(date_indices[2]-date_indices[1])) {
-      #write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
-      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
-      #assign(model_info[1], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
+      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
+      assign(model_info[1], rbind(modfc_s1_4root, thief_fc_full[[i]][[2]]))
     }
 
-    #save(modfc_s1_noTransform, file=paste("data/", sarima_models[2], "/", sarima_models[2], ".RData", sep=""))
+    save(modfc_s1_4root, file=paste("data/", sarima_models[1], "/", sarima_models[1], ".RData", sep=""))
   }
 
 } else {
