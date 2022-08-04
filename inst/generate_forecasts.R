@@ -49,6 +49,7 @@ sun_testing_dates <- c(as.Date("2021-10-31") + weeks(0:21))
 main_thief <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))[c(3:6, 1:2)]
 all_thief <- sort(paste("THieF_", c(1:4, 8, 12), "wk-", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
 sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
+SARIMA <- sort(paste("SARIMA_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
 models <- c(all_thief, sarima_models)
 
 thief_info <- sort(paste("modfc_", c(1:4, 8, 12), "wk_", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
@@ -183,12 +184,11 @@ if (system == "linux") {
 
     # write and save forecasts
       # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7 (4 > no)
-    for (i in 1:(date_indices[2]-date_indices[1])) {
-      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[2], "/", actual_fc_dates[i+0], "-", sarima_models[2], ".csv", sep=""))
-      assign(model_info[1], rbind(modfc_s1_4root, thief_fc_full[[i]][[2]]))
+    for (i in 1:(date_indices[2]-date_indices[1+1])) {
+      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", SARIMA[1], "/", actual_fc_dates[i+0], "-", sarima_models[1], ".csv", sep=""))
+      assign(model_info[13], rbind(modfc_s1_4root, thief_fc_full[[i]][[2]]))
     }
-
-    save(modfc_s1_4root, file=paste("data/", sarima_models[1], "/", sarima_models[1], ".RData", sep=""))
+    save(modfc_s1_4root, file=paste("data/", SARIMA[1], "/", sarima_models[1], ".RData", sep=""))
   }
 
 } else {
