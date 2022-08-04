@@ -49,7 +49,6 @@ sun_testing_dates <- c(as.Date("2021-10-31") + weeks(0:21))
 main_thief <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))[c(3:6, 1:2)]
 all_thief <- sort(paste("THieF_", c(1:4, 8, 12), "wk-", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
 sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
-SARIMA <- sort(paste("SARIMA_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
 models <- c(all_thief, sarima_models)
 
 thief_info <- sort(paste("modfc_", c(1:4, 8, 12), "wk_", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
@@ -170,9 +169,6 @@ if (system == "linux") {
         pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
     }
 
-    # # Export our function on the cluster
-    # clusterExport(cl, list('generate_thief_wk', 'generate_sarima_wk', 'states53', 'sun_fc_dates', 'training_truth_df'))
-
     # Run function across previously specified number of cores
     system.time({
       if (model_type == "sarima") {
@@ -181,14 +177,17 @@ if (system == "linux") {
         thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_thief_wk)
       }
     })
+    message("Forecasts successfully generated")
 
     # write and save forecasts
       # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7 (4 > no)
-    for (i in 1:(date_indices[2]-date_indices[1+1])) {
-      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", SARIMA[1], "/", actual_fc_dates[i+0], "-", sarima_models[1], ".csv", sep=""))
+    for (i in 1:(date_indices[2]-date_indices[1]+1)) {
+      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[1], "/", actual_fc_dates[i+0], "-", sarima_models[1], ".csv", sep=""))
+      message(paste("Week", i,"forecast successfully written"))
       assign(model_info[13], rbind(modfc_s1_4root, thief_fc_full[[i]][[2]]))
     }
-    save(modfc_s1_4root, file=paste("data/", SARIMA[1], "/", sarima_models[1], ".RData", sep=""))
+    save(modfc_s1_4root, file=paste("data/", sarima_models[1], "/", sarima_models[1], ".RData", sep=""))
+    message("Forecasts successfully saved")
   }
 
 } else {
