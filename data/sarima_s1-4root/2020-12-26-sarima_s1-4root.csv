@@ -1,0 +1,4 @@
+"","x"
+"1","Error in UseMethod(""collector_value"") : 
+  no applicable method for 'collector_value' applied to an object of class ""c('collector_skip', 'collector')""
+"
