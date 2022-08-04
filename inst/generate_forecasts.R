@@ -165,7 +165,7 @@ if (system == "linux") {
 
       covid_sarima(truth_df, "value",
         as.Date("2020-07-27"), fc_dates, # change as needed
-        fips_vec = states53, frequency = 1, # change as needed
+        fips_vec = states53, frequency = 7, # change as needed
         pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
     }
 
@@ -182,11 +182,11 @@ if (system == "linux") {
     # write and save forecasts
       # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7 (4 > no)
     for (i in 1:(date_indices[2]-date_indices[1]+1)) {
-      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[1], "/", actual_fc_dates[i+0], "-", sarima_models[1], ".csv", sep=""))
+      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[3], "/", actual_fc_dates[i+0], "-", sarima_models[3], ".csv", sep=""))
       message(paste("Week", i,"forecast successfully written"))
-      assign(model_info[13], rbind(modfc_s1_4root, thief_fc_full[[i]][[2]]))
+      assign(model_info[15], rbind(modfc_s7_4root, thief_fc_full[[i]][[2]]))
     }
-    save(modfc_s1_4root, file=paste("data/", sarima_models[1], "/", sarima_models[1], ".RData", sep=""))
+    save(modfc_s7_4root, file=paste("data/", sarima_models[3], "/", sarima_models[3], ".RData", sep=""))
     message("Forecasts successfully saved")
   }
 
