@@ -1,4 +1,3 @@
-library(doParallel)
 library(covidHubUtils)
 library(covidData)
 library(lubridate)
@@ -10,34 +9,42 @@ library(thief)
 system <- "windows" # c("linux", "windows")
 num_cores <- 0 # NA if system == "windows"
 action <- "generate_forecasts" # c("load_truth", "load_testing_forecasts", "generate_forecasts")
-model_type <- "sarima" # c("thief", "sarima")
+model_spec <- list("sarima", 1, TRUE) # list("THieF" or "sarima", thief_top_num or sarima_agg_num, transform.4root)
+  model_type <- ifelse(model_spec[[1]] == "thief", "THieF", model_spec[[1]])
+  specification <- ifelse(model_spec[[1]] == "sarima", paste("s", model_spec[[2]], sep=""), paste(model_spec[[2]], "wk", sep=""))
+  transform_type <- ifelse(model_spec[[3]], "4root", "noTransform")
 date_indices <- c(1, 47)
 
 # Get Command Line Arguments
 args = commandArgs(trailingOnly = TRUE) # system, num_cores, action
-args[2] = as.numeric(args[2])
+  args[2] = as.numeric(args[2])
+  args[5] = as.numeric(args[5])
+  args[6] = as.logical(args[6])
+  args[7] = as.numeric(args[7]); args[8] = as.numeric(args[8])
 
 # test if there is at least one argument: if not, return an error
 if (length(args) < 2) {
   stop("At least 2 arguments must be supplied (input file).n", call.=FALSE)
-} else if (length(args) == 2) { # generate_forecasts, sarima, fc_dates[1:47]
+} else if (length(args) == 2) { # generate_forecasts, sarima_s1-4root, fc_dates[1:47]
   system <- args[1]
   num_cores <- args[2]
-} else if (length(args) == 3) { # sarima, fc_dates[1:47]
-  system <- args[1]
-  num_cores <- args[2]
-  action <- args[3]
-} else if (length(args %in% 4:5)) { # fc_dates[1:47]
+} else if (length(args) == 3) { # sarima_s1-4root, fc_dates[1:47]
   system <- args[1]
   num_cores <- args[2]
   action <- args[3]
-  model_type <- args[4]
-} else if (length(args == 6)) {
+} else if (length(args %in% 4:5)) {
+  stop("More arguments must be supplied (input file).n", call.=FALSE)
+} else if (length(args %in% 6:7)) { # fc_dates[1:47]
   system <- args[1]
   num_cores <- args[2]
   action <- args[3]
-  model_type <- args[4]
-  date_indices <- c(as.numeric(args[5]), as.numeric(args[6]))
+  model_spec <- list(args[4], args[5], args[6])
+} else if (length(args == 8)) {
+  system <- args[1]
+  num_cores <- args[2]
+  action <- args[3]
+  model_spec <- list(args[4], args[5], args[6])
+  date_indices <- c(args[7], args[8])
 }
 
 # Date Vectors
@@ -97,26 +104,17 @@ pull_forecasts <- function(fc_dates) {
 
 if (system == "linux") {
   library(parallel)
-  # dataList <- list(dat1, dat2, dat3, dat4, dat5)
-  # mclapply(dataList, mc.cores = num_cores, function(dat) {   some_code_doing_something_with_dat })
 
   if (action == "load_truth") {
-    # # Export our function on the cluster
-    # clusterExport(cl, list('load_weekly_truth', 'sun_fc_dates'))
-
     # Run function across previously specified number of cores
-    system.time({
-      mon_training_truth_list <- mclapply(mon_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
-      sun_training_truth_list <- mclapply(sun_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
-    })
+    mon_training_truth_list <- mclapply(mon_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
+    sun_training_truth_list <- mclapply(sun_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
 
     save(mon_training_truth_list, sun_training_truth_list, file="data/versioned_truth_training.RData")
 
   } else if (action == "load_testing_forecasts") {
     # Pull forecasts from other models
-    system.time({
-      forecast_testing_list <- mclapply(sun_testing_dates[date_indices], mc.cores = num_cores, FUN = pull_forecasts)
-    })
+    forecast_testing_list <- mclapply(sun_testing_dates[date_indices], mc.cores = num_cores, FUN = pull_forecasts)
 
     save(forecast_testing_list, file=paste("data/", forecast_testing_list, ".RData", sep=""))
   } else {
@@ -127,6 +125,18 @@ if (system == "linux") {
     actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
       pull(target_end_date)
     states53 <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
+    
+    top_level <- c(1:4, 6, 8, 12)
+    aggregate_levels <- 
+      list(list(7, 1), list(14, 7, 1), list(21, 7, 1), list(28, 14, 7, 1), 
+        list(42, 21, 14, 7, 1), list(56, 28, 14, 7, 1), list(84, 56, 42, 28, 21, 14, 7, 1))
+    thief_aggregates <- tibble(top_level, aggregate_levels)
+    
+    model <- paste(model_spec[[1]], "_", specification, "-", transform_type, sep="")
+    model_agg <- thief_aggregates %>%
+      filter(top_level == model_spec[[2]]) %>%
+      pull(2) %>% pluck(1)
+    model_freq <- pluck(model_agg, 1)
 
   # FUNCTIONS
   # Generate THieF Forecasts
@@ -135,7 +145,6 @@ if (system == "linux") {
       library(tidyverse)
       library(lubridate)
       library(covidHubUtils)
-  #    setwd("C:/Users/lshan/Documents/UMass Amherst/04 Senior/covidTHieF")
       func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
       lapply(func_list, source)
 
@@ -145,9 +154,8 @@ if (system == "linux") {
 
       covid_thief(truth_df, "value",
         as.Date("2020-07-27"), fc_dates, # change as needed
-        fips_vec = states53,
-        aggregate_levels = list(21, 7, 1), frequency = 21, # change as needed
-        pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
+        fips_vec = states53, aggregate_levels = model_agg, frequency = model_freq,
+        pi_levels = c(10 * (1:9), 95, 98), transform.4root = model_spec[[3]])
     }
 
   # Generate Sarima Forecasts
@@ -164,29 +172,32 @@ if (system == "linux") {
          pull(2) %>% pluck(1)
 
       covid_sarima(truth_df, "value",
-        as.Date("2020-07-27"), fc_dates, # change as needed
-        fips_vec = states53, frequency = 7, # change as needed
-        pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
+        as.Date("2020-07-27"), fc_dates,
+        fips_vec = states53, frequency = model_spec[[2]],
+        pi_levels = c(10 * (1:9), 95, 98), transform.4root = model_spec[[3]])
     }
 
     # Run function across previously specified number of cores
-    system.time({
-      if (model_type == "sarima") {
-        thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_sarima_wk)
-      } else {
-        thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_thief_wk)
-      }
-    })
+    if (model_spec[[1]] == "sarima") {
+      thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_sarima_wk)
+    } else {
+      thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_thief_wk)
+    }
+    
     message("Forecasts successfully generated")
 
     # write and save forecasts
-      # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7 (4 > no)
+    model_df <- c()
     for (i in 1:(date_indices[2]-date_indices[1]+1)) {
-      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", sarima_models[3], "/", actual_fc_dates[i+0], "-", sarima_models[3], ".csv", sep=""))
+#      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", model, "/", actual_fc_dates[i+date_indices[1]-1], "-", model, ".csv", sep=""))
+      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+date_indices[1]-1], "-", model, ".csv", sep=""))
       message(paste("Week", i,"forecast successfully written"))
-      assign(model_info[15], rbind(modfc_s7_4root, thief_fc_full[[i]][[2]]))
+      model_df <- rbind(model_df, thief_fc_full[[i]][[2]])
     }
-    save(modfc_s7_4root, file=paste("data/", sarima_models[3], "/", sarima_models[3], ".RData", sep=""))
+    
+    assign(paste("modfc", specification, transform_type, sep="_"), model_df)
+#    save(list=paste("modfc", specification, transform_type, sep="_"), file=paste("data/", model, ".RData", sep=""))
+    save(list=paste("modfc", specification, transform_type, sep="_"), file=paste("data/", model, ".RData", sep=""))
     message("Forecasts successfully saved")
   }
 
