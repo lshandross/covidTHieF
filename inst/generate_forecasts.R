@@ -44,7 +44,7 @@ if (length(args) < 2) {
   num_cores <- args[2]
   action <- args[3]
   model_spec <- list(args[4], args[5], args[6])
-  date_indices <- c(args[7], args[8])
+  date_indices <- c(as.numeric(args[7]), as.numeric(args[8]))
 }
 
 # Date Vectors
@@ -188,7 +188,8 @@ if (system == "linux") {
 
     # write and save forecasts
     model_df <- c()
-    for (i in 1:(date_indices[2]-date_indices[1]+1)) {
+    for (i in 1:date_indices[2]-date_indices[1]+1) {
+      if (i == 1) {message("entered for loop")}
 #      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", model, "/", actual_fc_dates[i+date_indices[1]-1], "-", model, ".csv", sep=""))
       write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+date_indices[1]-1], "-", model, ".csv", sep=""))
       message(paste("Week", i,"forecast successfully written"))
