@@ -16,11 +16,11 @@ model_spec <- list("sarima", 1, TRUE) # list("THieF" or "sarima", thief_top_num 
 date_indices <- c(1, 47)
 
 # Get Command Line Arguments
-args = commandArgs(trailingOnly = TRUE) # system, num_cores, action
-  args[2] = as.numeric(args[2])
-  args[5] = as.numeric(args[5])
-  args[6] = as.logical(args[6])
-  args[7] = as.numeric(args[7]); args[8] = as.numeric(args[8])
+args <- commandArgs(trailingOnly = TRUE) # system, num_cores, action
+  args[2] <- as.numeric(args[2])
+  args[5] <- as.numeric(args[5])
+  args[6] <- as.logical(args[6])
+  args[7] <- as.numeric(args[7]); args[8] <- as.numeric(args[8])
 
 # test if there is at least one argument: if not, return an error
 if (length(args) < 2) {
@@ -32,9 +32,9 @@ if (length(args) < 2) {
   system <- args[1]
   num_cores <- args[2]
   action <- args[3]
-} else if (length(args %in% 4:5)) {
+} else if (length(args) %in% 4:5) {
   stop("More arguments must be supplied (input file).n", call.=FALSE)
-} else if (length(args %in% 6:7)) { # fc_dates[1:47]
+} else if (length(args) %in% 6:7) { # fc_dates[1:47]
   system <- args[1]
   num_cores <- args[2]
   action <- args[3]
@@ -132,7 +132,7 @@ if (system == "linux") {
         list(42, 21, 14, 7, 1), list(56, 28, 14, 7, 1), list(84, 56, 42, 28, 21, 14, 7, 1))
     thief_aggregates <- tibble(top_level, aggregate_levels)
     
-    model <- paste(model_spec[[1]], "_", specification, "-", transform_type, sep="")
+    model <- paste(model_type, "_", specification, "-", transform_type, sep="")
     model_agg <- thief_aggregates %>%
       filter(top_level == model_spec[[2]]) %>%
       pull(2) %>% pluck(1)
