@@ -1,7 +1,7 @@
 #!/bin/bash
 #BSUB -n 32 # how many cores we want for our job
 #BSUB -R span[hosts=1] # ask for all the cores on a single machine
-#BSUB -R rusage[mem=2000] # ask for memory
+#BSUB -R rusage[mem=1000] # ask for memory
 #BSUB -o job_log.out # log LSF output to a file
 #BSUB -W 4:00 # run time (hh:mm)
 #BSUB -q short  # which queue we want to run in

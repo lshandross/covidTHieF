@@ -10,9 +10,6 @@ system <- "windows" # c("linux", "windows")
 num_cores <- 0 # NA if system == "windows"
 action <- "generate_forecasts" # c("load_truth", "load_testing_forecasts", "generate_forecasts")
 model_spec <- list("sarima", 1, TRUE) # list("THieF" or "sarima", thief_top_num or sarima_agg_num, transform.4root)
-  model_type <- ifelse(model_spec[[1]] == "thief", "THieF", model_spec[[1]])
-  specification <- ifelse(model_spec[[1]] == "sarima", paste("s", model_spec[[2]], sep=""), paste(model_spec[[2]], "wk", sep=""))
-  transform_type <- ifelse(model_spec[[3]], "4root", "noTransform")
 date_indices <- c(1, 47)
 
 # Get Command Line Arguments
@@ -43,6 +40,9 @@ if (length(args) < 2) {
   date_indices <- c(as.numeric(args[7]), as.numeric(args[8]))
 }
 
+model_type <- ifelse(model_spec[[1]] == "thief", "THieF", model_spec[[1]])
+specification <- ifelse(model_spec[[1]] == "sarima", paste("s", model_spec[[2]], sep=""), paste(model_spec[[2]], "wk", sep=""))
+transform_type <- ifelse(model_spec[[3]], "4root", "noTransform")
 
 # Date Vectors
 mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
