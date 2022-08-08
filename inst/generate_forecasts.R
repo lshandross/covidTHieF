@@ -17,35 +17,32 @@ date_indices <- c(1, 47)
 
 # Get Command Line Arguments
 args <- commandArgs(trailingOnly = TRUE) # system, num_cores, action
-  args[2] <- as.numeric(args[2])
-  args[5] <- as.numeric(args[5])
-  args[6] <- as.logical(args[6])
-  args[7] <- as.numeric(args[7]); args[8] <- as.numeric(args[8])
 
 # test if there is at least one argument: if not, return an error
 if (length(args) < 2) {
   stop("At least 2 arguments must be supplied (input file).n", call.=FALSE)
 } else if (length(args) == 2) { # generate_forecasts, sarima_s1-4root, fc_dates[1:47]
   system <- args[1]
-  num_cores <- args[2]
+  num_cores <- as.numeric(args[2])
 } else if (length(args) == 3) { # sarima_s1-4root, fc_dates[1:47]
   system <- args[1]
-  num_cores <- args[2]
+  num_cores <- as.numeric(args[2])
   action <- args[3]
 } else if (length(args) %in% 4:5) {
   stop("More arguments must be supplied (input file).n", call.=FALSE)
 } else if (length(args) %in% 6:7) { # fc_dates[1:47]
   system <- args[1]
-  num_cores <- args[2]
+  num_cores <- as.numeric(args[2])
   action <- args[3]
-  model_spec <- list(args[4], args[5], args[6])
+  model_spec <- list(args[4], as.numeric(args[5]), as.logical(args[6]))
 } else if (length(args == 8)) {
   system <- args[1]
-  num_cores <- args[2]
+  num_cores <- as.numeric(args[2])
   action <- args[3]
-  model_spec <- list(args[4], args[5], args[6])
+  model_spec <- list(args[4], as.numeric(args[5]), as.logical(args[6]))
   date_indices <- c(as.numeric(args[7]), as.numeric(args[8]))
 }
+
 
 # Date Vectors
 mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
