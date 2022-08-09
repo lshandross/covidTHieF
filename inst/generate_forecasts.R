@@ -183,7 +183,7 @@ if (system == "linux") {
       if (i %in% c(6*(1:floor(total_forecasts)/6), total_forecasts)) {
         assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
 #        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
-      save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
+      save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "/", model, "_", ceiling(i/6), ".RData", sep=""))
       } 
     }
     message("Forecasts successfully saved")
