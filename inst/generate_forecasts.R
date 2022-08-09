@@ -1,3 +1,4 @@
+library(parallel)
 library(covidHubUtils)
 library(covidData)
 library(lubridate)
@@ -13,7 +14,7 @@ model_spec <- list("sarima", 1, TRUE) # list("THieF" or "sarima", thief_top_num 
 date_indices <- c(1, 47)
 
 # Get Command Line Arguments
-args <- commandArgs(trailingOnly = TRUE) # system, num_cores, action
+args <- commandArgs(trailingOnly = TRUE) # system, num_cores, action, model_specs(type, specification, transform), date_indices
 
 # test if there is at least one argument: if not, return an error
 if (length(args) < 2) {
@@ -48,17 +49,6 @@ transform_type <- ifelse(model_spec[[3]], "4root", "noTransform")
 mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
 sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
 sun_testing_dates <- c(as.Date("2021-10-31") + weeks(0:21))
-
-# Models
-main_thief <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))[c(3:6, 1:2)]
-all_thief <- sort(paste("THieF_", c(1:4, 8, 12), "wk-", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
-sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
-models <- c(all_thief, sarima_models)
-
-thief_info <- sort(paste("modfc_", c(1:4, 8, 12), "wk_", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
-sarima_info <- sort(paste("modfc_s", c(1, 7), c(rep("_4root", 2), rep("_noTransform", 2)), sep=""))
-model_info <- c(thief_info, sarima_info)
-for (i in 1:length(model_info)) assign(model_info[i], NULL)
 
 # Static Truth
 # full_hosp_truth <-
@@ -100,8 +90,6 @@ pull_forecasts <- function(fc_dates) {
 
 
 if (system == "linux") {
-  library(parallel)
-
   if (action == "load_truth") {
     # Run function across previously specified number of cores
     mon_training_truth_list <- mclapply(mon_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
@@ -124,9 +112,8 @@ if (system == "linux") {
     states53 <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
     
     top_level <- c(1:4, 6, 8, 12)
-    aggregate_levels <- 
-      list(list(7, 1), list(14, 7, 1), list(21, 7, 1), list(28, 14, 7, 1), 
-        list(42, 21, 14, 7, 1), list(56, 28, 14, 7, 1), list(84, 56, 42, 28, 21, 14, 7, 1))
+    agg_6wk <- list(42, 21, 14, 7, 1); agg_8wk <- list(56, 28, 14, 7, 1)
+    aggregate_levels <- list(agg_8wk[4:5], agg_8wk[3:5], agg_6wk[3:5], agg_8wk[2:5], agg_6wk, agg_8wk, list(84, 56, 42, 28, 21, 14, 7, 1))
     thief_aggregates <- tibble(top_level, aggregate_levels)
     
     model <- paste(model_type, "_", specification, "-", transform_type, sep="")
@@ -184,17 +171,19 @@ if (system == "linux") {
     message("Forecasts successfully generated")
 
     # write and save forecasts
-    for (i in 1:date_indices[2]-date_indices[1]+1) {
+    total_forecasts <- date_indices[2]-date_indices[1]+1
+    model_df <- c()
+    for (i in 1:total_forecasts) {
       if (i == 1) {message("entered for loop")}
       write.csv(thief_fc_full[[i]][[1]], file=paste("data/", model, "/", actual_fc_dates[i+date_indices[1]-1], "-", model, ".csv", sep=""))
 #      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+date_indices[1]-1], "-", model, ".csv", sep=""))
       message(paste("Week", i,"forecast successfully written"))
-      if (i %in% c(1 + 6*(0:7))) {model_df <- c()}
-      if (i %in% c(6*(1:7), 47)) {
-        model_df <- rbind(model_df, thief_fc_full[[i]][[2]])
+      if (i %in% c(1 + 6*(0:ceiling(total_forecasts/6)))) {model_df <- c()}
+      model_df <- rbind(model_df, thief_fc_full[[i]][[2]])
+      if (i %in% c(6*(1:floor(total_forecasts)/6), total_forecasts)) {
         assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
-        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, ".RData", sep=""))
-#      save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, ".RData", sep=""))
+        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
+#      save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
       } 
     }
     message("Forecasts successfully saved")
@@ -206,6 +195,18 @@ if (system == "linux") {
   # allocate number of available cores to R
   cl <- makeCluster(num_cores-1)
   registerDoParallel(cl)
+
+  # Models
+  main_thief <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))[c(3:6, 1:2)]
+  all_thief <- sort(paste("THieF_", c(1:4, 8, 12), "wk-", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
+  sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
+  models <- c(all_thief, sarima_models)
+
+  thief_info <- sort(paste("modfc_", c(1:4, 8, 12), "wk_", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
+  sarima_info <- sort(paste("modfc_s", c(1, 7), c(rep("_4root", 2), rep("_noTransform", 2)), sep=""))
+  model_info <- c(thief_info, sarima_info)
+  for (i in 1:length(model_info)) assign(model_info[i], NULL)
+
 
   if (action == "load_truth") {
     # Export our function on the cluster
