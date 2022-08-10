@@ -55,6 +55,12 @@ agg_6wk <- list(42, 21, 14, 7, 1); agg_8wk <- list(56, 28, 14, 7, 1)
 aggregate_levels <- list(agg_8wk[4:5], agg_8wk[3:5], agg_6wk[3:5], agg_8wk[2:5], agg_6wk, agg_8wk, list(84, 56, 42, 28, 21, 14, 7, 1))
 thief_aggregates <- tibble(top_level, aggregate_levels)
 
+model <- paste(model_type, "_", specification, "-", transform_type, sep="")
+model_agg <- thief_aggregates %>%
+  filter(top_level == model_spec[[2]]) %>%
+  pull(2) %>% pluck(1)
+model_freq <- pluck(model_agg, 1)
+
 # FUNCTIONS
 # Generate THieF Forecasts
 generate_thief_wk <-
