@@ -28,12 +28,10 @@ inc_hosp_targets <- paste(0:30, "day ahead inc hosp")
 mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:29))
 fips <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
 
-models <- c("THieF_4wk-4root", "THieF_4wk-noTrans",
-            "THieF_8wk-4root", "THieF_8wk-noTrans",
-            "THieF_12wk-4root", "THieF_12wk-noTrans")
-#models <-c("Base_arima_4root", "Base_arima_noTrans", "Multiple3_arima_4root", "Multiple3_arima_noTrans", "Topmost8_arima_4root", "Topmost8_arima_noTrans")
-#main6_models <- c("THieF_4wk-4root", "THieF_4wk-noTrans", "THieF_8wk-4root", "THieF_8wk-noTrans", "THieF_12wk-4root", "THieF_12wk-noTrans")
-#all_models <- c("THieF_1wk-4root", "THieF_1wk-noTrans", "THieF_2wk-4root", "THieF_2wk-noTrans", "THieF_3wk-4root", "THieF_3wk-noTrans", main6_models)
+#models <-c("Base_arima_4root", "Base_arima_noTransform", "Multiple3_arima_4root", "Multiple3_arima_noTransform", "Topmost8_arima_4root", "Topmost8_arima_noTransform")
+all_thief <- sort(paste("THieF_", c(1:4, 8, 12), "wk-", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
+sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
+models <- c(all_thief, sarima_models)
             
 load("../data/loadedfc_scores_df.RData")
 load("../data/versioned_fc_df.RData")
@@ -54,38 +52,38 @@ load("../data/versioned_truth_training.RData")
 #                                         as_of=NULL,
 #                                         hub = c("US"))
 # 
-# files <- rep("path", 30)
-# df <- c()
-# forecasts <- c()
-# for (i in 1:length(models)) {
-#   files <- list.files(path=paste("../data/", models[i], "/", sep=""), pattern=".csv", full.names=TRUE)
-#   for (j in 1:30) {
-#     if(isTRUE(i + j != 2)) {
-#       df <- read_csv(files[j]) %>%
-#         mutate(model = models[i])
-#       forecasts <- rbind(forecasts, df)
-#     } else {
-#         forecasts <- read_csv(files[j]) %>%
-#         mutate(model = models[i])
-#     }
-#   }
-# }
-# 
-# forecasts_df <-
-#   forecasts %>%
-#     separate(target,
-#       into=c("horizon", "temp"),
-#       sep=" "
-#     ) %>%
-#     mutate(
-#       horizon=as.numeric(horizon),
-#       temporal_resolution="day",
-#       target_variable="inc hosp"
-#     ) %>%
-#     select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
-#     left_join(hub_locations, by=c("location"="fips"))
-# 
-# forecasts_ver <-forecasts_df
+files <- rep("path", 30)
+df <- c()
+forecasts <- c()
+for (i in 1:length(models)) {
+  files <- list.files(path=paste("../data/", models[i], "/", sep=""), pattern=".csv", full.names=TRUE)
+  for (j in 1:30) {
+    if(isTRUE(i + j != 2)) {
+      df <- read_csv(files[j]) %>%
+        mutate(model = models[i])
+      forecasts <- rbind(forecasts, df)
+    } else {
+        forecasts <- read_csv(files[j]) %>%
+        mutate(model = models[i])
+    }
+  }
+}
+
+forecasts_df <-
+  forecasts %>%
+    separate(target,
+      into=c("horizon", "temp"),
+      sep=" "
+    ) %>%
+    mutate(
+      horizon=as.numeric(horizon),
+      temporal_resolution="day",
+      target_variable="inc hosp"
+    ) %>%
+    select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
+    left_join(hub_locations, by=c("location"="fips"))
+
+forecasts_ver <-forecasts_df
 
 actual_fc_dates <- distinct(forecasts_ver, forecast_date) %>% pull(1)
 mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
@@ -126,15 +124,15 @@ for (i in 1:3) {
   }
   
   p <- plot_forecasts(fdat, 
-                      models = models,
+#                      models = models,
 #                      truth_data = filter(full_hosp_truth, target_end_date <= as.Date("2021-05-03")),
                       target_variable = "inc hosp", 
                       intervals = c(.5, .95), 
                       truth_source = "HealthData",
                       use_median_as_point = TRUE,
                       facet = model ~.,
-                      facet_nrow = 4,
-                      facet_scales = "free_y",
+                      facet_nrow = ceiling((length(models) + 1)/3),
+#                      facet_scales = "free_y",
                       fill_by_model = TRUE, 
                       plot=FALSE)
 
@@ -146,7 +144,7 @@ for (i in 1:3) {
           axis.text.x = element_text(vjust = 7, hjust = -0.2),
           legend.position = "none")
           
-   print(pt)
+  print(pt)
 }
 ```
 
@@ -178,6 +176,7 @@ We calculate metrics for all three models, aggregating by horizon. Since hospita
 # scores_ver <- scores
 # 
 # save(forecasts_ver, scores_ver, mon_dates_df, file="../data/versioned_fc_df.RData")
+# save(forecasts_baseline, scores_base, file="../data/baseline_fc_scores.RData")
 ```
 
 ### Overall metrics
@@ -188,10 +187,10 @@ scores <- scores_ver %>%
   select(-mon_fc_dates) %>%
   filter(horizon_wk %in% 1:4)
 
-# score_baseline <- score_baseline %>%
-#   mutate(horizon=as.numeric(horizon),
-#     horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
-#   filter(horizon_wk %in% 1:4)
+score_baseline <- score_baseline %>%
+  mutate(horizon=as.numeric(horizon),
+    horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
+  filter(horizon_wk %in% 1:4)
 
   
 # US National
