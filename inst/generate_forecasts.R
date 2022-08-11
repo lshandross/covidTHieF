@@ -54,6 +54,8 @@ sun_testing_dates <- c(as.Date("2021-10-31") + weeks(0:21))
 # full_hosp_truth <-
 #   load_truth("HealthData", "inc hosp", temporal_resolution="daily", data_location = "remote_hub_repo")
 
+states53 <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
+
 # FUNCTIONS
 load_weekly_truth <- function(fc_dates) {
   library(tidyverse)
@@ -76,6 +78,8 @@ load_weekly_truth <- function(fc_dates) {
 # Pull forecasts from other models
 #hub_models <- # eligible models
 pull_forecasts <- function(fc_dates) {
+  library(tidyverse)
+  library(covidHubUtils)
   load_forecasts(#models = hub_models,
                 dates = fc_dates,
                 date_window_size = 6,
@@ -109,7 +113,6 @@ if (system == "linux") {
     training_truth_df <- tibble(forecast_date=sun_fc_dates, truth_data=sun_training_truth_list)
     actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
       pull(target_end_date)
-    states53 <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
     
     top_level <- c(1:4, 6, 8, 12)
     agg_6wk <- list(42, 21, 14, 7, 1); agg_8wk <- list(56, 28, 14, 7, 1)
@@ -190,6 +193,7 @@ if (system == "linux") {
   }
 
 } else {
+  library(doParallel)
   num_cores <- detectCores(logical=TRUE) # returns number of available cores
 
   # allocate number of available cores to R
@@ -220,6 +224,9 @@ if (system == "linux") {
     save(mon_training_truth_list, sun_training_truth_list, file="data/versioned_truth_training.RData")
 
   } else if (action == "load_testing_forecasts") {
+    # Export our function on the cluster
+    clusterExport(cl, list('pull_forecasts', 'sun_testing_dates', 'states53'))
+    
     # Pull forecasts from other models
     system.time({
       forecast_testing_list <- c(parLapply(cl, sun_testing_dates, fun = pull_forecasts))
@@ -234,7 +241,6 @@ if (system == "linux") {
     training_truth_df <- tibble(forecast_date=sun_fc_dates, truth_data=sun_training_truth_list)
     actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
       pull(target_end_date)
-    states53 <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
 
     # FUNCTIONS
     # Generate THieF Forecasts
