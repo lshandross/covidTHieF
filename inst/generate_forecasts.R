@@ -116,7 +116,7 @@ if (system == "linux") {
     
     top_level <- c(1:4, 6, 8, 12)
     agg_6wk <- list(42, 21, 14, 7, 1); agg_8wk <- list(56, 28, 14, 7, 1)
-    aggregate_levels <- list(agg_8wk[4:5], agg_8wk[3:5], agg_6wk[3:5], agg_8wk[2:5], agg_6wk, agg_8wk, list(84, 56, 42, 28, 21, 14, 7, 1))
+    aggregate_levels <- list(agg_8wk[4:5], agg_8wk[3:5], list(21, 7, 1), agg_8wk[2:5], agg_6wk, agg_8wk, list(84, 56, 42, 28, 21, 14, 7, 1))
     thief_aggregates <- tibble(top_level, aggregate_levels)
     
     model <- paste(model_type, "_", specification, "-", transform_type, sep="")
