@@ -18,6 +18,12 @@ library(covidHubUtils)
 library(patchwork)
 library(surveillance)
 library(tidytext)
+
+# parallelize code
+library(doParallel)
+num_cores <- detectCores(logical=TRUE)
+cl <- makeCluster(num_cores-1)
+registerDoParallel(cl)
 ```
 
 ## Load in truth data and forecasts
@@ -52,24 +58,19 @@ load("../data/versioned_truth_training.RData")
 #                                         as_of=NULL,
 #                                         hub = c("US"))
 # 
-files <- rep("path", 30)
-df <- c()
-forecasts <- c()
-for (i in 1:length(models)) {
-  files <- list.files(path=paste("../data/", models[i], "/", sep=""), pattern=".csv", full.names=TRUE)
-  for (j in 1:30) {
-    if(isTRUE(i + j != 2)) {
-      df <- read_csv(files[j]) %>%
-        mutate(model = models[i])
-      forecasts <- rbind(forecasts, df)
-    } else {
-        forecasts <- read_csv(files[j]) %>%
-        mutate(model = models[i])
-    }
-  }
-}
 
-forecasts_df <-
+load_formatted_forecasts <- function(model_vector) {
+  library(tidyverse)
+  library(covidHubUtils)
+  files <- rep("path", 47)
+  df <- c()
+  forecasts <- c()
+  files <- list.files(path=paste("data/", model_vector, "/", sep=""), pattern=".csv", full.names=TRUE)
+  for (j in 1:47) {
+    df <- read_csv(files[j]) %>% mutate(model = model_vector)
+    forecasts <- rbind(forecasts, df)
+  }
+
   forecasts %>%
     separate(target,
       into=c("horizon", "temp"),
@@ -82,8 +83,15 @@ forecasts_df <-
     ) %>%
     select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
     left_join(hub_locations, by=c("location"="fips"))
+}
 
-forecasts_ver <-forecasts_df
+# Export our function on the cluster
+clusterExport(cl, list('load_formatted_forecasts', 'models', 'all_thief', 'sarima_models'))
+
+# Run function across previously specified number of cores
+system.time({
+  forecasts_ver <- c(parLapply(cl, models, fun = load_formatted_forecasts))
+})
 
 actual_fc_dates <- distinct(forecasts_ver, forecast_date) %>% pull(1)
 mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
