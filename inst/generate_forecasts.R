@@ -178,7 +178,8 @@ if (system == "linux") {
     if (date_indices[1] == 1) {
       model_df <- c()
     } else {
-      load(paste("data/", model, "_", ceiling((date_indices[1]-1)/6), ".RData", sep=""))
+#      load(paste("data/", model, "_", ceiling((date_indices[1]-1)/6), ".RData", sep=""))
+      load(paste("data/", model, "/", model, "_", ceiling((date_indices[1]-1)/6), ".RData", sep=""))
     }
     for (i in 1:total_forecasts) {
       if (i == 1) {message("entered for loop")}
