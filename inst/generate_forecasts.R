@@ -174,25 +174,24 @@ if (system == "linux") {
     message("Forecasts successfully generated")
 
     # write and save forecasts
-    total_forecasts <- date_indices[2]-date_indices[1]+1
-    if (date_indices[1] == 1) {
+    if (date_indices[1] %in% c(1 + 6*(0:ceiling(47/6)))) {
       model_df <- c()
     } else {
 #      load(paste("data/", model, "_", ceiling((date_indices[1]-1)/6), ".RData", sep=""))
       load(paste("data/", model, "/", model, "_", ceiling((date_indices[1]-1)/6), ".RData", sep=""))
     }
-    for (i in 1:total_forecasts) {
-      if (i == 1) {message("entered for loop")}
-      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", model, "/", actual_fc_dates[i+date_indices[1]-1], "-", model, ".csv", sep=""))
-#      write.csv(thief_fc_full[[i]][[1]], file=paste("data/", actual_fc_dates[i+date_indices[1]-1], "-", model, ".csv", sep=""))
-      message(paste("Week", i+date_indices[1]-1,"forecast successfully written"))
-      if (i %in% c(1 + 6*(0:ceiling(total_forecasts/6)))) {model_df <- c()}
-      model_df <- rbind(model_df, thief_fc_full[[i]][[2]])
-      if (i %in% c(6*(1:floor(total_forecasts/6)), total_forecasts)) {
-        assign(paste("modfc", specification, transform_type, ceiling((i+date_indices[1]-1)/6), sep="_"), model_df)
-#        save(list=paste("modfc", specification, transform_type, ceiling((i+date_indices[1]-1)/6), sep="_"), file=paste("data/", model, "_", ceiling((i+date_indices[1]-1)/6), ".RData", sep=""))
-        save(list=paste("modfc", specification, transform_type, ceiling((i+date_indices[1]-1)/6), sep="_"), file=paste("data/", model, "/", model, "_", ceiling((i+date_indices[1]-1)/6), ".RData", sep=""))
-      message(paste("Forecast object", ceiling((i+date_indices[1]-1)/6), "saved", sep=" "))
+    for (i in date_indices[1]:date_indices[2]) {
+      if (i == date_indices[1]) {message("entered for loop")}
+#      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""))
+      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""))
+      message(paste("Week", i,"forecast successfully written"))
+      if (i %in% c(1 + 6*(0:ceiling(47/6)))) {model_df <- c()}
+      model_df <- rbind(model_df, thief_fc_full[[i-date_indices[1]+1]][[2]])
+      if (i %in% c(6*(1:floor(47/6)), 47)) {
+        assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
+#        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
+        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", model, "/", ceiling(i/6), ".RData", sep=""))
+      message(paste("Forecast object", ceiling(i/6), "saved", sep=" "))
       } 
     }
   }
