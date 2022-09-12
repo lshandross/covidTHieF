@@ -148,6 +148,7 @@ if (system == "linux") {
   # Generate Sarima Forecasts
   generate_sarima_wk <-
     function(fc_dates) {
+      message(paste("Starting", fc_dates, "forecasts"))
       library(tidyverse)
       library(lubridate)
       library(covidHubUtils)
@@ -162,6 +163,8 @@ if (system == "linux") {
         as.Date("2020-07-27"), fc_dates,
         fips_vec = states53, frequency = model_spec[[2]],
         pi_levels = c(10 * (1:9), 95, 98), transform.4root = model_spec[[3]])
+      
+      message(paste("Finished", fc_dates, "forecasts"))
     }
 
     # Run function across previously specified number of cores
@@ -264,8 +267,8 @@ if (system == "linux") {
         covid_thief(truth_df, "value",
           as.Date("2020-07-27"), fc_dates, # change as needed
           fips_vec = states53,
-          aggregate_levels = list(21, 7, 1), frequency = 21, # change as needed
-          pi_levels = c(10 * (1:9), 95, 98), transform.4root = TRUE) # change as needed
+          aggregate_levels = list(84, 42, 28, 21, 14, 7, 1), frequency = 84, # change as needed
+          pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
       }
 
     # Generate Sarima Forecasts
@@ -296,7 +299,7 @@ if (system == "linux") {
       if (model_type == "sarima") {
         thief_fc_full <- c(parLapply(cl, sun_fc_dates[36:47], fun = generate_sarima_wk))
       } else {
-        thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:length(sun_fc_dates)], fun = generate_thief_wk))
+        thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:30], fun = generate_thief_wk))
       }
     })
 
