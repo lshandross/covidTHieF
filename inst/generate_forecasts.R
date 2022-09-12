@@ -116,7 +116,7 @@ if (system == "linux") {
     
     top_level <- c(1:4, 6, 8, 12)
     agg_6wk <- list(42, 21, 14, 7, 1); agg_8wk <- list(56, 28, 14, 7, 1)
-    aggregate_levels <- list(agg_8wk[4:5], agg_8wk[3:5], list(21, 7, 1), agg_8wk[2:5], agg_6wk, agg_8wk, list(84, 56, 42, 28, 21, 14, 7, 1))
+    aggregate_levels <- list(agg_8wk[4:5], agg_8wk[3:5], list(21, 7, 1), agg_8wk[2:5], agg_6wk, agg_8wk, list(84, 42, 28, 21, 14, 7, 1))
     thief_aggregates <- tibble(top_level, aggregate_levels)
     
     model <- paste(model_type, "_", specification, "-", transform_type, sep="")
@@ -129,6 +129,7 @@ if (system == "linux") {
   # Generate THieF Forecasts
   generate_thief_wk <-
     function(fc_dates) {
+      message(paste("Starting", fc_dates, "forecasts"))
       library(tidyverse)
       library(lubridate)
       library(covidHubUtils)
@@ -143,6 +144,8 @@ if (system == "linux") {
         as.Date("2020-07-27"), fc_dates, # change as needed
         fips_vec = states53, aggregate_levels = model_agg, frequency = model_freq,
         pi_levels = c(10 * (1:9), 95, 98), transform.4root = model_spec[[3]])
+      
+      message(paste("Finished", fc_dates, "forecasts"))
     }
 
   # Generate Sarima Forecasts
