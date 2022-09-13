@@ -106,7 +106,7 @@ if (system == "linux") {
     forecast_testing_list <- mclapply(sun_testing_dates[date_indices], mc.cores = num_cores, FUN = pull_forecasts)
 
     save(forecast_testing_list, file=paste("data/", forecast_testing_list, ".RData", sep=""))
-  } else {
+  } else { #action == "generate_forecasts"
     load(file="data/versioned_truth_training.RData")
 
     # Generate Forecasts
@@ -171,7 +171,7 @@ if (system == "linux") {
     # Run function across previously specified number of cores
     if (model_spec[[1]] == "sarima") {
       thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_sarima_wk)
-    } else {
+    } else { # model_spec[[1]] == "thief"
       thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_thief_wk)
     }
     
@@ -186,15 +186,15 @@ if (system == "linux") {
     }
     for (i in date_indices[1]:date_indices[2]) {
       if (i == date_indices[1]) {message("entered for loop")}
-      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""))
-#      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""))
+#      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""))
+      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""))
       message(paste(model, "week", i,"csv file written"))
       if (i %in% c(1 + 6*(0:ceiling(47/6)))) {model_df <- c()}
       model_df <- rbind(model_df, thief_fc_full[[i-date_indices[1]+1]][[2]])
       if (i %in% c(6*(1:floor(47/6)), 47)) {
         assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
-        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
-#        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "/", model, "_", ceiling(i/6), ".RData", sep=""))
+#        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
+        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "/", model, "_", ceiling(i/6), ".RData", sep=""))
       message(paste(model, "RData object", ceiling(i/6), "saved"))
       } 
     }
