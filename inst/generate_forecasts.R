@@ -188,15 +188,15 @@ if (system == "linux") {
     }
     for (i in date_indices[1]:date_indices[2]) {
       if (i == date_indices[1]) {message("entered for loop")}
-#      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""))
-      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""))
+      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""))
+#      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""))
       message(paste(model, "week", i,"csv file written"))
       if (i %in% c(1 + 6*(0:ceiling(47/6)))) {model_df <- c()}
       model_df <- rbind(model_df, thief_fc_full[[i-date_indices[1]+1]][[2]])
       if (i %in% c(6*(1:floor(47/6)), 47)) {
         assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
-#        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
-        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "/", model, "_", ceiling(i/6), ".RData", sep=""))
+        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
+#        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "/", model, "_", ceiling(i/6), ".RData", sep=""))
       message(paste(model, "RData object", ceiling(i/6), "saved"))
       } 
     }
