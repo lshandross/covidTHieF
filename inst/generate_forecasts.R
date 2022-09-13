@@ -139,13 +139,12 @@ if (system == "linux") {
       truth_df <- training_truth_df %>%
          filter(forecast_date == fc_dates) %>%
          pull(2) %>% pluck(1)
-
-      covid_thief(truth_df, "value",
+      results <- covid_thief(truth_df, "value",
         as.Date("2020-07-27"), fc_dates, # change as needed
         fips_vec = states53, aggregate_levels = model_agg, frequency = model_freq,
         pi_levels = c(10 * (1:9), 95, 98), transform.4root = model_spec[[3]])
-      
       message(paste("Finished", fc_dates, "forecasts"))
+      return(results)
     }
 
   # Generate Sarima Forecasts
@@ -161,13 +160,12 @@ if (system == "linux") {
       truth_df <- training_truth_df %>%
          filter(forecast_date == fc_dates) %>%
          pull(2) %>% pluck(1)
-
-      covid_sarima(truth_df, "value",
+      results <- covid_sarima(truth_df, "value",
         as.Date("2020-07-27"), fc_dates,
         fips_vec = states53, frequency = model_spec[[2]],
         pi_levels = c(10 * (1:9), 95, 98), transform.4root = model_spec[[3]])
-      
       message(paste("Finished", fc_dates, "forecasts"))
+      return(results)
     }
 
     # Run function across previously specified number of cores
