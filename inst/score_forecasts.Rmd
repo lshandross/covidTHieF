@@ -31,22 +31,34 @@ We load in the hospitalization truth data and our forecasts. (Note: The load for
 
 ```{r, message=FALSE, warning=FALSE}
 inc_hosp_targets <- paste(0:30, "day ahead inc hosp")
-mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:29))
+mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
 fips <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
 
 #models <-c("Base_arima_4root", "Base_arima_noTransform", "Multiple3_arima_4root", "Multiple3_arima_noTransform", "Topmost8_arima_4root", "Topmost8_arima_noTransform")
-all_thief <- sort(paste("THieF_", c(1:4, 8, 12), "wk-", c(rep("4root", 6), rep("noTransform", 6)), sep=""))[c(3:12, 1:2)]
+all_thief <- sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep=""))[c(3:14, 1:2)]
+thief_new <- sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep=""))
+thief_old <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))
 sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
 models <- c(all_thief, sarima_models)
+#models <- thief_old
             
 load("../data/loadedfc_scores_df.RData")
 load("../data/versioned_fc_df.RData")
 load("../data/baseline_fc_scores.RData")
 
+load("../data/extended_fcv_thief_old.RData")
+load("../data/extended_fcv_thief_new.RData")
+load("../data/extended_fcv_sarima.RData")
+load("../data/baseline_fc_scores.RData")
+
 load("../data/versioned_truth_training.RData")
+
+#actual_fc_dates <- distinct(forecasts_ver, forecast_date) %>% pull(1)
+  mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
+#mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
 ```
 
-```{r, message=FALSE, echo=FALSE}
+```{r, message=FALSE, echo=FALSE, eval=FALSE}
 # forecasts_baseline <- load_forecasts(models = "COVIDhub-baseline",
 #                                         dates = mon_fc_dates,
 #                                         date_window_size = 6, 
@@ -65,7 +77,7 @@ load_formatted_forecasts <- function(model_vector) {
   files <- rep("path", 47)
   df <- c()
   forecasts <- c()
-  files <- list.files(path=paste("data/", model_vector, "/", sep=""), pattern=".csv", full.names=TRUE)
+  files <- list.files(path=paste("../data/", model_vector, "/", sep=""), pattern=".csv", full.names=TRUE)
   for (j in 1:47) {
     df <- read_csv(files[j]) %>% mutate(model = model_vector)
     forecasts <- rbind(forecasts, df)
@@ -93,15 +105,25 @@ system.time({
   forecasts_ver <- c(parLapply(cl, models, fun = load_formatted_forecasts))
 })
 
-actual_fc_dates <- distinct(forecasts_ver, forecast_date) %>% pull(1)
+# Split into data frames
+fc_version_thief_new <- c(); fc_version_thief_old <- c(); fc_version_sarima <- c()
+for (i in 1:length(fc_versioned_list)) {
+  if (i %in% c(1:6, 9, 10)) {
+    fc_version_thief_new <- rbind(fc_version_thief_new, fc_versioned_list[[i]])
+  } else if (i %in% c(7, 8, 11:14)) {
+    fc_version_thief_old <- rbind(fc_version_thief_old, fc_versioned_list[[i]])
+  } else {
+    fc_version_sarima <- rbind(fc_version_sarima, fc_versioned_list[[i]])
+  }
+}
+
+actual_fc_dates <- distinct(fc_version_sarima, forecast_date) %>% pull(1)
 mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
 
-full_hosp_truth <- load_truth("HealthData", 
-                         "inc hosp", 
-                         as_of=as.Date("2022-04-06"),
-                         temporal_resolution="weekly",
-                         data_location = "covidData")
 # save(full_hosp_truth, sun_training_truth_list, sun_testing_truth_list, file = "all_truth_data.RData")
+# save(fc_version_sarima, file="../data/extended_fcv_sarima.RData")
+# save(fc_version_thief_old, file="../data/extended_fcv_thief_old.RData")
+# save(fc_version_thief_new, file="../data/extended_fcv_thief_new.RData")
 ```
 
 # Versioned Truth Results
@@ -110,6 +132,12 @@ full_hosp_truth <- load_truth("HealthData",
 We plot forecasts for three locations (US National, Texas, and Vermont) for each of the three models. The two state locations were chosen as the highest and lowest hospitalization count locations. The plotted forecasts are spaced 4 weeks apart with 1 - 28 day ahead horizons, starting with the first forecast date, 12/07/20, until the end of the training period, 07/05/21.   
 
 ```{r, warning=FALSE, message=FALSE}
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         as_of=as.Date("2022-04-06"),
+                         temporal_resolution="weekly",
+                         data_location = "covidData")
+
 locs <- full_hosp_truth %>%
   filter(target_end_date <= as.Date("2021-07-05")) %>%
   group_by(location) %>%
@@ -119,9 +147,11 @@ locs <- full_hosp_truth %>%
   filter(row_number() %in% c(1, 2, 53)) %>%
   pull(location)
 
-fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)), actual_fc_dates[1+4*(0:7)])
+fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_fc_dates[1+4*(0:11)])
 
-fc_ver <- forecasts_ver %>% rbind(forecasts_baseline) 
+fc_ver <- rbind(fc_version_sarima, fc_version_thief_new, fc_version_thief_old) %>% rbind(forecasts_baseline) 
+#fc_ver <- rbind(forecasts_ver, forecasts_baseline)
+
 for (i in 1:3) {
   fdat <- fc_ver %>%
     filter(location == locs[i], forecast_date %in% fc_dates, horizon <= 28)
@@ -132,14 +162,14 @@ for (i in 1:3) {
   }
   
   p <- plot_forecasts(fdat, 
-#                      models = models,
+#                      models = c(),
 #                      truth_data = filter(full_hosp_truth, target_end_date <= as.Date("2021-05-03")),
                       target_variable = "inc hosp", 
                       intervals = c(.5, .95), 
                       truth_source = "HealthData",
                       use_median_as_point = TRUE,
                       facet = model ~.,
-                      facet_nrow = ceiling((length(models) + 1)/3),
+                      facet_ncol = 3,
 #                      facet_scales = "free_y",
                       fill_by_model = TRUE, 
                       plot=FALSE)
@@ -164,23 +194,25 @@ We calculate metrics for all three models, aggregating by horizon. Since hospita
 ```{r score forecasts, eval = FALSE, echo = FALSE}
 #scores_ver <- score_forecasts(forecasts=forecasts_ver, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
 #score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
+  # note that the default column order may differ between these dfs due to existence of separate point forecasts
+  # you will need to re-order the columns to correctly rbind them: score_baseline <- select(score_baseline, 1:7, 20, 9:19, 21:49, 8)
 
 # if forecasts are too big for a single call
-# scores_list <- list()
-# for (i in 1:length(models)) {
-#   scores_list[[i]] <- 
-#     score_forecasts(
-#       forecasts=filter(forecasts_ver, model==models[i]),
-#       return_format="wide",
-#       truth=full_hosp_truth,
-#       use_median_as_point=TRUE
-#     )
-# }
-# scores <- c()
-# for (i in 1:length(models)) {
-#   scores <- rbind(scores, scores_list[[i]])
-# }
-# 
+scores_list <- list()
+for (i in 1:length(models)) {
+  scores_list[[i]] <-
+    score_forecasts(
+      forecasts=filter(forecasts_ver, model==models[i]),
+      return_format="wide",
+      truth=full_hosp_truth,
+      use_median_as_point=TRUE
+    )
+}
+scores <- c()
+for (i in 1:length(models)) {
+  scores <- rbind(scores, scores_list[[i]])
+}
+
 # scores_ver <- scores
 # 
 # save(forecasts_ver, scores_ver, mon_dates_df, file="../data/versioned_fc_df.RData")
@@ -217,10 +249,10 @@ overall_metrics_US <- overall_metrics_US %>%
   mutate(
     rwis = wis/pull(overall_metrics_US[1, 2]),
     rmae = mae/pull(overall_metrics_US[1, 3]),
-    rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_US[1, 4])-0.5),
-    rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_US[1, 5])-0.95),
+    #rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_US[1, 4])-0.5),
+    #rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_US[1, 5])-0.95),
   ) %>% 
-  mutate(across(where(is.numeric), round, digits=3)) %>%
+  mutate(across(where(is.numeric), round, digits=1)) %>%
   arrange(wis)
 knitr::kable(overall_metrics_US)
 
@@ -238,8 +270,8 @@ overall_metrics_states <- overall_metrics_states %>%
   mutate(
     rwis = wis/pull(overall_metrics_states[1, 2]),
     rmae = mae/pull(overall_metrics_states[1, 3]),
-    rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_states[1, 4])-0.5),
-    rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_states[1, 5])-0.95),
+    # rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_states[1, 4])-0.5),
+    # rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_states[1, 5])-0.95),
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
@@ -274,18 +306,18 @@ horizon_wk_metrics_US <- horizon_wk_metrics_US %>%
       horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_US[3,4]),
       horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_US[4,4])
     ),
-    rcov_50 = case_when(
-      horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[1,5])-0.5),
-      horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[2,5])-0.5),
-      horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[3,5])-0.5),
-      horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[4,5])-0.5),
-    ),
-    rcov_95 = case_when(
-      horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[1,6])-0.95),
-      horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[2,6])-0.95),
-      horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[3,6])-0.95),
-      horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[4,6])-0.95),
-    )
+    # rcov_50 = case_when(
+    #   horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[1,5])-0.5),
+    #   horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[2,5])-0.5),
+    #   horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[3,5])-0.5),
+    #   horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[4,5])-0.5),
+    # ),
+    # rcov_95 = case_when(
+    #   horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[1,6])-0.95),
+    #   horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[2,6])-0.95),
+    #   horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[3,6])-0.95),
+    #   horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[4,6])-0.95),
+    # )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(horizon_wk, wis)
@@ -315,18 +347,18 @@ horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
       horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_states[3,4]),
       horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_states[4,4])
     ),
-    rcov_50 = case_when(
-      horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[1,5])-0.5),
-      horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[2,5])-0.5),
-      horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[3,5])-0.5),
-      horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[4,5])-0.5),
-    ),
-    rcov_95 = case_when(
-      horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[1,6])-0.95),
-      horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[2,6])-0.95),
-      horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[3,6])-0.95),
-      horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[4,6])-0.95),
-    )
+    # rcov_50 = case_when(
+    #   horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[1,5])-0.5),
+    #   horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[2,5])-0.5),
+    #   horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[3,5])-0.5),
+    #   horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[4,5])-0.5),
+    # ),
+    # rcov_95 = case_when(
+    #   horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[1,6])-0.95),
+    #   horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[2,6])-0.95),
+    #   horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[3,6])-0.95),
+    #   horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[4,6])-0.95),
+    # )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(horizon_wk, wis)
@@ -334,14 +366,14 @@ knitr::kable(horizon_wk_metrics_states)
 ```
 
 ```{r, message=FALSE, warning=FALSE}  
-#models <- c("COVIDhub-baseline", models)
+model_names <- c("COVIDhub-baseline", models[3:6], models[1:2])
 
 wis_hzn_plot_US <- horizon_wk_metrics_US %>%
 ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model), alpha = 0.8) +
   geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
-    breaks = models,
+    breaks = model_names,
     values = c("black", "#F8766D", "#B79F00",
       "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title="US",
@@ -353,7 +385,7 @@ wis_hzn_plot_states <- horizon_wk_metrics_states %>%
   geom_line(mapping=aes(col=model), alpha = 0.8) +
   coord_cartesian(ylim = c(15, 60)) +
   scale_color_manual(
-    breaks = models,
+    breaks = model_names,
     values = c("black", "#F8766D", "#B79F00",
       "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
   labs(title="States", 
@@ -411,26 +443,26 @@ wave_metrics_US <- wave_metrics_US %>%
       horizon_wk == 3 & wave == "winter21" ~ mae / pull(wave_metrics_US[31, 5]),
       horizon_wk == 4 & wave == "winter21" ~ mae / pull(wave_metrics_US[32,5])
     ),
-    rcov_50 = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[1,6])-0.5),
-      horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[2,6])-0.5),
-      horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[3,6])-0.5),
-      horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[4,6])-0.5),
-      horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[29,6])-0.5),
-      horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[30,6])-0.5),
-      horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[31,6])-0.5),
-      horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[32,6])-0.5)
-    ),
-    rcov_95 = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[1, 7])-0.95),
-      horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[2, 7])-0.95),
-      horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[3, 7])-0.95),
-      horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[4, 7])-0.95),
-      horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[29, 7])-0.95),
-      horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[30, 7])-0.95),
-      horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[31, 7])-0.95),
-      horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[32, 7])-0.95)
-    )
+    # rcov_50 = case_when(
+    #   horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[1,6])-0.5),
+    #   horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[2,6])-0.5),
+    #   horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[3,6])-0.5),
+    #   horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[4,6])-0.5),
+    #   horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[29,6])-0.5),
+    #   horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[30,6])-0.5),
+    #   horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[31,6])-0.5),
+    #   horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[32,6])-0.5)
+    # ),
+    # rcov_95 = case_when(
+    #   horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[1, 7])-0.95),
+    #   horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[2, 7])-0.95),
+    #   horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[3, 7])-0.95),
+    #   horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[4, 7])-0.95),
+    #   horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[29, 7])-0.95),
+    #   horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[30, 7])-0.95),
+    #   horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[31, 7])-0.95),
+    #   horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[32, 7])-0.95)
+    # )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wave, horizon_wk, wis)
@@ -475,26 +507,26 @@ wave_metrics_states <- wave_metrics_states %>%
       horizon_wk == 3 & wave == "winter21" ~ mae / pull(wave_metrics_states[31,5]),
       horizon_wk == 4 & wave == "winter21" ~ mae / pull(wave_metrics_states[32,5])
     ),
-    rcov_50 = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[1,6])-0.5),
-      horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[2,6])-0.5),
-      horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[3,6])-0.5),
-      horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[4,6])-0.5),
-      horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[29,6])-0.5),
-      horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[30,6])-0.5),
-      horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[31,6])-0.5),
-      horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[32,6])-0.5)
-    ),
-    rcov_95 = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[1,7])-0.95),
-      horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[2,7])-0.95),
-      horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[3,7])-0.95),
-      horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[4,7])-0.95),
-      horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[29,7])-0.95),
-      horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[30,7])-0.95),
-      horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[31,7])-0.95),
-      horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[32,7])-0.95)
-    )
+    # rcov_50 = case_when(
+    #   horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[1,6])-0.5),
+    #   horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[2,6])-0.5),
+    #   horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[3,6])-0.5),
+    #   horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[4,6])-0.5),
+    #   horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[29,6])-0.5),
+    #   horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[30,6])-0.5),
+    #   horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[31,6])-0.5),
+    #   horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[32,6])-0.5)
+    # ),
+    # rcov_95 = case_when(
+    #   horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[1,7])-0.95),
+    #   horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[2,7])-0.95),
+    #   horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[3,7])-0.95),
+    #   horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[4,7])-0.95),
+    #   horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[29,7])-0.95),
+    #   horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[30,7])-0.95),
+    #   horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[31,7])-0.95),
+    #   horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[32,7])-0.95)
+    # )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wave, horizon_wk, wis)
@@ -509,7 +541,7 @@ wis_hzn_plot_winter21_US <- wave_metrics_US %>%
    geom_point(mapping=aes(col=model), alpha = 0.8) +
    geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
-    breaks = models,
+    breaks = model_names,
     values = c("black", "#F8766D", "#B79F00",
       "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
    labs(title="Winter '21 Wave (US)", x="Horizon Week", y="Average WIS")
@@ -520,7 +552,7 @@ wis_hzn_plot_alpha_US <- wave_metrics_US %>%
    geom_point(mapping=aes(col=model), alpha = 0.8) +
    geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
-    breaks = models,
+    breaks = model_names,
     values = c("black", "#F8766D", "#B79F00",
       "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
    labs(title="Alpha Wave (US)", x="Horizon Week", y="Average WIS")
@@ -531,7 +563,7 @@ wis_hzn_plot_winter21_states <- wave_metrics_states %>%
    geom_point(mapping=aes(col=model), alpha = 0.8) +
    geom_line(mapping=aes(col=model), alpha = 0.8) +
   scale_color_manual(
-    breaks = models,
+    breaks = model_names,
     values = c("black", "#F8766D", "#B79F00",
       "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
    labs(title="Winter '21 Wave (states)", x="Horizon Week", y="Average WIS")
@@ -543,7 +575,7 @@ wis_hzn_plot_alpha_states <- wave_metrics_states %>%
    geom_line(mapping=aes(col=model), alpha = 0.8) +
   coord_cartesian(ylim = c(0, 50)) +
   scale_color_manual(
-    breaks = models,
+    breaks = model_names,
     values = c("black", "#F8766D", "#B79F00",
       "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
    labs(title="Alpha Wave (states)", x="Horizon Week", y="Average WIS")
@@ -600,7 +632,7 @@ wis_1wk_plot_US <- forecast_date_metrics_US %>%
   geom_point(aes(color=model), alpha=0.5, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = models[1:7],
+    breaks = model_names[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (1-week)") +
@@ -616,7 +648,7 @@ wis_4wk_plot_US <- forecast_date_metrics_US %>%
   geom_point(aes(color=model), alpha=0.5, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = models[1:7],
+    breaks = model_names[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (4-week)") +
@@ -635,7 +667,7 @@ cov95_1wk_plot_US <- forecast_date_metrics_US %>%
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = models[1:7],
+    breaks = model_names[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (1-week)") +
@@ -652,7 +684,7 @@ cov95_4wk_plot_US <- forecast_date_metrics_US %>%
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = models[1:7],
+    breaks = model_names[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (4-week)") +
@@ -699,7 +731,7 @@ wis_1wk_plot_states <- forecast_date_metrics_states %>%
   geom_point(aes(color=model), alpha=0.5, size=0.75) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = models[1:7],
+    breaks = model_names[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (1-week)") +
@@ -716,7 +748,7 @@ wis_4wk_plot_states <- forecast_date_metrics_states %>%
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   coord_cartesian(ylim = c(0, 175)) +
   scale_color_manual(
-    breaks = models[1:7],
+    breaks = model_names[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "WIS (4-week)") +
@@ -735,7 +767,7 @@ cov95_1wk_plot_states <- forecast_date_metrics_states %>%
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = models[1:7],
+    breaks = model_names[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (1-week)") +
@@ -752,7 +784,7 @@ cov95_4wk_plot_states <- forecast_date_metrics_states %>%
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   scale_color_manual(
-    breaks = models[1:7],
+    breaks = model_names[1:7],
     values = c("black", "red", "darkorange",
       "green", "blue", "purple", "magenta")) +
   labs(title = "95% PI Coverage (4-week)") +
@@ -1012,8 +1044,8 @@ overall_metrics_US <- overall_metrics_US %>%
   mutate(
     rwis = wis/pull(overall_metrics_US[3, 2]),
     rmae = mae/pull(overall_metrics_US[3, 3]),
-    rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_US[3, 4])-0.5),
-    rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_US[3, 5])-0.95),
+    #rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_US[3, 4])-0.5),
+    #rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_US[3, 5])-0.95),
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
@@ -1035,8 +1067,8 @@ overall_metrics_states <- overall_metrics_states %>%
   mutate(
     rwis = wis/pull(overall_metrics_states[3, 2]),
     rmae = mae/pull(overall_metrics_states[3, 3]),
-    rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_states[3, 4])-0.5),
-    rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_states[3, 5])-0.95),
+    #rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_states[3, 4])-0.5),
+    #rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_states[3, 5])-0.95),
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
@@ -1079,18 +1111,18 @@ horizon_wk_metrics_US <- horizon_wk_metrics_US %>%
       horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_US[11,4]),
       horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_US[12,4])
     ),
-    rcov_50 = case_when(
-      horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[9,5])-0.5),
-      horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[10,5])-0.5),
-      horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[11,5])-0.5),
-      horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[12,5])-0.5),
-    ),
-    rcov_95 = case_when(
-      horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[9,6])-0.95),
-      horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[10,6])-0.95),
-      horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[11,6])-0.95),
-      horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[12,6])-0.95),
-    )
+    # rcov_50 = case_when(
+    #   horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[9,5])-0.5),
+    #   horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[10,5])-0.5),
+    #   horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[11,5])-0.5),
+    #   horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[12,5])-0.5),
+    # ),
+    # rcov_95 = case_when(
+    #   horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[9,6])-0.95),
+    #   horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[10,6])-0.95),
+    #   horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[11,6])-0.95),
+    #   horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[12,6])-0.95),
+    # )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
@@ -1130,18 +1162,18 @@ horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
       horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_states[11,4]),
       horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_states[12,4])
     ),
-    rcov_50 = case_when(
-      horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[9,5])-0.5),
-      horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[10,5])-0.5),
-      horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[11,5])-0.5),
-      horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[12,5])-0.5),
-    ),
-    rcov_95 = case_when(
-      horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[9,6])-0.95),
-      horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[10,6])-0.95),
-      horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[11,6])-0.95),
-      horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[12,6])-0.95),
-    )
+    # rcov_50 = case_when(
+    #   horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[9,5])-0.5),
+    #   horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[10,5])-0.5),
+    #   horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[11,5])-0.5),
+    #   horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[12,5])-0.5),
+    # ),
+    # rcov_95 = case_when(
+    #   horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[9,6])-0.95),
+    #   horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[10,6])-0.95),
+    #   horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[11,6])-0.95),
+    #   horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[12,6])-0.95),
+    # )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
@@ -1230,26 +1262,26 @@ wave_metrics_US <- wave_metrics_US %>%
       horizon_wk == 2 & wave == "winter21" ~ mae / pull(wave_metrics_US[38, 5]),
       horizon_wk == 3 & wave == "winter21" ~ mae / pull(wave_metrics_US[39, 5]),
       horizon_wk == 4 & wave == "winter21" ~ mae / pull(wave_metrics_US[40,5])
-    ),
-    rcov_50 = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[9,6])-0.5),
-      horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[10,6])-0.5),
-      horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[11,6])-0.5),
-      horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[12,6])-0.5),
-      horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[37,6])-0.5),
-      horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[38,6])-0.5),
-      horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[39,6])-0.5),
-      horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[40,6])-0.5)
-    ),
-    rcov_95 = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[9, 7])-0.95),
-      horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[10, 7])-0.95),
-      horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[11, 7])-0.95),
-      horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[12, 7])-0.95),
-      horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[37, 7])-0.95),
-      horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[38, 7])-0.95),
-      horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[39, 7])-0.95),
-      horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[40, 7])-0.95)
+    # ),
+    # rcov_50 = case_when(
+    #   horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[9,6])-0.5),
+    #   horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[10,6])-0.5),
+    #   horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[11,6])-0.5),
+    #   horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[12,6])-0.5),
+    #   horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[37,6])-0.5),
+    #   horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[38,6])-0.5),
+    #   horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[39,6])-0.5),
+    #   horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[40,6])-0.5)
+    # ),
+    # rcov_95 = case_when(
+    #   horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[9, 7])-0.95),
+    #   horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[10, 7])-0.95),
+    #   horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[11, 7])-0.95),
+    #   horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[12, 7])-0.95),
+    #   horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[37, 7])-0.95),
+    #   horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[38, 7])-0.95),
+    #   horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[39, 7])-0.95),
+    #   horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[40, 7])-0.95)
     )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
@@ -1302,26 +1334,26 @@ wave_metrics_states <- wave_metrics_states %>%
       horizon_wk == 2 & wave == "winter21" ~ mae / pull(wave_metrics_states[38,5]),
       horizon_wk == 3 & wave == "winter21" ~ mae / pull(wave_metrics_states[39,5]),
       horizon_wk == 4 & wave == "winter21" ~ mae / pull(wave_metrics_states[40,5])
-    ),
-    rcov_50 = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[9,6])-0.5),
-      horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[10,6])-0.5),
-      horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[11,6])-0.5),
-      horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[12,6])-0.5),
-      horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[37,6])-0.5),
-      horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[38,6])-0.5),
-      horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[39,6])-0.5),
-      horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[40,6])-0.5)
-    ),
-    rcov_95 = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[9,7])-0.95),
-      horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[10,7])-0.95),
-      horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[11,7])-0.95),
-      horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[12,7])-0.95),
-      horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[37,7])-0.95),
-      horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[38,7])-0.95),
-      horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[39,7])-0.95),
-      horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[40,7])-0.95)
+    # ),
+    # rcov_50 = case_when(
+    #   horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[9,6])-0.5),
+    #   horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[10,6])-0.5),
+    #   horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[11,6])-0.5),
+    #   horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[12,6])-0.5),
+    #   horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[37,6])-0.5),
+    #   horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[38,6])-0.5),
+    #   horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[39,6])-0.5),
+    #   horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[40,6])-0.5)
+    # ),
+    # rcov_95 = case_when(
+    #   horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[9,7])-0.95),
+    #   horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[10,7])-0.95),
+    #   horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[11,7])-0.95),
+    #   horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[12,7])-0.95),
+    #   horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[37,7])-0.95),
+    #   horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[38,7])-0.95),
+    #   horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[39,7])-0.95),
+    #   horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[40,7])-0.95)
     )
   ) %>% 
   mutate(across(where(is.numeric), round, digits=3)) %>%
