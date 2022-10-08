@@ -32,34 +32,68 @@ registerDoParallel(cl)
 ## Load in truth data and forecasts
 We load in the hospitalization truth data and our forecasts. (Note: The load forecast parentheses function wasn't working, so alternate code is written to achieve the same output.)   
 
-```{r, message=FALSE, warning=FALSE}
-inc_hosp_targets <- paste(0:30, "day ahead inc hosp")
-mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
-fips <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
-
-#models <-c("Base_arima_4root", "Base_arima_noTransform", "Multiple3_arima_4root", "Multiple3_arima_noTransform", "Topmost8_arima_4root", "Topmost8_arima_noTransform")
-all_thief <- sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep=""))[c(3:14, 1:2)]
-thief_new <- sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep=""))
-thief_old <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))
-sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
-models <- c(all_thief, sarima_models)
-#models <- thief_old
+```{r, message=FALSE, warning=FALSE, results=FALSE}
+analysis <- "extended" # original, versioned, extended
+train_end_date <-
+  case_when(
+    analysis == "original" | analysis == "version" ~ as.Date("2021-07-05"),
+    analysis == "extended" ~ as.Date("2021-10-31"))
             
-# load("../data/loadedfc_scores_df.RData") # original unversioned forecasts and scores
-# load("../data/versioned_fc_df.RData") # versioned forecasts and scores
-# load("../data/baseline_fc_scores.RData") # original baseline forecasts and scores
+inc_hosp_targets <- paste(0:30, "day ahead inc hosp")
+fips <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
+ifelse(analysis == "extended", 
+       mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46)),
+       mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:29)))
 
-# load("../data/extended_fcv_thief_old.RData")
-# load("../data/extended_fcv_thief_new.RData")
-# load("../data/extended_fcv_sarima.RData")
-load("../data/extended_fcv_thief_old_small.RData")
-load("../data/extended_fcv_thief_new_small.RData")
-load("../data/extended_fcv_sarima_small.RData")
-load("../data/extended_scv_thief_old.RData")
-load("../data/extended_scv_thief_new.RData")
-load("../data/extended_scv_sarima.RData")
-load("../data/baseline_fc_scores_extended.RData")
+if (analysis == "original") {
+  models <-c("Base_arima_4root", "Base_arima_noTransform", "Multiple3_arima_4root", "Multiple3_arima_noTransform", "Topmost8_arima_4root", "Topmost8_arima_noTransform")
+  load("../data/loadedfc_scores_df.RData") # original unversioned forecasts and scores
+  load("../data/baseline_fc_scores.RData") # original baseline forecasts and scores
+  fc_plot <- rbind(forecasts_df, forecasts_baseline)
+  scores_df <-scores_df %>%
+    mutate(horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7))
+} else if (analysis == "versioned") {
+  models <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))
+  load("../data/versioned_fc_df.RData") # versioned forecasts and scores
+  load("../data/baseline_fc_scores.RData") # original baseline forecasts and scores
+  actual_fc_dates <- distinct(forecasts_ver, forecast_date) %>% pull(1)
+  mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
+  fc_plot <- rbind(forecasts_ver, forecasts_baseline)
 
+  scores <- scores_ver %>%
+    left_join(mon_dates_df, by = "forecast_date") %>%
+    mutate(horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_dates)/7)) %>%
+    select(-mon_fc_dates) %>%
+    filter(horizon_wk %in% 1:4)
+} else if (analysis == "extended") {
+  all_thief <- sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep=""))[c(3:14, 1:2)]
+  thief_new <- sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep=""))
+  thief_old <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))
+  sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
+  models <- c(all_thief, sarima_models)
+
+  # load("../data/extended_fcv_thief_old.RData")
+  # load("../data/extended_fcv_thief_new.RData")
+  # load("../data/extended_fcv_sarima.RData")
+  load("../data/extended_fcv_thief_old_small.RData")
+  load("../data/extended_fcv_thief_new_small.RData")
+  load("../data/extended_fcv_sarima_small.RData")
+  load("../data/extended_scv_thief_old.RData")
+  load("../data/extended_scv_thief_new.RData")
+  load("../data/extended_scv_sarima.RData")
+  load("../data/baseline_fc_scores_extended.RData")
+
+  actual_fc_dates <- distinct(scores_version_sarima, forecast_date) %>% pull(1)
+  mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
+  fc_plot <- rbind(fcv_sarima_small, fcv_thief_new_small, fcv_thief_old_small) %>% rbind(forecasts_baseline) 
+  scores <- 
+    rbind(scores_version_sarima, scores_version_thief_old, scores_version_thief_new) %>%
+    left_join(mon_dates_df, by = "forecast_date") %>%
+    mutate(horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_dates)/7)) %>%
+    select(-mon_fc_dates) %>%
+    filter(horizon_wk %in% 1:4)
+}
+            
 load("../data/versioned_truth_training.RData")
 full_hosp_truth <- load_truth("HealthData", 
                          "inc hosp", 
@@ -67,9 +101,10 @@ full_hosp_truth <- load_truth("HealthData",
                          temporal_resolution="weekly",
                          data_location = "covidData")
 
-actual_fc_dates <- distinct(scores_version_sarima, forecast_date) %>% pull(1)
-  mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
-mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
+scores_baseline <- score_baseline %>%
+  mutate(horizon=as.numeric(horizon),
+    horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
+  filter(horizon_wk %in% 1:4)
 ```
 
 ```{r, message=FALSE, echo=FALSE, eval=FALSE}
@@ -131,23 +166,19 @@ for (i in 1:length(fc_versioned_list)) {
   }
 }
 
-actual_fc_dates <- distinct(fc_version_sarima, forecast_date) %>% pull(1)
-mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
-
 # save(full_hosp_truth, sun_training_truth_list, sun_testing_truth_list, file = "all_truth_data.RData")
 # save(fc_version_sarima, file="../data/extended_fcv_sarima.RData")
 # save(fc_version_thief_old, file="../data/extended_fcv_thief_old.RData")
 # save(fc_version_thief_new, file="../data/extended_fcv_thief_new.RData")
 ```
 
-# Versioned Truth Results
 
 ## Plot Forecasts
 We plot forecasts for three locations (US National, Texas, and Vermont) for each of the three models. The two state locations were chosen as the highest and lowest hospitalization count locations. The plotted forecasts are spaced 4 weeks apart with 1 - 28 day ahead horizons, starting with the first forecast date, 12/07/20, until the end of the training period, 10/31/21.   
 
 ```{r, warning=FALSE, message=FALSE}
 locs <- full_hosp_truth %>%
-  filter(target_end_date <= as.Date("2021-10-31")) %>%
+  filter(target_end_date <= train_end_date) %>%
   group_by(location) %>%
   summarize(cum_value=sum(value)) %>%
   ungroup() %>%
@@ -155,17 +186,15 @@ locs <- full_hosp_truth %>%
   filter(row_number() %in% c(1, 2, 53)) %>%
   pull(location)
 
-fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_fc_dates[1+4*(0:11)])
-
-fc_ver <- rbind(fcv_sarima_small, fcv_thief_new_small, fcv_thief_old_small) %>% rbind(forecasts_baseline) 
-#fc_ver <- rbind(fc_version_sarima, fc_version_thief_new, fc_version_thief_old) %>% rbind(forecasts_baseline) 
-#fc_ver <- rbind(forecasts_ver, forecasts_baseline)
+ifelse(analysis == "extended", 
+       fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_fc_dates[1+4*(0:11)]),
+       fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)), actual_fc_dates[1+4*(0:7)]))
 
 for (i in 1:3) {
-  fdat <- fc_ver %>%
+  fdat <- fc_plot %>%
     filter(location == locs[i], forecast_date %in% fc_dates, horizon <= 28)
   
-  if (locs[i] == "US") {
+  if (locs[i] == "US" | locs[i] == "22") {
   fdat <- fdat %>%
     filter(forecast_date > as.Date("2021-01-04"))
   }
@@ -184,7 +213,7 @@ for (i in 1:3) {
                       plot=FALSE)
 
   pt <- p +
-    scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-10-31")), 
+    scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), train_end_date), 
               date_breaks = "4 months", date_labels = "%b %y") +
     coord_cartesian(ylim = c(0, max(filter(full_hosp_truth, location==locs[i])$value) * 1.15)) +
     theme(axis.ticks.length.x = unit(0.5, "cm"),
@@ -240,24 +269,10 @@ save(scores_version_sarima, file="../data/extended_scv_.RData")
 
 ### Overall metrics
 ```{r, warning=FALSE, message=FALSE}
-scores <- 
-#  scores_ver %>%
-  rbind(scores_version_sarima, scores_version_thief_old, scores_version_thief_new) %>%
-  left_join(mon_dates_df, by = "forecast_date") %>%
-  mutate(horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_dates)/7)) %>%
-  select(-mon_fc_dates) %>%
-  filter(horizon_wk %in% 1:4)
-
-scores_baseline <- score_baseline %>%
-  mutate(horizon=as.numeric(horizon),
-    horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
-  filter(horizon_wk %in% 1:4)
-
-  
 # US National
 overall_metrics_US <- scores %>%
   rbind(scores_baseline) %>%
-  filter(target_end_date <= as.Date("2021-10-31"),
+  filter(target_end_date <= train_end_date,
          forecast_date >= as.Date("2021-01-11"),
          location == "US") %>%
   group_by(model) %>%
@@ -305,7 +320,7 @@ knitr::kable(overall_metrics_states)
 # US National
 horizon_wk_metrics_US <- scores %>%
   rbind(scores_baseline) %>%
-  filter(target_end_date <= as.Date("2021-10-31"),
+  filter(target_end_date <= train_end_date,
          forecast_date >= as.Date("2021-01-11"),
          location == "US") %>%
   group_by(model, horizon_wk) %>%
@@ -386,9 +401,17 @@ knitr::kable(horizon_wk_metrics_states)
 ```
 
 ```{r, message=FALSE, warning=FALSE}  
-# model_names <- c("COVIDhub-baseline", models[3:6], models[1:2])
-model_names <- c("COVIDhub-baseline", models)
-
+if (analysis == "original") {
+  model_names <- c("COVIDhub-baseline", models[3:6], models[1:2])
+  model_colors <- c("black", "red", "orange", "green", "blue", "purple", "magenta")
+} else if (analysis == "versioned") {
+  model_names <- c("COVIDhub-baseline", models[3:6], models[1:2])
+  model_colors <- c("black", "red", "orange", "green", "blue", "purple", "magenta")
+} else if (analysis == "extended") {
+  model_names <- c("COVIDhub-baseline", models)
+  model_colors <- c("black", rep(c("red", "orange", "yellow", "green",
+               "blue", "purple", "magenta", "brown", "darkgray"), each=2))
+}
 wis_hzn_plot_US <- horizon_wk_metrics_US %>%
 mutate(
   specification = gsub(".*_(.+)-.*", "\\1", model),
@@ -399,13 +422,9 @@ ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   coord_cartesian(ylim = c(450, 3000)) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
-  labs(title="US",
-       x="Horizon Week", y="Average WIS")
+  labs(title="US", x="Horizon Week", y="Average WIS")
               
 wis_hzn_plot_states <- horizon_wk_metrics_states %>%
 mutate(
@@ -417,13 +436,9 @@ ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   coord_cartesian(ylim = c(15, 60)) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
-  labs(title="States",
-       x="Horizon Week", y="Average WIS")
+  labs(title="States", x="Horizon Week", y="Average WIS")
        
 wis_hzn_plot_US + wis_hzn_plot_states +
   plot_layout(ncol = 2, guides='collect') &
@@ -440,13 +455,13 @@ For the state level, we see noticeably better coverage rates that approach the n
 # US National
 wave_metrics_US <- scores %>%
   rbind(scores_baseline) %>%
-  filter(target_end_date <= as.Date("2021-10-31"),
+  filter(target_end_date <= train_end_date,
          forecast_date >= as.Date("2021-01-11"),
          location == "US") %>%
   mutate(
     wave = case_when(
       forecast_date <= as.Date("2021-03-17") ~"winter21",
-      forecast_date %in% c(as.Date("2021-03-17"):as.Date("2021-07-05")) ~"alpha",
+      forecast_date %in% c(as.Date("2021-03-17"):as.Date("2021-07-05")) ~ "alpha",
       forecast_date >= as.Date("2021-07-05") ~"delta"
     )
   ) %>%
@@ -615,10 +630,7 @@ wis_hzn_plot_winter21_US <- wave_metrics_US %>%
   ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
     geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="Winter '21 Wave (US)", x="Horizon Week", y="Average WIS")
    
@@ -633,10 +645,7 @@ ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   coord_cartesian(ylim = c(250, 2250)) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="Alpha Wave (US)", x="Horizon Week", y="Average WIS")
   
@@ -651,10 +660,7 @@ ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   coord_cartesian(ylim = c(500, 4000)) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="Delta Wave (US)", x="Horizon Week", y="Average WIS")
   
@@ -668,10 +674,7 @@ wis_hzn_plot_winter21_states <- wave_metrics_states %>%
 ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="Winter '21 Wave (States)", x="Horizon Week", y="Average WIS")
    
@@ -686,10 +689,7 @@ ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   coord_cartesian(ylim = c(0, 50)) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="Alpha Wave (states)", x="Horizon Week", y="Average WIS")
       
@@ -704,10 +704,7 @@ ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   coord_cartesian(ylim = c(15, 70)) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="Delta Wave (states)", x="Horizon Week", y="Average WIS")
   
@@ -731,7 +728,7 @@ For states during both waves, we again see noticeably better coverage rates that
 # US National
 forecast_date_metrics_US <- scores %>%
   left_join(mon_dates_df, by = "forecast_date") %>%
-  filter(target_end_date <= as.Date("2021-10-31"),
+  filter(target_end_date <= train_end_date,
          forecast_date > as.Date("2021-01-04"),
          location == "US") %>%
   select(model, horizon, horizon_wk, forecast_date, target_end_date, 
@@ -744,7 +741,7 @@ forecast_date_metrics_US <- scores %>%
   )
 
 baseline_fc_date_metrics_US <- scores_baseline %>%
-  filter(target_end_date <= as.Date("2021-10-31"),
+  filter(target_end_date <= train_end_date,
          forecast_date > as.Date("2021-01-11"),
          location == "US") %>%
   select(model, horizon, horizon_wk, forecast_date, target_end_date, 
@@ -769,10 +766,7 @@ wis_1wk_plot_US <- forecast_date_metrics_US %>%
     geom_point(mapping=aes(col=model), alpha = 0.8) +
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "WIS (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -780,6 +774,7 @@ wis_1wk_plot_US <- forecast_date_metrics_US %>%
 
 wis_4wk_plot_US <- forecast_date_metrics_US %>%
   rbind(baseline_fc_date_metrics_US) %>%
+  filter(horizon_wk == 4) %>%
   mutate(
     specification = gsub(".*_(.+)-.*", "\\1", model),
     transform = ifelse(model == "COVIDhub-baseline", "noTransform", sub(".*-", "", model)),
@@ -790,10 +785,7 @@ wis_4wk_plot_US <- forecast_date_metrics_US %>%
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   coord_cartesian(ylim = c(0, 12500)) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "WIS (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -814,10 +806,7 @@ cov95_1wk_plot_US <- forecast_date_metrics_US %>%
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "95% PI Coverage (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -835,10 +824,7 @@ cov95_4wk_plot_US <- forecast_date_metrics_US %>%
     geom_point(mapping=aes(col=model), alpha = 0.8) +
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "95% PI Coverage (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -888,10 +874,7 @@ wis_1wk_plot_states <- forecast_date_metrics_states %>%
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   coord_cartesian(ylim = c(0, 125)) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "WIS (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -910,10 +893,7 @@ wis_4wk_plot_states <- forecast_date_metrics_states %>%
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
   coord_cartesian(ylim = c(0, 175)) +
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "WIS (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -934,10 +914,7 @@ cov95_1wk_plot_states <- forecast_date_metrics_states %>%
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "95% PI Coverage (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -956,10 +933,7 @@ cov95_4wk_plot_states <- forecast_date_metrics_states %>%
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   geom_hline(aes(yintercept=0.95)) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = model_names,
-    values = c("black", rep(c("red", "orange", "yellow", "green",
-               "blue", "purple", "magenta", "brown", "darkgray"), each=2))) +
+  scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "95% PI Coverage (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
@@ -980,7 +954,7 @@ data("hub_locations")
 model_levels <- pull(overall_metrics_states, model)
 
 inc_scores <- rbind(scores, scores_baseline) %>%
-  filter(target_end_date <= as.Date("2021-10-31"),
+  filter(target_end_date <= train_end_date,
          ifelse(location == "22" | location == "US", 
                 forecast_date > as.Date("2021-01-04"), 
                 forecast_date >= as.Date("2020-12-05")))
@@ -1050,7 +1024,6 @@ pairwise_comparison <- function(heat_scores, mx, my, subset = rep(TRUE, nrow(hea
 
 
 
-
 # compute pairwise and relative WIS for each location separately:
 for(i in seq_along(locations)){
   
@@ -1098,7 +1071,7 @@ for(i in seq_along(locations)){
 
 ## plot of true data by state, tiled
 truth_dat <- full_hosp_truth %>%
-  filter(target_end_date <= as.Date("2021-07-05")) %>%
+  filter(target_end_date <= train_end_date) %>%
   group_by(location, location_name) %>%
   summarize(cum_value=sum(value)) %>%
   ungroup() %>%
@@ -1124,772 +1097,6 @@ fig_wis_loc <- ggplot(average_by_loc_to_plot,
                        name = "Relative WIS", 
                        breaks = c(-2,-1,0,1), 
                        labels =c("0.25", 0.5, 1, 2)) + 
-  xlab(NULL) + ylab(NULL) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
-        #                            color=ifelse(
-        #                              levels(average_by_loc_to_plot$model) %in% models_to_highlight,
-        #                              "red", "black")),
-        axis.title.x = element_text(size = 9),
-        axis.text.y = element_text(size = 9),
-        title = element_text(size = 9))
-
-print(fig_wis_loc)
-```
-
-
-### Scoring Conclusions   
-It seems that the best three models that should be passed onto the testing phase are the Base_arima_noTrans, the Base_arima_4root, and the Topmost8_arima_noTrans models, which seem to take turns being most accurate depending on state or national level overall and during different waves.
-
-# Original Results
-## Plot Forecasts
-We plot forecasts for three locations (Us National, Texas, and Vermont) for each of the three models. The two state locations were chosen as the highest and lowest hospitalization count locations. The plotted forecasts are spaced 4 weeks apart with 1 - 28 day ahead horizons, starting with the first forecast date, 12/07/20, until the end of the training period, 07/05/21.   
-
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
-full_hosp_truth <- load_truth("HealthData", 
-                         "inc hosp", 
-                         temporal_resolution="daily",
-                         data_location = "remote_hub_repo")
-                         
-locs <- full_hosp_truth %>%
-  filter(target_end_date <= as.Date("2021-07-05")) %>%
-  group_by(location) %>%
-  summarize(cum_value=sum(value)) %>%
-  ungroup() %>%
-  arrange(desc(cum_value)) %>%
-  filter(row_number() %in% c(1, 2, 53)) %>%
-  pull(location)
-
-fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)))
-
-fc_df <- forecasts_df %>% rbind(forecasts_baseline) 
-for (i in 1:3) {
-  fdat <- fc_df %>%
-    filter(location == locs[i], forecast_date %in% fc_dates)
-  
-  p <- plot_forecasts(fdat, 
-#                      truth_data = filter(full_hosp_truth, target_end_date <= as.Date("2021-05-03")),
-                      target_variable = "inc hosp", 
-                      intervals = c(.5, .95), 
-                      truth_source = "HealthData",
-                      use_median_as_point = TRUE,
-                      facet = model ~.,
-                      facet_nrow = 4,
-                      facet_scales = "free_y",
-                      fill_by_model = TRUE, 
-                      plot=FALSE)
-
-  pt <- p +
-    scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-07-05")), 
-              date_breaks = "2 months", date_labels = "%b") +
-    scale_y_continuous(limits=c(0, max(filter(full_hosp_truth, location==locs[i])$value) * 1.25)) +
-    theme(axis.ticks.length.x = unit(0.5, "cm"),
-          axis.text.x = element_text(vjust = 7, hjust = -0.2),
-          legend.position = "none")
-          
-  print(pt)
-}
-```
-
-The plots don't show much difference between the 6 models (although this is partially due to the fact that the yscales are free and are not consistent even for the same location). However, of note is the fact that the models that use a forth root transformation tend to have wider prediction intervals than the models without transformations. All of the models reasonably follow the trend of the truth lines for every location shown, although it seems like lower count locations may have slightly greater accuracy. The baseline seems to have intervals of fairly consistent widths while the models tend to vary in their interval widths, tending to show wider intervals during times of higher incidents or change points and narrow lower intervals otherwise. We investigate model accuracy more deeply by scoring the forecasts for each model and calculating appropriate metrics.   
-
-## Score forecasts
-We calculate metrics for all three models, aggregating by horizon. Since hospitalizations are forecasted at a daily time scale, a new horizon week variable is created in which scoring metrics are averaged over from a single week Tuesday to the following Monday. We perform these calculations for the entire training phase as well as for each of the two waves that occurred during the training phase.   
-
-
-### Overall metrics
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
-score_baseline <- select(score_baseline, 1:49)
-models <- c("COVIDhub-baseline", pull(distinct(scores_df, model), 1))
-
-# US National
-overall_metrics_US <- scores_df %>%
-  rbind(score_baseline) %>%
-  filter(horizon <= 28, 
-         target_end_date <= as.Date("2021-07-05"),
-         location == "US") %>%
-  group_by(model) %>%
-  summarize(
-    wis = mean(wis), mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  ) 
-overall_metrics_US <- overall_metrics_US %>%
-  mutate(
-    rwis = wis/pull(overall_metrics_US[3, 2]),
-    rmae = mae/pull(overall_metrics_US[3, 3]),
-    #rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_US[3, 4])-0.5),
-    #rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_US[3, 5])-0.95),
-  ) %>% 
-  mutate(across(where(is.numeric), round, digits=3)) %>%
-  arrange(wis)
-knitr::kable(overall_metrics_US)
-
-# States
-overall_metrics_states <- scores_df %>%
-  rbind(score_baseline) %>%
-  filter(horizon <= 28, 
-         target_end_date <= as.Date("2021-07-05"),
-         location != "US") %>%
-  group_by(model) %>%
-  summarize(
-    wis = mean(wis), mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  ) 
-overall_metrics_states <- overall_metrics_states %>%
-  mutate(
-    rwis = wis/pull(overall_metrics_states[3, 2]),
-    rmae = mae/pull(overall_metrics_states[3, 3]),
-    #rcov_50 = (cov_50-0.5) / abs(pull(overall_metrics_states[3, 4])-0.5),
-    #rcov_95 = (cov_95-0.95) / abs(pull(overall_metrics_states[3, 5])-0.95),
-  ) %>% 
-  mutate(across(where(is.numeric), round, digits=3)) %>%
-  arrange(wis)
-knitr::kable(overall_metrics_states)
-```
-
-### Horizon week metrics
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
-# US National
-horizon_wk_metrics_US <- scores_df %>%
-  rbind(score_baseline) %>%
-  filter(horizon <= 28, 
-         target_end_date <= as.Date("2021-07-05"),
-         location == "US") %>%
-  mutate(
-    horizon_wk = case_when(
-      horizon %in% c(1:7) ~ 1,
-      horizon %in% c(8:14) ~ 2,
-      horizon %in% c(15:21) ~ 3,
-      horizon %in% c(22:28) ~ 4
-    )
-  ) %>%
-  group_by(model, horizon_wk) %>%
-  summarize(
-    wis = mean(wis), mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  ) 
-horizon_wk_metrics_US <- horizon_wk_metrics_US %>%
-  mutate(
-    rwis = case_when(
-      horizon_wk == 1 ~ wis / pull(horizon_wk_metrics_US[9,3]),
-      horizon_wk == 2 ~ wis / pull(horizon_wk_metrics_US[10,3]),
-      horizon_wk == 3 ~ wis / pull(horizon_wk_metrics_US[11,3]),
-      horizon_wk == 4 ~ wis / pull(horizon_wk_metrics_US[12,3])
-    ),
-    rmae = case_when(
-      horizon_wk == 1 ~ mae / pull(horizon_wk_metrics_US[9,4]),
-      horizon_wk == 2 ~ mae / pull(horizon_wk_metrics_US[10,4]),
-      horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_US[11,4]),
-      horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_US[12,4])
-    ),
-    # rcov_50 = case_when(
-    #   horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[9,5])-0.5),
-    #   horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[10,5])-0.5),
-    #   horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[11,5])-0.5),
-    #   horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_US[12,5])-0.5),
-    # ),
-    # rcov_95 = case_when(
-    #   horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[9,6])-0.95),
-    #   horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[10,6])-0.95),
-    #   horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[11,6])-0.95),
-    #   horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_US[12,6])-0.95),
-    # )
-  ) %>% 
-  mutate(across(where(is.numeric), round, digits=3)) %>%
-  arrange(wis)
-knitr::kable(horizon_wk_metrics_US)
-
-# Aggregated for all states and territories
-horizon_wk_metrics_states <- scores_df %>%
-  rbind(score_baseline) %>%
-  filter(horizon <= 28, 
-         target_end_date <= as.Date("2021-07-05"),
-         location != "US") %>%
-  mutate(
-    horizon_wk = case_when(
-      horizon %in% c(1:7) ~ 1,
-      horizon %in% c(8:14) ~ 2,
-      horizon %in% c(15:21) ~ 3,
-      horizon %in% c(22:28) ~ 4
-    )
-  ) %>%
-  group_by(model, horizon_wk) %>%
-  summarize(
-    wis = mean(wis), mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  ) 
-horizon_wk_metrics_states <- horizon_wk_metrics_states %>%
-  mutate(
-    rwis = case_when(
-      horizon_wk == 1 ~ wis / pull(horizon_wk_metrics_states[9,3]),
-      horizon_wk == 2 ~ wis / pull(horizon_wk_metrics_states[10,3]),
-      horizon_wk == 3 ~ wis / pull(horizon_wk_metrics_states[11,3]),
-      horizon_wk == 4 ~ wis / pull(horizon_wk_metrics_states[12,3])
-    ),
-    rmae = case_when(
-      horizon_wk == 1 ~ mae / pull(horizon_wk_metrics_states[9,4]),
-      horizon_wk == 2 ~ mae / pull(horizon_wk_metrics_states[10,4]),
-      horizon_wk == 3 ~ mae / pull(horizon_wk_metrics_states[11,4]),
-      horizon_wk == 4 ~ mae / pull(horizon_wk_metrics_states[12,4])
-    ),
-    # rcov_50 = case_when(
-    #   horizon_wk == 1 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[9,5])-0.5),
-    #   horizon_wk == 2 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[10,5])-0.5),
-    #   horizon_wk == 3 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[11,5])-0.5),
-    #   horizon_wk == 4 ~ (cov_50-0.5) / abs(pull(horizon_wk_metrics_states[12,5])-0.5),
-    # ),
-    # rcov_95 = case_when(
-    #   horizon_wk == 1 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[9,6])-0.95),
-    #   horizon_wk == 2 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[10,6])-0.95),
-    #   horizon_wk == 3 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[11,6])-0.95),
-    #   horizon_wk == 4 ~ (cov_95-0.95) / abs(pull(horizon_wk_metrics_states[12,6])-0.95),
-    # )
-  ) %>% 
-  mutate(across(where(is.numeric), round, digits=3)) %>%
-  arrange(wis)
-knitr::kable(horizon_wk_metrics_states)
-```
-
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
-models <- c("COVIDhub-baseline", models)
-
-wis_hzn_plot_US <- horizon_wk_metrics_US %>%
-ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-  geom_point(mapping=aes(col=model), alpha = 0.8) +
-  geom_line(mapping=aes(col=model), alpha = 0.8) +
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "#F8766D", "#B79F00",
-      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
-  labs(title="US",
-       x="Horizon Week", y="Average WIS")
-              
-wis_hzn_plot_states <- horizon_wk_metrics_states %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-  geom_point(mapping=aes(col=model), alpha = 0.8) +
-  geom_line(mapping=aes(col=model), alpha = 0.8) +
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "#F8766D", "#B79F00",
-      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
-  labs(title="States", 
-       x="Horizon Week", y="Average WIS")
-              
-wis_hzn_plot_US + wis_hzn_plot_states +
-  plot_layout(ncol = 2, guides='collect') &
-  theme(legend.position='bottom')
-```
-
-When splitting the results so that US National is separate, we find that for US National the two models that use the base set hierarchy tended to perform the best, with improvements seen over a naive baseline in all metrics except for 95%PI Coverage. These two models are followed by the Topmost8_arima_noTrans model, which showed more comparable performance to the baseline. The Base_arima_noTrans model performed the best in terms of PI Coverage, followed by the Base_arima_4root and Topmost8_arima_noTrans models (with the latter being more consistent with coverage rates for all horizons). In terms of WIS and MAE, the Base_arima_4root model performed the best, followed by the Base_arima_noTrans model. Overall, for the US National level, it seems that there is a pattern that for coverage rates, the models without transformations perform better (and these tend to have smaller prediction intervals) while for WIS and MAE the fourth root transform models perform better; these patterns hold at all horizons. Further, there is a general order to model accuracy in terms of hierarchical structure used: the Base set performs the best, followed by the Topmost8 set, and finally the Multiple3 set.   
-
-For the state level, we see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models. (We also see shrunken WIS and MAE values, although this is likely partially due to the fact that the states have smaller scale values than the National level.) Interestingly, we see fewer improvements to MAE over the baseline but more substantial improvements in terms of coverage rates. It's a little harder to definitively say which models have the best coverage rates, as the results differ between the 50% and 95% intervals and the models are quite similar in coverage rates, especially for the 95% intervals. However, it seems that the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model.   
-
-
-### Metrics by wave
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
-# US National
-wave_metrics_US <- scores_df %>%
-  rbind(score_baseline) %>%
-  filter(horizon <= 28, 
-         target_end_date <= as.Date("2021-07-05"),
-         location == "US") %>%
-  mutate(
-    horizon_wk = case_when(
-      horizon %in% c(1:7) ~ 1,
-      horizon %in% c(8:14) ~ 2,
-      horizon %in% c(15:21) ~ 3,
-      horizon %in% c(22:28) ~ 4
-    ),
-    wave = case_when(
-      forecast_date <= as.Date("2021-03-17") ~"winter21",
-      forecast_date >= as.Date("2021-03-17") ~"alpha"
-    )
-  ) %>%
-  group_by(wave, model, horizon_wk) %>%
-  summarize(
-    wis = mean(wis), mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  ) 
-wave_metrics_US <- wave_metrics_US %>%
-  mutate(
-    rwis = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ wis / pull(wave_metrics_US[9, 4]),
-      horizon_wk == 2 & wave == "alpha" ~ wis / pull(wave_metrics_US[10,4]),
-      horizon_wk == 3 & wave == "alpha" ~ wis / pull(wave_metrics_US[11,4]),
-      horizon_wk == 4 & wave == "alpha" ~ wis / pull(wave_metrics_US[12,4]),
-      horizon_wk == 1 & wave == "winter21" ~ wis / pull(wave_metrics_US[37,4]),
-      horizon_wk == 2 & wave == "winter21" ~ wis / pull(wave_metrics_US[38,4]),
-      horizon_wk == 3 & wave == "winter21" ~ wis / pull(wave_metrics_US[39,4]),
-      horizon_wk == 4 & wave == "winter21" ~ wis / pull(wave_metrics_US[40,4])
-    ),
-    rmae = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ mae / pull(wave_metrics_US[9, 5]),
-      horizon_wk == 2 & wave == "alpha" ~ mae / pull(wave_metrics_US[10, 5]),
-      horizon_wk == 3 & wave == "alpha" ~ mae / pull(wave_metrics_US[11, 5]),
-      horizon_wk == 4 & wave == "alpha" ~ mae / pull(wave_metrics_US[12, 5]),
-      horizon_wk == 1 & wave == "winter21" ~ mae / pull(wave_metrics_US[37, 5]),
-      horizon_wk == 2 & wave == "winter21" ~ mae / pull(wave_metrics_US[38, 5]),
-      horizon_wk == 3 & wave == "winter21" ~ mae / pull(wave_metrics_US[39, 5]),
-      horizon_wk == 4 & wave == "winter21" ~ mae / pull(wave_metrics_US[40,5])
-    # ),
-    # rcov_50 = case_when(
-    #   horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[9,6])-0.5),
-    #   horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[10,6])-0.5),
-    #   horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[11,6])-0.5),
-    #   horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[12,6])-0.5),
-    #   horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[37,6])-0.5),
-    #   horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[38,6])-0.5),
-    #   horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[39,6])-0.5),
-    #   horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_US[40,6])-0.5)
-    # ),
-    # rcov_95 = case_when(
-    #   horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[9, 7])-0.95),
-    #   horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[10, 7])-0.95),
-    #   horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[11, 7])-0.95),
-    #   horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[12, 7])-0.95),
-    #   horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[37, 7])-0.95),
-    #   horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[38, 7])-0.95),
-    #   horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[39, 7])-0.95),
-    #   horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_US[40, 7])-0.95)
-    )
-  ) %>% 
-  mutate(across(where(is.numeric), round, digits=3)) %>%
-  arrange(wis)
-  
-knitr::kable(wave_metrics_US)
-
-# Aggregated for all states and territories
-wave_metrics_states <- scores_df %>%
-  rbind(score_baseline) %>%
-  filter(horizon <= 28, 
-         target_end_date <= as.Date("2021-07-05"),
-         location != "US") %>%
-  mutate(
-    horizon_wk = case_when(
-      horizon %in% c(1:7) ~ 1,
-      horizon %in% c(8:14) ~ 2,
-      horizon %in% c(15:21) ~ 3,
-      horizon %in% c(22:28) ~ 4
-    ),
-    wave = case_when(
-      forecast_date <= as.Date("2021-03-17") ~"winter21",
-      forecast_date >= as.Date("2021-03-17") ~"alpha"
-    )
-  ) %>%
-  group_by(wave, model, horizon_wk) %>%
-  summarize(
-    wis = mean(wis), mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  ) 
-wave_metrics_states <- wave_metrics_states %>%
-  mutate(
-    rwis = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ wis / pull(wave_metrics_states[9,4]),
-      horizon_wk == 2 & wave == "alpha" ~ wis / pull(wave_metrics_states[10,4]),
-      horizon_wk == 3 & wave == "alpha" ~ wis / pull(wave_metrics_states[11,4]),
-      horizon_wk == 4 & wave == "alpha" ~ wis / pull(wave_metrics_states[12,4]),
-      horizon_wk == 1 & wave == "winter21" ~ wis / pull(wave_metrics_states[37,4]),
-      horizon_wk == 2 & wave == "winter21" ~ wis / pull(wave_metrics_states[38,4]),
-      horizon_wk == 3 & wave == "winter21" ~ wis / pull(wave_metrics_states[39,4]),
-      horizon_wk == 4 & wave == "winter21" ~ wis / pull(wave_metrics_states[40,4])
-    ),
-    rmae = case_when(
-      horizon_wk == 1 & wave == "alpha" ~ mae / pull(wave_metrics_states[9,5]),
-      horizon_wk == 2 & wave == "alpha" ~ mae / pull(wave_metrics_states[10,5]),
-      horizon_wk == 3 & wave == "alpha" ~ mae / pull(wave_metrics_states[11,5]),
-      horizon_wk == 4 & wave == "alpha" ~ mae / pull(wave_metrics_states[12,5]),
-      horizon_wk == 1 & wave == "winter21" ~ mae / pull(wave_metrics_states[37,5]),
-      horizon_wk == 2 & wave == "winter21" ~ mae / pull(wave_metrics_states[38,5]),
-      horizon_wk == 3 & wave == "winter21" ~ mae / pull(wave_metrics_states[39,5]),
-      horizon_wk == 4 & wave == "winter21" ~ mae / pull(wave_metrics_states[40,5])
-    # ),
-    # rcov_50 = case_when(
-    #   horizon_wk == 1 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[9,6])-0.5),
-    #   horizon_wk == 2 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[10,6])-0.5),
-    #   horizon_wk == 3 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[11,6])-0.5),
-    #   horizon_wk == 4 & wave == "alpha" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[12,6])-0.5),
-    #   horizon_wk == 1 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[37,6])-0.5),
-    #   horizon_wk == 2 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[38,6])-0.5),
-    #   horizon_wk == 3 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[39,6])-0.5),
-    #   horizon_wk == 4 & wave == "winter21" ~ (cov_50-0.5) / abs(pull(wave_metrics_states[40,6])-0.5)
-    # ),
-    # rcov_95 = case_when(
-    #   horizon_wk == 1 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[9,7])-0.95),
-    #   horizon_wk == 2 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[10,7])-0.95),
-    #   horizon_wk == 3 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[11,7])-0.95),
-    #   horizon_wk == 4 & wave == "alpha" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[12,7])-0.95),
-    #   horizon_wk == 1 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[37,7])-0.95),
-    #   horizon_wk == 2 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[38,7])-0.95),
-    #   horizon_wk == 3 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[39,7])-0.95),
-    #   horizon_wk == 4 & wave == "winter21" ~ (cov_95-0.95) / abs(pull(wave_metrics_states[40,7])-0.95)
-    )
-  ) %>% 
-  mutate(across(where(is.numeric), round, digits=3)) %>%
-  arrange(wis)
-  
-knitr::kable(wave_metrics_states)
-```
-
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
-wis_hzn_plot_winter21_US <- wave_metrics_US %>%
-  filter(wave == "winter21") %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-   geom_point(mapping=aes(col=model), alpha = 0.8) +
-   geom_line(mapping=aes(col=model), alpha = 0.8) +
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "#F8766D", "#B79F00",
-      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
-   labs(title="Winter '21 Wave (US)", x="Horizon Week", y="Average WIS")
-   
-wis_hzn_plot_alpha_US <- wave_metrics_US %>%
-  filter(wave == "alpha") %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-   geom_point(mapping=aes(col=model), alpha = 0.8) +
-   geom_line(mapping=aes(col=model), alpha = 0.8) +
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "#F8766D", "#B79F00",
-      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
-   labs(title="Alpha Wave (US)", x="Horizon Week", y="Average WIS")
-   
-wis_hzn_plot_winter21_states <- wave_metrics_states %>%
-  filter(wave == "winter21") %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-   geom_point(mapping=aes(col=model), alpha = 0.8) +
-   geom_line(mapping=aes(col=model), alpha = 0.8) +
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "#F8766D", "#B79F00",
-      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
-   labs(title="Winter '21 Wave (states)", x="Horizon Week", y="Average WIS")
-
-wis_hzn_plot_alpha_states <- wave_metrics_states %>%
-  filter(wave == "alpha") %>%
-  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-   geom_point(mapping=aes(col=model), alpha = 0.8) +
-   geom_line(mapping=aes(col=model), alpha = 0.8) +
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "#F8766D", "#B79F00",
-      "#53B400", "#00B6EB", "#A58AFF", "#FB61D7")) +
-   labs(title="Alpha Wave (states)", x="Horizon Week", y="Average WIS")
-   
-wis_hzn_plot_winter21_US + wis_hzn_plot_alpha_US + 
-  wis_hzn_plot_winter21_states + wis_hzn_plot_alpha_states +
-  plot_layout(ncol = 2, guides='collect') &
-  theme(legend.position='bottom')
-```
-
-For US National during the alpha wave, the Base_arima_noTrans model performed the best for coverage rates and second best for WIS and MAE at every horizon. The Base_arima_4root model performed best in terms of WIS and MAE but was third for coverage rate while the Topmost8_arima_noTrans model had the second best coverage rates and third best WIS and MAE. During the alpha wave, these models performed the best and tended to have more consistent values for their metrics. The winter21 wave saw noticeably worse values for all metrics at every horizon. Generally, the two models that use the base set hierarchy tended to perform the best for all metrics, although the coverage rates varied a lot by horizon, with the Topmost8_arima_4root and Multiple3_arima_noTrans achieving closer to nominal coverage rates for the 95% interval than even the Base models at horizons greater than 1 week ahead. These results are pretty consistent with improvements over the base-line, which ranged from modest to significant for the best performing models during the alpha wave, especially for WIS and 50% PI coverage. The winter21 wave saw fairly comparable or worse performance compared to the baseline for WIS and MAE. The 50% coverage was better than the baseline for all models, the greatest improvements for the best models, but the 95% coverage could be better or worse for the best models.   
-
-For states during both waves, we again see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models, compared to those of the US National level when broken into waves. During the alpha wave, the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model. During the winter21 wave, the Base_arima_4root model is again generally the best for all metrics at all horizon weeks but sometimes loses out in terms of 95% coverage at longer horizons to other models. Notably during this wave, there are much greater similarities in coverage rates and certain models have better coverage rates for the 50% interval while others have better coverage reads for the 95% one. Similar patterns to the ones described above for the US national level when compared to the baseline were observed.   
-
-### By forecast date (week)
-
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
-# US National
-forecast_date_metrics_US <- scores_df %>%
-  rbind(score_baseline) %>%
-  filter(horizon <= 28, 
-         target_end_date <= as.Date("2021-07-05"),
-         location == "US") %>%
-  mutate(
-    horizon_wk = case_when(
-      horizon %in% c(1:7) ~ 1,
-      horizon %in% c(8:14) ~ 2,
-      horizon %in% c(15:21) ~ 3,
-      horizon %in% c(22:28) ~ 4
-    )
-  ) %>%
-  group_by(forecast_date, model, horizon_wk) %>%
-  summarize(
-    wis = mean(wis), mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  )
-
-
-# WIS
-wis_1wk_plot_US <- forecast_date_metrics_US %>%
-  rbind(baseline_fc_date_metrics_US) %>%
-  filter(horizon_wk == 1) %>%
-  ggplot(aes(x = forecast_date, y = wis)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
-  labs(title = "WIS (1-week)") +
-  theme(axis.ticks.length.x = unit(0.1, "cm"),
-        axis.text.x = element_text(vjust = 2, hjust = -0.2),
-        legend.position = 'bottom')
-
-wis_4wk_plot_US <- forecast_date_metrics_US %>%
-  rbind(baseline_fc_date_metrics_US) %>%
-  filter(horizon_wk == 4) %>%
-  ggplot(aes(x = forecast_date, y = wis)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
-  labs(title = "WIS (4-week)") +
-  theme(axis.ticks.length.x = unit(0.1, "cm"),
-        axis.text.x = element_text(vjust = 2, hjust = -0.2),
-        legend.position = 'bottom')
-
-
-# 95% PI Coverage
-cov95_1wk_plot_US <- forecast_date_metrics_US %>%
-  rbind(baseline_fc_date_metrics_US) %>%
-  filter(horizon_wk == 1) %>%
-  ggplot(aes(x = forecast_date, y = cov_95)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
-  geom_hline(aes(yintercept=0.95)) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
-  labs(title = "95% PI Coverage (1-week)") +
-  theme(axis.ticks.length.x = unit(0.1, "cm"),
-        axis.text.x = element_text(vjust = 2, hjust = -0.2),
-        legend.position = 'bottom')  
-
-cov95_4wk_plot_US <- forecast_date_metrics_US %>%
-  rbind(baseline_fc_date_metrics_US) %>%
-  filter(horizon_wk == 4) %>%
-  ggplot(aes(x = forecast_date, y = cov_95)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
-  geom_hline(aes(yintercept=0.95)) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
-  labs(title = "95% PI Coverage (4-week)") +
-  theme(axis.ticks.length.x = unit(0.1, "cm"),
-        axis.text.x = element_text(vjust = 2, hjust = -0.2),
-        legend.position = 'bottom')
-
-wis_1wk_plot_US + wis_4wk_plot_US + 
-  cov95_1wk_plot_US + cov95_4wk_plot_US +
-  plot_layout(ncol = 2, guides='collect') &
-  theme(legend.position='bottom')
-```
-
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
-# States
-forecast_date_metrics_states <- scores_df %>%
-  rbind(score_baseline) %>%
-  filter(horizon <= 28, 
-         target_end_date <= as.Date("2021-07-05"),
-         location != "US") %>%
-  mutate(
-    horizon_wk = case_when(
-      horizon %in% c(1:7) ~ 1,
-      horizon %in% c(8:14) ~ 2,
-      horizon %in% c(15:21) ~ 3,
-      horizon %in% c(22:28) ~ 4
-    )
-  ) %>%
-  group_by(forecast_date, model, horizon_wk) %>%
-  summarize(
-    wis = mean(wis), mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  )
-
-
-# WIS
-wis_1wk_plot_states <- forecast_date_metrics_states %>%
-  rbind(baseline_fc_date_metrics_states) %>%
-  filter(horizon_wk == 1) %>%
-  ggplot(aes(x = forecast_date, y = wis)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
-  labs(title = "WIS (1-week)") +
-  theme(axis.ticks.length.x = unit(0.1, "cm"),
-        axis.text.x = element_text(vjust = 2, hjust = -0.2),
-        legend.position = 'bottom')
-
-wis_4wk_plot_states <- forecast_date_metrics_states %>%
-  rbind(baseline_fc_date_metrics_states) %>%
-  filter(horizon_wk == 4) %>%
-  ggplot(aes(x = forecast_date, y = wis)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
-  labs(title = "WIS (4-week)") +
-  theme(axis.ticks.length.x = unit(0.1, "cm"),
-        axis.text.x = element_text(vjust = 2, hjust = -0.2),
-        legend.position = 'bottom')
-
-
-# 95% PI Coverage
-cov95_1wk_plot_states <- forecast_date_metrics_states %>%
-  rbind(baseline_fc_date_metrics_states) %>%
-  filter(horizon_wk == 1) %>%
-  ggplot(aes(x = forecast_date, y = cov_95)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
-  geom_hline(aes(yintercept=0.95)) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
-  labs(title = "95% PI Coverage (1-week)") +
-  theme(axis.ticks.length.x = unit(0.1, "cm"),
-        axis.text.x = element_text(vjust = 2, hjust = -0.2),
-        legend.position = 'bottom')  
-
-cov95_4wk_plot_states <- forecast_date_metrics_states %>%
-  rbind(baseline_fc_date_metrics_states) %>%
-  filter(horizon_wk == 4) %>%
-  ggplot(aes(x = forecast_date, y = cov_95)) +
-  geom_line(aes(color=model), alpha = 0.5) +
-  geom_point(aes(color=model), alpha=0.5, size=0.75) +
-  geom_hline(aes(yintercept=0.95)) +
-  scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  scale_color_manual(
-    breaks = c(models[1:3], models[6:7], models[4:5]),
-    values = c("black", "red", "darkorange",
-      "green", "blue", "purple", "magenta")) +
-  labs(title = "95% PI Coverage (4-week)") +
-  theme(axis.ticks.length.x = unit(0.1, "cm"),
-        axis.text.x = element_text(vjust = 2, hjust = -0.2),
-        legend.position = 'bottom')
-
-wis_1wk_plot_states + wis_4wk_plot_states + 
-  cov95_1wk_plot_states + cov95_4wk_plot_states +
-  plot_layout(ncol = 2, guides='collect') &
-  theme(legend.position='bottom')
-```
-
-### Metrics By Location
-```{r, warning=FALSE, message=FALSE, eval=FALSE}
-#reorder states, reorder models 
-model_levels <- pull(overall_metrics_states, model)
-
-inc_scores <- score_baseline %>%
-#  select(-horizon_wk) %>%
-  rbind(scores_df) %>%
-  filter(target_end_date <= as.Date("2021-07-05"), horizon <= 28)
-
-###################################################################################################
-# Calculate pairwise WIS
-
-# bring all forecast_dates to Monday:
-inc_scores$forecast_date <- next_monday(inc_scores$forecast_date)
-
-# select relevant columns:
-heat_scores <- inc_scores %>% 
-  left_join(hub_locations[1:2], by = c("location" = "fips")) %>%
-  select("model", "forecast_date", "location", "location_name", "horizon", "abs_error", "wis") %>% 
-  droplevels()
-
-# the included models and locations:
-models <- unique(heat_scores$model)
-locations <- unique(heat_scores$location)
-location_names <- unique(heat_scores$location_name)
-
-
-# compute pairwise and relative WIS for each location separately:
-for(i in seq_along(locations)){
-  
-  # select location:
-  loc <- locations[i]
-  loc_name <- location_names[i]
-  
-  # matrix to store:
-  results_ratio_temp <- matrix(ncol = length(models),
-                               nrow = length(models),
-                               dimnames = list(models, models)) 
-  
-  # run pairwise comparison for chosen location:
-  for(mx in seq_along(models)){
-    for(my in 1:mx){
-      pwc <- pairwise_comparison(heat_scores = heat_scores, mx = models[mx], my = models[my],
-                                 permutation_test = FALSE, # disable permutation test to speed up things
-                                 subset = heat_scores$location == loc) # this will subset to the respective location inside the function
-      results_ratio_temp[mx, my] <- pwc$ratio
-      results_ratio_temp[my, mx] <- 1/pwc$ratio
-    }
-  }
-  
-  # compute the geometric means etc
-  ind_baseline <- which(rownames(results_ratio_temp) == "COVIDhub-baseline")
-  geom_mean_ratios_temp <- exp(rowMeans(log(results_ratio_temp[, -ind_baseline]), na.rm = TRUE))
-  ratios_baseline_temp <- results_ratio_temp[, "COVIDhub-baseline"]
-  ratios_baseline2_temp <- geom_mean_ratios_temp/geom_mean_ratios_temp["COVIDhub-baseline"]
-  
-  # summarize results:
-  to_add <- data.frame(model = names(ratios_baseline2_temp),
-                       location = loc,
-                       location_name = loc_name,
-                       relative_wis = ratios_baseline2_temp,
-                       log_relative_wis = log(ratios_baseline2_temp))
-  
-  # append to already stored:
-  if(i == 1){ # initialize at first location
-    average_by_loc <- to_add
-  }else{
-    average_by_loc <- rbind(average_by_loc, to_add)
-  }
-}
-
-
-
-## plot of true data by state, tiled
-truth_dat <- full_hosp_truth %>%
-  filter(target_end_date <= as.Date("2021-07-05")) %>%
-  group_by(location, location_name) %>%
-  summarize(cum_value=sum(value)) %>%
-  ungroup() %>%
-  mutate(location_name = reorder(location_name, cum_value)) %>%
-  pull(location_name)
-
-
-average_by_loc_to_plot <- average_by_loc %>%
-  mutate(location_name = fct_relevel(location_name, levels(truth_dat)),
-         relative_wis_text = sprintf("%.2f", round(relative_wis, 2)),
-         log_relative_wis = log2(relative_wis),
-         model = fct_relevel(model, model_levels)) %>%
-  filter(!is.na(relative_wis)) 
-
-
-# plot:
-fig_wis_loc <- ggplot(average_by_loc_to_plot, 
-                      aes(x=model, y=location_name, 
-                          fill= scales::oob_squish(log_relative_wis, range = c(- 2.584963, 2.584963)))) +
-  geom_tile() +
-  geom_text(aes(label = relative_wis_text), size = 2.5) + # I adapted the rounding
-  scale_fill_gradient2(low = "steelblue", high = "red", midpoint = 0, na.value = "grey50", 
-                       name = "Relative WIS", 
-                       breaks = c(-2,-1,0,1,2), 
-                       labels =c("0.25", 0.5, 1, 2, 4)) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
         #                            color=ifelse(
