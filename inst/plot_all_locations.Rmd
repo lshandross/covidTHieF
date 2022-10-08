@@ -1,8 +1,11 @@
 ---
 title: "plot_all_locations"
 author: "Li Shandross"
-date: "6/22/2022"
-output: pdf_document
+date: "`r Sys.Date()`"
+output: 
+  pdf_document: 
+    fig_width: 12
+    fig_height: 9
 classoption: landscape
 ---
 
@@ -16,7 +19,7 @@ library(zoltr)
 library(covidHubUtils)
 ```
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 full_hosp_truth <- load_truth("HealthData", 
                          "inc hosp", 
                          as_of=as.Date("2022-04-06"),
@@ -26,17 +29,27 @@ full_hosp_truth <- load_truth("HealthData",
 inc_hosp_targets <- paste(0:35, "day ahead inc hosp")
 
 #load("../data/loadedfc_scores_df.RData")
-load("../data/versioned_fc_df.RData")
+#load("../data/versioned_fc_df.RData")
+load("../data/baseline_fc_scores_extended.RData")
 
-fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)), pull(distinct(forecasts_ver, forecast_date))[1+4*(0:7)])
-locs <- distinct(forecasts_ver, location) %>% pull()
+load("../data/extended_fcv_thief_old_small.RData")
+load("../data/extended_fcv_thief_new_small.RData")
+load("../data/extended_fcv_sarima_small.RData")
 
+fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), pull(distinct(fcv_sarima_small, forecast_date)))
+locs <- distinct(fcv_sarima_small, location) %>% pull()
+locs <- locs
+#locs <- "US"
 
-for (i in 1:53) {
-  fdat <-forecasts_ver %>% 
+fc_ver <- rbind(fcv_sarima_small, fcv_thief_new_small, fcv_thief_old_small) %>% 
+  rbind(filter(forecasts_baseline, forecast_date %in% fc_dates)) %>%
+  mutate(model = ifelse(model == "COVIDhub-baseline", "zCOVIDhub-baseline", model))
+models <- fc_ver %>% distinct(model) %>% pull(1)
+
+for (i in 1:length(locs)) {
+  fdat <- fc_ver %>% 
     filter(location == locs[i], 
-           forecast_date %in% fc_dates,
-           horizon %in% c(3:30))
+           horizon %in% c(1:28))
   
   if (locs[i] %in% c("US", "22")) {
   fdat <- fdat %>%
@@ -49,14 +62,14 @@ for (i in 1:53) {
                       truth_source = "HealthData",
                       use_median_as_point = TRUE,
                       facet = model ~.,
-                      facet_nrow = 3,
+                      facet_nrow = 5,
                       fill_by_model = TRUE, 
                       plot=FALSE)
 
   pt <- p +
-    scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-07-05")), 
-              date_breaks = "2 months", date_labels = "%b %y") +
-    coord_cartesian(ylim = c(0, max(filter(full_hosp_truth, location==locs[i], target_end_date <= as.Date("2021-07-05"))$value * 1.15))) +
+    scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-11-01")), 
+              date_breaks = "3 months", date_labels = "%b %y") +
+    coord_cartesian(ylim = c(0, max(filter(full_hosp_truth, location==locs[i], target_end_date <= as.Date("2021-10-31"))$value * 1.15))) +
     theme(axis.ticks.length.x = unit(0.5, "cm"),
           axis.text.x = element_text(vjust = 7, hjust = -0.2),
           legend.position = "none")
