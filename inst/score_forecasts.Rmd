@@ -6,6 +6,7 @@ output:
   pdf_document: 
     fig_height: 9
     fig_caption: yes
+    fig_width: 7
   html_document: default
 ---
 
@@ -34,10 +35,7 @@ We load in the hospitalization truth data and our forecasts. (Note: The load for
 
 ```{r, message=FALSE, warning=FALSE, results=FALSE}
 analysis <- "extended" # original, versioned, extended
-train_end_date <-
-  case_when(
-    analysis == "original" | analysis == "version" ~ as.Date("2021-07-05"),
-    analysis == "extended" ~ as.Date("2021-10-31"))
+ifelse(analysis != "extended", train_end_date <- as.Date("2021-07-05"), train_end_date <- as.Date("2021-10-31"))
             
 inc_hosp_targets <- paste(0:30, "day ahead inc hosp")
 fips <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
@@ -207,7 +205,7 @@ for (i in 1:3) {
                       truth_source = "HealthData",
                       use_median_as_point = TRUE,
                       facet = model ~.,
-                      facet_ncol = 3,
+                      facet_nrow = ifelse(analysis == "extended", 7, 4),
 #                      facet_scales = "free_y",
                       fill_by_model = TRUE, 
                       plot=FALSE)
@@ -421,7 +419,7 @@ mutate(
 ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
-  coord_cartesian(ylim = c(450, 3000)) +
+  coord_cartesian(ylim = c(min(horizon_wk_metrics_US$wis)*0.9, median(filter(horizon_wk_metrics_US, horizon_wk==4)$wis)*1.5)) +
   scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="US", x="Horizon Week", y="Average WIS")
@@ -435,7 +433,7 @@ mutate(
 ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
-  coord_cartesian(ylim = c(15, 60)) +
+  coord_cartesian(ylim = c(min(horizon_wk_metrics_states$wis)*0.9, median(filter(horizon_wk_metrics_states, horizon_wk==4)$wis)*1.25)) +
   scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="States", x="Horizon Week", y="Average WIS")
@@ -644,26 +642,32 @@ wis_hzn_plot_alpha_US <- wave_metrics_US %>%
 ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
-  coord_cartesian(ylim = c(250, 2250)) +
+  coord_cartesian(
+    ylim = c(min(filter(wave_metrics_US, wave == "alpha")$wis)*0.9, 
+            median(filter(wave_metrics_US, horizon_wk==4, wave == "alpha")$wis)*1.5)) +
   scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="Alpha Wave (US)", x="Horizon Week", y="Average WIS")
-  
-wis_hzn_plot_delta_US <- wave_metrics_US %>%
-  filter(wave == "delta") %>%
-  mutate(
-    specification = gsub(".*_(.+)-.*", "\\1", model),
-    transform = ifelse(model == "COVIDhub-baseline", "noTransform", sub(".*-", "", model)),
-    type = sub("_.*", "", model)
-  ) %>%
-ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-  geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
-  geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
-  coord_cartesian(ylim = c(500, 4000)) +
-  scale_color_manual(breaks = model_names, values = model_colors) +
-  scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
-  labs(title="Delta Wave (US)", x="Horizon Week", y="Average WIS")
-  
+
+if (analysis == "extended") {  
+  wis_hzn_plot_delta_US <- wave_metrics_US %>%
+    filter(wave == "delta") %>%
+    mutate(
+      specification = gsub(".*_(.+)-.*", "\\1", model),
+      transform = ifelse(model == "COVIDhub-baseline", "noTransform", sub(".*-", "", model)),
+      type = sub("_.*", "", model)
+    ) %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+    geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
+    geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
+    coord_cartesian(
+      ylim = c(min(filter(wave_metrics_US, wave == "delta")$wis)*0.9, 
+              median(filter(wave_metrics_US, horizon_wk==4, wave == "delta")$wis)*1.5)) +
+    scale_color_manual(breaks = model_names, values = model_colors) +
+    scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
+    labs(title="Delta Wave (US)", x="Horizon Week", y="Average WIS")
+}  
+
 wis_hzn_plot_winter21_states <- wave_metrics_states %>%
   filter(wave == "winter21") %>%
   mutate(
@@ -688,30 +692,36 @@ mutate(
 ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
   geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
   geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
-  coord_cartesian(ylim = c(0, 50)) +
+  coord_cartesian(
+    ylim = c(min(filter(wave_metrics_states, wave == "alpha")$wis)*0.8, 
+            median(filter(wave_metrics_states, horizon_wk==4, wave == "alpha")$wis)*1.6)) +
   scale_color_manual(breaks = model_names, values = model_colors) +
   scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
   labs(title="Alpha Wave (states)", x="Horizon Week", y="Average WIS")
-      
-wis_hzn_plot_delta_states <- wave_metrics_states %>%
-  filter(wave == "delta") %>%
-mutate(
-  specification = gsub(".*_(.+)-.*", "\\1", model),
-  transform = ifelse(model == "COVIDhub-baseline", "noTransform", sub(".*-", "", model)),
-  type = sub("_.*", "", model)
-) %>%
-ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
-  geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
-  geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
-  coord_cartesian(ylim = c(15, 70)) +
-  scale_color_manual(breaks = model_names, values = model_colors) +
-  scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
-  labs(title="Delta Wave (states)", x="Horizon Week", y="Average WIS")
-  
+
+if (analysis == "extended") {      
+  wis_hzn_plot_delta_states <- wave_metrics_states %>%
+    filter(wave == "delta") %>%
+  mutate(
+    specification = gsub(".*_(.+)-.*", "\\1", model),
+    transform = ifelse(model == "COVIDhub-baseline", "noTransform", sub(".*-", "", model)),
+    type = sub("_.*", "", model)
+  ) %>%
+  ggplot(mapping=aes(x=horizon_wk, y=wis, group=model)) +
+    geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
+    geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
+    coord_cartesian(
+      ylim = c(min(filter(wave_metrics_states, wave == "delta")$wis)*0.9, 
+              median(filter(wave_metrics_states, horizon_wk==4, wave == "delta")$wis)*1.5)) +
+    scale_color_manual(breaks = model_names, values = model_colors) +
+    scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
+    labs(title="Delta Wave (states)", x="Horizon Week", y="Average WIS")
+}  
+
 wis_hzn_plot_winter21_US + wis_hzn_plot_winter21_states + 
   wis_hzn_plot_alpha_US + wis_hzn_plot_alpha_states + 
-  wis_hzn_plot_delta_US + wis_hzn_plot_delta_states +
-  plot_layout(nrow = 3, guides='collect') &
+  if (analysis == "extended") {wis_hzn_plot_delta_US + wis_hzn_plot_delta_states +}
+  plot_layout(ncol = 2, guides='collect') &
   theme(legend.position='bottom')
 ```
 
@@ -784,7 +794,7 @@ wis_4wk_plot_US <- forecast_date_metrics_US %>%
     geom_point(mapping=aes(col=model), alpha = 0.8) +
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  coord_cartesian(ylim = c(0, 12500)) +
+  coord_cartesian(ylim = c(0, max(filter(forecast_date_metrics_US, horizon_wk==4, forecast_date < as.Date("2021-02-01"))$wis)*1.25)) +
   scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "WIS (4-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
@@ -873,7 +883,7 @@ wis_1wk_plot_states <- forecast_date_metrics_states %>%
     geom_point(mapping=aes(col=model), alpha = 0.8) +
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
-  coord_cartesian(ylim = c(0, 125)) +
+  coord_cartesian(ylim = c(0, max(filter(forecast_date_metrics_states, horizon_wk==1, forecast_date < as.Date("2020-12-10"))$wis)*1.25)) +
   scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "WIS (1-week)") +
   theme(axis.ticks.length.x = unit(0.1, "cm"),
@@ -892,6 +902,7 @@ wis_4wk_plot_states <- forecast_date_metrics_states %>%
     geom_point(mapping=aes(col=model), alpha = 0.8) +
     geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
   scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") + 
+  coord_cartesian(ylim = c(0, max(filter(forecast_date_metrics_states, horizon_wk==4, forecast_date < as.Date("2021-02-10"))$wis)*1.15)) +
   coord_cartesian(ylim = c(0, 175)) +
   scale_color_manual(breaks = model_names, values = model_colors) +
   labs(title = "WIS (4-week)") +
