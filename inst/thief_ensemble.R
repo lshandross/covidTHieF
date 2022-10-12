@@ -89,18 +89,30 @@ rolling_end_date <- as.Date("2021-10-31")
 wday(rolling_end_date)
 rolling_period <- weeks(12)
 rolling_start_date <- floor_date(rolling_end_date-rolling_period, "week", 7)
-rolling_metrics_states <- baseline_weekly_metrics_states %>%
-  select(-model, -cov_50, -cov_95) %>%
-  right_join(weekly_metrics_states, by = c("forecast_date", "horizon_wk")) %>%
-  mutate(rwis = wis/base_wis, rmae = mae/base_mae) %>%
-  select(-base_wis, -base_mae) %>%
+
+# States
+rolling_metrics_states <- scores %>%
+  rbind(scores_baseline) %>%
+  filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US")) %>%
+  group_by(model) %>%
   filter(forecast_date >= rolling_start_date, forecast_date <= rolling_end_date) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+rolling_metrics_states <- rolling_metrics_states %>%
+  mutate(
+    rwis = wis/pull(filter(rolling_metrics_states, model == "COVIDhub-baseline"), 2),
+    rmae = mae/pull(filter(rolling_metrics_states, model == "COVIDhub-baseline"), 3),
+  ) %>% 
+  filter(model != "COVIDhub-baseline") %>%
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
 
 
 
+
 # Thesis stuff
-  # Adapt code to calculate rwis over a period of time
   # Locate or write code to create simple ensemble
     # give function weights and forecasts, it spits out ensemble
