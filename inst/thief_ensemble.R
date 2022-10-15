@@ -8,12 +8,14 @@ library(patchwork)
 library(surveillance)
 library(tidytext)
 library(stringr)
+library(hubEnsembles)
 
 # parallelize code
 library(doParallel)
 num_cores <- detectCores(logical=TRUE)
 cl <- makeCluster(num_cores-1)
 registerDoParallel(cl)
+source("inst/load_score_forecasts.R")
 
 # Set variables, load in data
 inc_hosp_targets <- paste(0:30, "day ahead inc hosp")
@@ -39,7 +41,6 @@ load("data/baseline_fc_scores_extended.RData")
 
 actual_fc_dates <- distinct(scores_version_sarima, forecast_date) %>% pull(1)
 mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
-fc_plot <- rbind(fcv_sarima_small, fcv_thief_new_small, fcv_thief_old_small) %>% rbind(forecasts_baseline) 
 scores <- 
   rbind(scores_version_sarima, scores_version_thief_old, scores_version_thief_new) %>%
   left_join(mon_dates_df, by = "forecast_date") %>%
@@ -59,38 +60,12 @@ scores_baseline <- score_baseline %>%
     horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
   filter(horizon_wk %in% 1:4)
 
-
-# calculate rwis over a period of time (states)
-weekly_metrics_states <- scores %>%
-  left_join(mon_dates_df, by = "forecast_date") %>%
-  filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US")) %>%
-  select(model, horizon, horizon_wk, forecast_date = mon_fc_dates, target_end_date,
-          true_value, abs_error, wis, coverage_50, coverage_95) %>%
-  group_by(forecast_date, model, horizon_wk) %>%
-  summarize(
-    wis = mean(wis), mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  ) %>%
-  ungroup()
-
-baseline_weekly_metrics_states <- scores_baseline %>%
-  select(model, horizon, horizon_wk, forecast_date, target_end_date,
-        true_value, abs_error, wis, coverage_50, coverage_95) %>%
-  group_by(forecast_date, model, horizon_wk) %>%
-  summarize(
-    base_wis = mean(wis), base_mae=mean(abs_error),
-    cov_50 = mean(coverage_50),
-    cov_95 = mean(coverage_95)
-  ) %>%
-  ungroup()
-
-rolling_end_date <- as.Date("2021-10-31")
+# Calculate model rwis
+rolling_end_date <- floor_date(as.Date("2021-10-26")-1, "week", 1)
 wday(rolling_end_date)
 rolling_period <- weeks(12)
-rolling_start_date <- floor_date(rolling_end_date-rolling_period, "week", 7)
+rolling_start_date <- rolling_end_date - rolling_period
 
-# States
 rolling_metrics_states <- scores %>%
   rbind(scores_baseline) %>%
   filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US")) %>%
@@ -110,9 +85,16 @@ rolling_metrics_states <- rolling_metrics_states %>%
   mutate(across(where(is.numeric), round, digits=3)) %>%
   arrange(wis)
 
+# Compute weights
+theta <- 6.5
+weights <- exp(-theta * pull(rolling_metrics_states, rwis)) / sum(exp(-theta * pull(rolling_metrics_states, rwis)))
+
+# Create ensemble
+date_indices <- match(rolling_end_date, mon_fc_dates)
+
 
 
 
 # Thesis stuff
-  # Locate or write code to create simple ensemble
+   # Locate or write code to create simple ensemble
     # give function weights and forecasts, it spits out ensemble
