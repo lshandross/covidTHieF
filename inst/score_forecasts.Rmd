@@ -105,71 +105,6 @@ scores_baseline <- score_baseline %>%
   filter(horizon_wk %in% 1:4)
 ```
 
-```{r, message=FALSE, echo=FALSE, eval=FALSE}
-# forecasts_baseline <- load_forecasts(models = "COVIDhub-baseline",
-#                                         dates = mon_fc_dates,
-#                                         date_window_size = 6, 
-#                                         locations = fips,
-#                                         types = c("point","quantile"),
-#                                         targets = inc_hosp_targets,
-#                                         source = "zoltar",
-#                                         verbose = FALSE,
-#                                         as_of=NULL,
-#                                         hub = c("US"))
-# 
-
-load_formatted_forecasts <- function(model_vector) {
-  library(tidyverse)
-  library(covidHubUtils)
-  files <- rep("path", 47)
-  df <- c()
-  forecasts <- c()
-  files <- list.files(path=paste("../data/", model_vector, "/", sep=""), pattern=".csv", full.names=TRUE)
-  for (j in 1:47) {
-    df <- read_csv(files[j]) %>% mutate(model = model_vector)
-    forecasts <- rbind(forecasts, df)
-  }
-
-  forecasts %>%
-    separate(target,
-      into=c("horizon", "temp"),
-      sep=" "
-    ) %>%
-    mutate(
-      horizon=as.numeric(horizon),
-      temporal_resolution="day",
-      target_variable="inc hosp"
-    ) %>%
-    select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
-    left_join(hub_locations, by=c("location"="fips"))
-}
-
-# Export our function on the cluster
-clusterExport(cl, list('load_formatted_forecasts', 'models', 'all_thief', 'sarima_models'))
-
-# Run function across previously specified number of cores
-system.time({
-  forecasts_ver <- c(parLapply(cl, models, fun = load_formatted_forecasts))
-})
-
-# Split into data frames
-fc_version_thief_new <- c(); fc_version_thief_old <- c(); fc_version_sarima <- c()
-for (i in 1:length(fc_versioned_list)) {
-  if (i %in% c(1:6, 9, 10)) {
-    fc_version_thief_new <- rbind(fc_version_thief_new, fc_versioned_list[[i]])
-  } else if (i %in% c(7, 8, 11:14)) {
-    fc_version_thief_old <- rbind(fc_version_thief_old, fc_versioned_list[[i]])
-  } else {
-    fc_version_sarima <- rbind(fc_version_sarima, fc_versioned_list[[i]])
-  }
-}
-
-# save(full_hosp_truth, sun_training_truth_list, sun_testing_truth_list, file = "all_truth_data.RData")
-# save(fc_version_sarima, file="../data/extended_fcv_sarima.RData")
-# save(fc_version_thief_old, file="../data/extended_fcv_thief_old.RData")
-# save(fc_version_thief_new, file="../data/extended_fcv_thief_new.RData")
-```
-
 
 ## Plot Forecasts
 We plot forecasts for three locations (US National, Texas, and Vermont) for each of the three models. The two state locations were chosen as the highest and lowest hospitalization count locations. The plotted forecasts are spaced 4 weeks apart with 1 - 28 day ahead horizons, starting with the first forecast date, 12/07/20, until the end of the training period, 10/31/21.   
@@ -226,44 +161,6 @@ The plots don't show much difference between the 6 models (although this is part
 
 ## Score forecasts
 We calculate metrics for all three models, aggregating by horizon. Since hospitalizations are forecasted at a daily time scale, a new horizon week variable is created in which scoring metrics are averaged over from a single week Tuesday to the following Monday. We perform these calculations for the entire training phase as well as for each of the two waves that occurred during the training phase.   
-
-```{r score forecasts, eval = FALSE, echo = FALSE}
-#scores_ver <- score_forecasts(forecasts=forecasts_ver, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
-#score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
-  # note that the default column order may differ between these dfs due to existence of separate point forecasts
-  # you will need to re-order the columns to correctly rbind them: score_baseline <- select(score_baseline, 1:7, 20, 9:19, 21:49, 8)
-
-# if forecasts are too big for a single call
-parallel_scoring <- function (models) { 
-    library(tidyverse)
-    library(covidHubUtils)
-    score_forecasts(
-      forecasts=filter(fc_version_sarima, model==models),
-      return_format="wide",
-      truth=full_hosp_truth,
-      use_median_as_point=TRUE
-    )
-}
-
-# Export our function on the cluster
-clusterExport(cl, list('parallel_scoring', 'full_hosp_truth', 'sarima_models', 'fc_version_sarima'))
-
-# Run function across previously specified number of cores
-system.time({
-  scores_list_temp <- c(parLapply(cl, sarima_models, fun = parallel_scoring))
-})
-
-scores_version_sarima <- c()
-for (i in 1:length(sarima_models)) {
-  scores_version_sarima <- rbind(scores_version_sarima, scores_list_temp[[i]])
-}
-
-save(scores_version_sarima, file="../data/extended_scv_.RData")
-# scores_ver <- scores
-# 
-# save(forecasts_ver, scores_ver, mon_dates_df, file="../data/versioned_fc_df.RData")
-# save(forecasts_baseline, scores_base, file="../data/baseline_fc_scores.RData")
-```
 
 ### Overall metrics
 ```{r, warning=FALSE, message=FALSE}
@@ -719,9 +616,9 @@ if (analysis == "extended") {
 }  
 
 wis_hzn_plot_winter21_US + wis_hzn_plot_winter21_states + 
-  wis_hzn_plot_alpha_US + wis_hzn_plot_alpha_states + 
-  if (analysis == "extended") {wis_hzn_plot_delta_US + wis_hzn_plot_delta_states +}
-  plot_layout(ncol = 2, guides='collect') &
+  wis_hzn_plot_alpha_US + wis_hzn_plot_alpha_states 
+  if (analysis == "extended") {+ wis_hzn_plot_delta_US + wis_hzn_plot_delta_states}
+  + plot_layout(ncol = 2, guides='collect') &
   theme(legend.position='bottom')
 ```
 
