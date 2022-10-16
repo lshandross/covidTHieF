@@ -10,7 +10,7 @@
 load_formatted_forecasts <- function(model_vector, date_indices) {
   library(tidyverse)
   library(covidHubUtils)
-  files <- rep("path", length(date_indices))
+  files <- c()
   df <- c()
   forecasts <- c()
   files <- list.files(path=paste("data/", model_vector, "/", sep=""), pattern=".csv", full.names=TRUE)
