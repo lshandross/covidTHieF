@@ -10,12 +10,16 @@ library(tidytext)
 library(stringr)
 library(hubEnsembles)
 
+# Load in functions
+func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+lapply(func_list, source)
+
 # parallelize code
 library(doParallel)
 num_cores <- detectCores(logical=TRUE)
 cl <- makeCluster(num_cores-1)
 registerDoParallel(cl)
-source("inst/load_score_forecasts.R")
+#source("inst/load_score_forecasts.R")
 
 # Set variables, load in data
 inc_hosp_targets <- paste(0:30, "day ahead inc hosp")
@@ -27,6 +31,7 @@ thief_new <- sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTr
 thief_old <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))
 sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
 models <- c(all_thief, sarima_models)
+#models <- sarima_models
 
 # load("data/extended_fcv_thief_old.RData")
 # load("data/extended_fcv_thief_new.RData")
@@ -87,14 +92,24 @@ rolling_metrics_states <- rolling_metrics_states %>%
 
 # Compute weights
 theta <- 6.5
-weights <- exp(-theta * pull(rolling_metrics_states, rwis)) / sum(exp(-theta * pull(rolling_metrics_states, rwis)))
+model_weights <- rolling_metrics_states %>%
+  filter(models %in% all_thief) %>%
+  mutate(weight=exp(-theta * rwis) / sum(exp(-theta * rwis))) %>%
+  select(model, weight)
 
 # Create ensemble
-date_indices <- match(rolling_end_date, mon_fc_dates)
+date_index <- match(rolling_end_date, mon_fc_dates)
+forecast_data <- map_dfr(all_thief, load_formatted_forecasts, date_index)
+intermediate <- forecast_data %>%
+  left_join(model_weights, by = "model") %>%
+  mutate(ensemble_contribution=weight*value)
+ensemble_forecasts <- intermediate %>%
+  group_by(forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date, type, quantile) %>%
+  summarize(value=sum(ensemble_contribution)) %>%
+  mutate(model="THieF_ensemble-train6.5", .before=forecast_date) %>%
+  left_join(hub_locations, by=c("location"="fips"))
 
 
 
 
-# Thesis stuff
-   # Locate or write code to create simple ensemble
-    # give function weights and forecasts, it spits out ensemble
+
