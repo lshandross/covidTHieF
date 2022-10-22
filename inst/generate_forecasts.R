@@ -42,8 +42,16 @@ if (length(args) < 2) {
 }
 
 model_type <- ifelse(model_spec[[1]] == "thief", "THieF", model_spec[[1]])
-specification <- ifelse(model_spec[[1]] == "sarima", paste("s", model_spec[[2]], sep=""), paste(model_spec[[2]], "wk", sep=""))
-transform_type <- ifelse(model_spec[[3]], "4root", "noTransform")
+specification <- 
+  case_when(
+    pluck(model_spec, 1) == "sarima" ~ paste("s", pluck(model_spec, 2), sep=""), 
+    pluck(model_spec, 1) == "thief" ~ paste(pluck(model_spec, 2), "wk", sep=""), 
+    pluck(model_spec, 1) == "ensemble" ~ as.character(pluck(model_spec, 2))
+  )
+transform_type <- 
+  case_when(pluck(model_spec, 3) ~ "4root", 
+            !pluck(model_spec, 3) ~ "noTransform",
+            is.na(pluck(model_spec, 3)) ~ "THieF")
 
 # Date Vectors
 mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
@@ -124,7 +132,32 @@ if (system == "linux") {
       filter(top_level == model_spec[[2]]) %>%
       pull(2) %>% pluck(1)
     model_freq <- pluck(model_agg, 1)
+    
+    if (model_spec[[1]] == "ensemble") {
+      ensemble_name <- paste("THieF_ensemble-", ifelse(model_spec[[2]] == 0, "mean", paste("train", model_spec[[2]], sep="")), sep="")
+      
+      load("data/extended_scv_thief_old.RData")
+      load("data/extended_scv_thief_new.RData")
+      load("data/extended_scv_sarima.RData")
+      load("data/baseline_fc_scores_extended.RData")
 
+      scores <- 
+        rbind(scores_version_thief_old, scores_version_thief_new) %>%
+        left_join(mon_dates_df, by = "forecast_date") %>%
+        mutate(horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_dates)/7)) %>%
+        select(-mon_fc_dates) %>%
+        filter(horizon_wk %in% 1:4)
+        
+      scores_baseline <- score_baseline %>%
+        mutate(horizon=as.numeric(horizon),
+          horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
+        filter(horizon_wk %in% 1:4)
+      
+      scores_clean <- scores %>%
+        rbind(scores_baseline) %>%
+        filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US"))
+    }
+    
   # FUNCTIONS
   # Generate THieF Forecasts
   generate_thief_wk <-
@@ -167,36 +200,69 @@ if (system == "linux") {
       message(paste("Finished", fc_dates, "forecasts"))
       return(results)
     }
+      
+  # Generate Ensemble Forecasts
+  generate_ensemble_wk <-
+    function(fc_dates) {
+      library(tidyverse)
+      library(lubridate)
+      library(covidHubUtils)
+      func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+      lapply(func_list, source)
+      message(paste("Starting", fc_dates, "forecasts"))
+
+      results <- 
+        build_composite_ensemble(
+          forecast_df = NULL, composite_models = all_thief, 
+          scores_df = scores_clean, truth_data = NULL, use_median_as_point = TRUE,
+          rolling_period = weeks(12), theta = model_spec[[2]], ensemble_name = ensemble_name, 
+          forecast_date = fc_dates, reference_dates = mon_fc_dates)
+      message(paste("Finished", fc_dates, "forecasts"))
+      return(results)
+    }
+
 
     # Run function across previously specified number of cores
-    if (model_spec[[1]] == "sarima") {
-      thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_sarima_wk)
-    } else { # model_spec[[1]] == "thief"
-      thief_fc_full <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_thief_wk)
-    }
-    
-    message("Forecasts successfully generated")
-
-    # write and save forecasts
-    if (date_indices[1] %in% c(1 + 6*(0:ceiling(47/6)))) {
-      model_df <- c()
+    if (model_spec[[1]] == "ensemble") {
+      fc_list <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_ensemble_wk)
+      
+      # write and save forecasts
+      for (i in date_indices[1]:date_indices[2]) {
+        if (i == date_indices[1]) {message("entered for loop")}
+        write.csv(fc_list[[i-date_indices[1]+1]], file=paste("data/", ensemble_name, "/", actual_fc_dates[i], "-", ensemble_name, ".csv", sep=""), row.names=FALSE)
+        message(paste(model, "week", i,"csv file written"))
+      }
     } else {
-#      load(paste("data/", model, "_", ceiling((date_indices[1]-1)/6), ".RData", sep=""))
-      load(paste("data/", model, "/", model, "_", ceiling((date_indices[1]-1)/6), ".RData", sep=""))
-    }
-    for (i in date_indices[1]:date_indices[2]) {
-      if (i == date_indices[1]) {message("entered for loop")}
-#      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""))
-      write.csv(thief_fc_full[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""))
-      message(paste(model, "week", i,"csv file written"))
-      if (i %in% c(1 + 6*(0:ceiling(47/6)))) {model_df <- c()}
-      model_df <- rbind(model_df, thief_fc_full[[i-date_indices[1]+1]][[2]])
-      if (i %in% c(6*(1:floor(47/6)), 47)) {
-        assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
-#        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
-        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "/", model, "_", ceiling(i/6), ".RData", sep=""))
-      message(paste(model, "RData object", ceiling(i/6), "saved"))
-      } 
+      if (model_spec[[1]] == "sarima") {
+        fc_list <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_sarima_wk)
+      } else if (model_spec[[1]] == "thief") {
+        fc_list <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_thief_wk)
+      }
+    
+      message("Forecasts successfully generated")
+
+      # write and save forecasts
+      if (date_indices[1] %in% c(1 + 6*(0:ceiling(47/6)))) {
+        model_df <- c()
+      } else {
+  #      load(paste("data/", model, "_", ceiling((date_indices[1]-1)/6), ".RData", sep=""))
+        load(paste("data/", model, "/", model, "_", ceiling((date_indices[1]-1)/6), ".RData", sep=""))
+      }
+      
+      for (i in date_indices[1]:date_indices[2]) {
+        if (i == date_indices[1]) {message("entered for loop")}
+  #      write.csv(fc_list[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""), row.names=FALSE)
+        write.csv(fc_list[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""), row.names=FALSE)
+        message(paste(model, "week", i,"csv file written"))
+        if (i %in% c(1 + 6*(0:ceiling(47/6)))) {model_df <- c()}
+        model_df <- rbind(model_df, fc_list[[i-date_indices[1]+1]][[2]])
+        if (i %in% c(6*(1:floor(47/6)), 47)) {
+          assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
+  #        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
+          save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "/", model, "_", ceiling(i/6), ".RData", sep=""))
+        message(paste(model, "RData object", ceiling(i/6), "saved"))
+        }
+      }
     }
   }
 
@@ -298,17 +364,17 @@ if (system == "linux") {
     system.time({
       # models: THieF: 1, 2, 3, 4, 8, 12; Sarima: 1, 7
       if (model_type == "sarima") {
-        thief_fc_full <- c(parLapply(cl, sun_fc_dates[36:47], fun = generate_sarima_wk))
+        fc_list <- c(parLapply(cl, sun_fc_dates[36:47], fun = generate_sarima_wk))
       } else {
-        thief_fc_full <- c(parLapply(cl, sun_fc_dates[1:30], fun = generate_thief_wk))
+        fc_list <- c(parLapply(cl, sun_fc_dates[1:30], fun = generate_thief_wk))
       }
     })
 
     # Write and Save forecasts
 #    load(file=paste("data/", models[13], "/", models[13], ".RData", sep=""))
     for (i in 1:12) {
-      write_csv(thief_fc_full[[i]][[1]], file=paste("data/", models[14], "/", actual_fc_dates[i+35], "-", models[14], ".csv", sep=""))
-      assign(model_info[14], rbind(modfc_s1_noTransform, thief_fc_full[[i]][[2]]))
+      write_csv(fc_list[[i]][[1]], file=paste("data/", models[14], "/", actual_fc_dates[i+35], "-", models[14], ".csv", sep=""), row.names=FALSE)
+      assign(model_info[14], rbind(modfc_s1_noTransform, fc_list[[i]][[2]]))
     }
 
     #modfc_3wk_4root <-rbind(modfc_3wk_noTransform, modfc_3wk_4root)
@@ -319,6 +385,6 @@ if (system == "linux") {
 
 # for (i in 1:20) {
 #   csv.temp <- read_csv(file=paste("data/", actual_fc_dates[i+0], "-", models[13], ".csv", sep=""))
-#   write_csv(csv.temp, file=paste("data/", models[14], "/", actual_fc_dates[i], "-", models[14], ".csv", sep=""))
+#   write_csv(csv.temp, file=paste("data/", models[14], "/", actual_fc_dates[i], "-", models[14], ".csv", sep=""), row.names=FALSE)
 # }
 
