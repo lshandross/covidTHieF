@@ -138,9 +138,10 @@ if (system == "linux") {
       
       load("data/extended_scv_thief_old.RData")
       load("data/extended_scv_thief_new.RData")
-      load("data/extended_scv_sarima.RData")
       load("data/baseline_fc_scores_extended.RData")
 
+      actual_fc_dates <- distinct(scores_version_thief_old, forecast_date) %>% pull(1)
+      mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
       scores <- 
         rbind(scores_version_thief_old, scores_version_thief_new) %>%
         left_join(mon_dates_df, by = "forecast_date") %>%
