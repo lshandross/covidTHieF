@@ -227,6 +227,7 @@ if (system == "linux") {
       fc_list <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_ensemble_wk)
       
       # write and save forecasts
+      if (!file.exists(paste("data/", ensemble_name, sep=""))) dir.create(paste("data/", ensemble_name, sep=""))
       for (i in date_indices[1]:date_indices[2]) {
         if (i == date_indices[1]) {message("entered for loop")}
         write.csv(fc_list[[i-date_indices[1]+1]], file=paste("data/", ensemble_name, "/", actual_fc_dates[i], "-", ensemble_name, ".csv", sep=""), row.names=FALSE)
