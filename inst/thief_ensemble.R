@@ -5,8 +5,6 @@ library(tidyverse)
 library(zoltr)
 library(covidHubUtils)
 library(patchwork)
-library(surveillance)
-library(tidytext)
 library(stringr)
 library(hubEnsembles)
 
@@ -65,15 +63,17 @@ scores_baseline <- score_baseline %>%
     horizon_wk=ceiling(as.numeric(target_end_date-forecast_date)/7)) %>%
   filter(horizon_wk %in% 1:4)
 
+scores_clean <- scores %>%
+  rbind(scores_baseline) %>%
+  filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US"))
+
 # Calculate model rwis
 rolling_end_date <- floor_date(as.Date("2021-10-26")-1, "week", 1)
 wday(rolling_end_date)
 rolling_period <- weeks(12)
 rolling_start_date <- rolling_end_date - rolling_period
 
-rolling_metrics_states <- scores %>%
-  rbind(scores_baseline) %>%
-  filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US")) %>%
+rolling_metrics_states <- scores_clean %>%
   group_by(model) %>%
   filter(forecast_date >= rolling_start_date, forecast_date <= rolling_end_date) %>%
   summarize(
@@ -111,5 +111,81 @@ ensemble_forecasts <- intermediate %>%
 
 
 
+# Function Version
+build_composite_ensemble <- function(forecast_df = NULL, composite_models, scores_df = NULL, truth_data, theta = 0, ensemble_name = NULL, forecast_date, reference_dates) {
+  library(tidyverse)
+  library(lubridate)
+  library(covidHubUtils)
+  library(zoltr)
+  # Load in functions
+  func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+  lapply(func_list, source)
+  
+  if (is.character(forecast_date)) { forecast_date <- as.Date(forecast_date)}
+  rolling_end_date <- floor_date(forecast_date-1, "week", 1)
+  rolling_period <- weeks(12) # could make into argument
+  rolling_start_date <- rolling_end_date - rolling_period
+  
+  if (is.null(forecast_df)) {
+    date_index <- match(rolling_end_date, reference_dates)
+    forecast_df <- map_dfr(composite_models, load_formatted_forecasts, date_index)
+  }
 
+  if (is.null(scores_df)) {
+    scores_df <- score_forecasts(forecasts_ver, return_format="wide", truth=truth_data, use_median_as_point=TRUE)
+  }
+  
+  # compute weights
+  rolling_metrics_states <- scores_df %>%
+    group_by(model) %>%
+    filter(forecast_date >= rolling_start_date, forecast_date <= rolling_end_date) %>%
+    summarize(wis = mean(wis), mae=mean(abs_error))
+  model_weights <- rolling_metrics_states %>%
+    mutate(
+      rwis = wis/pull(filter(rolling_metrics_states, model == "COVIDhub-baseline"), 2),
+      rmae = mae/pull(filter(rolling_metrics_states, model == "COVIDhub-baseline"), 3),
+    ) %>% 
+    filter(model != "COVIDhub-baseline", model %in% composite_models) %>%
+    mutate(weight=exp(-theta * rwis) / sum(exp(-theta * rwis))) %>%
+  select(model, weight)
+  
+  # Build ensemble
+  ensemble_forecasts <- forecast_df %>%
+    left_join(model_weights, by = "model") %>%
+    mutate(ensemble_contribution = weight*value) %>%
+    group_by(forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date, type, quantile) %>%
+    summarize(value=sum(ensemble_contribution)) %>%
+    mutate(model = ensemble_name, .before = forecast_date) %>%
+    left_join(hub_locations, by = c("location" = "fips"))
+  
+  return (ensemble_forecasts)
+}
 
+# Testing
+ensemble_test <- build_composite_ensemble(forecast_df = NULL, composite_models = all_thief, scores_df = scores_clean, truth_data = NULL, rolling_period = weeks(12), theta = 6.5, ensemble_name = "THieF_ensemble-train6.5", forecast_date = as.Date("2021-10-26"), reference_dates = mon_fc_dates)
+
+fc_dates <- as.Date("2021-10-26")    
+theta <- 6.5 # c(0, 3, 6.5, 10, 15, 20, 25)
+ensemble_name <- paste("THieF_ensemble-", ifelse(theta == 0, "mean", paste("train", theta, sep="")), sep="")
+    
+# Parallelize function for cluster
+  generate_ensemble_wk <-
+    function(fc_dates) {
+      message(paste("Starting", fc_dates, "forecasts"))
+      library(tidyverse)
+      library(lubridate)
+      library(covidHubUtils)
+      func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+      lapply(func_list, source)
+
+      results <- 
+        build_composite_ensemble(
+          forecast_df = NULL, composite_models = all_thief, 
+          scores_df = scores_clean, truth_data = NULL, 
+          rolling_period = weeks(12), theta = theta, ensemble_name = ensemble_name, 
+          forecast_date = fc_dates, reference_dates = mon_fc_dates)
+      message(paste("Finished", fc_dates, "forecasts"))
+      return(results)
+    }
+
+parallel_test <- generate_ensemble_wk(fc_dates)
