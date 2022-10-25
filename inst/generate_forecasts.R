@@ -140,6 +140,7 @@ if (system == "linux") {
       load("data/extended_scv_thief_new.RData")
       load("data/baseline_fc_scores_extended.RData")
 
+      all_thief <- sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep=""))[c(3:14, 1:2)]
       actual_fc_dates <- distinct(scores_version_thief_old, forecast_date) %>% pull(1)
       mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
       scores <- 
@@ -225,7 +226,7 @@ if (system == "linux") {
 
     # Run function across previously specified number of cores
     if (model_spec[[1]] == "ensemble") {
-      fc_list <- mclapply(sun_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_ensemble_wk)
+      fc_list <- mclapply(mon_fc_dates[date_indices[1]:date_indices[2]], mc.cores = num_cores, FUN = generate_ensemble_wk)
       
       # write and save forecasts
       if (!file.exists(paste("data/", ensemble_name, sep=""))) dir.create(paste("data/", ensemble_name, sep=""))
