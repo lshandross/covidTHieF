@@ -28,14 +28,19 @@ build_composite_ensemble <- function(forecast_df = NULL, composite_models, score
   rolling_end_date <- floor_date(forecast_date-1, "week", 1)
   rolling_start_date <- rolling_end_date - rolling_period
 
+  date_index <- match(rolling_end_date + weeks(1), reference_dates)
+  
   if (is.null(forecast_df)) {
-    date_index <- match(rolling_end_date + weeks(1), reference_dates)
-    if (date_index < time_length(rolling_period, "week")) warning(paste("Insufficient forecasts for entire provided rolling period,", date_index - 1, "weeks will be used instead"))
     forecast_df <- map_dfr(composite_models, load_formatted_forecasts, date_index)
+  }
+  
+  if (date_index < time_length(rolling_period, "week")) {
+    warning("Insufficient forecasts provided for entire rolling period. Equal weights will be used instead.")
+    theta <- 0
   }
 
   if (is.null(scores_df)) {
-    scores_df <- score_forecasts(forecasts_ver, return_format="wide", truth=truth_data, use_median_as_point=use_median_as_point)
+    scores_df <- score_forecasts(forecasts_df, return_format="wide", truth=truth_data, use_median_as_point=use_median_as_point)
   }
 
   # compute weights
