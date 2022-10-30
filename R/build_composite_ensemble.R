@@ -20,11 +20,14 @@ build_composite_ensemble <- function(forecast_df = NULL, composite_models, score
   library(lubridate)
   library(covidHubUtils)
   library(zoltr)
-  # Load in functions
   func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
   lapply(func_list, source)
-
-  if (is.character(forecast_date)) { forecast_date <- as.Date(forecast_date)}
+  
+  if (forecast_date > max(reference_dates)) {
+    stop("Please provide a forecast date within the span of the reference dates")
+  } else if (is.character(forecast_date)) { 
+    forecast_date <- as.Date(forecast_date)
+  }
   rolling_end_date <- floor_date(forecast_date-1, "week", 1)
   rolling_start_date <- rolling_end_date - rolling_period
 
@@ -60,7 +63,9 @@ build_composite_ensemble <- function(forecast_df = NULL, composite_models, score
   # Build ensemble
   ensemble_forecasts <- forecast_df %>%
     left_join(model_weights, by = "model") %>%
-    mutate(ensemble_contribution = ifelse(date_index == 1, 1/length(composite_models), weight)*value) %>%
+    mutate(ensemble_contribution = 
+      case_when(date_index == 1 ~ (1/length(composite_models))*value,
+                date_index != 1 ~ weight*value)) %>%
     group_by(forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date, type, quantile) %>%
     summarize(value=sum(ensemble_contribution)) %>%
     mutate(model = ensemble_name, .before = forecast_date) %>%
@@ -70,5 +75,4 @@ build_composite_ensemble <- function(forecast_df = NULL, composite_models, score
 }
 
 # Not run
-# ensemble_test <- build_composite_ensemble(forecast_df = forecast_data, composite_models = all_thief, scores_df = scores_clean, truth_data = NULL, theta = 6.5, ensemble_name = "THieF_ensemble-train6.5", forecast_date = as.Date("2021-10-26"), reference_dates = mon_fc_dates)
-
+# ensemble_test <- build_composite_ensemble(forecast_df = NULL, composite_models = all_thief, scores_df = scores_clean, truth_data = NULL, rolling_period = weeks(12), theta = 6.5, ensemble_name = "THieF_ensemble-train6.5", forecast_date = as.Date("2021-10-23"), reference_dates = mon_fc_dates)
