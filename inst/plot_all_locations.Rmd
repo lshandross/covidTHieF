@@ -4,8 +4,8 @@ author: "Li Shandross"
 date: "`r Sys.Date()`"
 output: 
   pdf_document: 
-    fig_width: 12
-    fig_height: 9
+    fig_width: 24
+    fig_height: 18
 classoption: landscape
 ---
 
@@ -34,6 +34,7 @@ load("../data/baseline_fc_scores_extended.RData")
 
 load("../data/extended_fcv_thief_old_small.RData")
 load("../data/extended_fcv_thief_new_small.RData")
+load("../data/extended_fcv_thief_ensemble_small2.RData")
 load("../data/extended_fcv_sarima_small.RData")
 
 fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), pull(distinct(fcv_sarima_small, forecast_date)))
@@ -41,7 +42,8 @@ locs <- distinct(fcv_sarima_small, location) %>% pull()
 locs <- locs
 #locs <- "US"
 
-fc_ver <- rbind(fcv_sarima_small, fcv_thief_new_small, fcv_thief_old_small) %>% 
+fc_ver <- fcv_thief_ensemble_small %>%
+  rbind(fcv_sarima_small, fcv_thief_new_small, fcv_thief_old_small) %>% 
   rbind(filter(forecasts_baseline, forecast_date %in% fc_dates)) %>%
   mutate(model = ifelse(model == "COVIDhub-baseline", "zCOVIDhub-baseline", model))
 models <- fc_ver %>% distinct(model) %>% pull(1)
@@ -62,7 +64,7 @@ for (i in 1:length(locs)) {
                       truth_source = "HealthData",
                       use_median_as_point = TRUE,
                       facet = model ~.,
-                      facet_nrow = 5,
+                      facet_nrow = 6,
                       fill_by_model = TRUE, 
                       plot=FALSE)
 
