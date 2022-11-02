@@ -31,7 +31,6 @@ registerDoParallel(cl)
 ```
 
 ## Load in truth data and forecasts
-We load in the hospitalization truth data and our forecasts. (Note: The load forecast parentheses function wasn't working, so alternate code is written to achieve the same output.)   
 
 ```{r, message=FALSE, warning=FALSE, results=FALSE}
 analysis <- "extended" # original, versioned, extended
@@ -113,7 +112,6 @@ scores_baseline <- score_baseline %>%
 
 
 ## Plot Forecasts
-We plot forecasts for three locations (US National, Texas, and Vermont) for each of the three models. The two state locations were chosen as the highest and lowest hospitalization count locations. The plotted forecasts are spaced 4 weeks apart with 1 - 28 day ahead horizons, starting with the first forecast date, 12/07/20, until the end of the training period, 10/31/21.   
 
 ```{r, warning=FALSE, message=FALSE}
 locs <- full_hosp_truth %>%
@@ -163,10 +161,8 @@ for (i in 1:3) {
 }
 ```
 
-The plots don't show much difference between the 6 models (although this is partially due to the fact that the yscales are free and are not consistent even for the same location). However, of note is the fact that the models that use a forth root transformation tend to have wider prediction intervals than the models without transformations. All of the models reasonably follow the trend of the truth lines for every location shown, although it seems like lower count locations may have slightly greater accuracy. The baseline seems to have intervals of fairly consistent widths while the models tend to vary in their interval widths, tending to show wider intervals during times of higher incidents or change points and narrow lower intervals otherwise. We investigate model accuracy more deeply by scoring the forecasts for each model and calculating appropriate metrics.   
 
 ## Score forecasts
-We calculate metrics for all three models, aggregating by horizon. Since hospitalizations are forecasted at a daily time scale, a new horizon week variable is created in which scoring metrics are averaged over from a single week Tuesday to the following Monday. We perform these calculations for the entire training phase as well as for each of the two waves that occurred during the training phase.   
 
 ### Overall metrics
 ```{r, warning=FALSE, message=FALSE}
@@ -351,11 +347,6 @@ wis_hzn_plot_US + wis_hzn_plot_states +
   plot_layout(ncol = 2, guides='collect') &
   theme(legend.position='bottom')
 ```
-
-When splitting the results so that US National is separate, we find that for US National the two models that use the base set hierarchy tended to perform the best, with improvements seen over a naive baseline in all metrics except for 95%PI Coverage. These two models are followed by the Topmost8_arima_noTrans model, which showed more comparable performance to the baseline. The Base_arima_noTrans model performed the best in terms of PI Coverage, followed by the Base_arima_4root and Topmost8_arima_noTrans models (with the latter being more consistent with coverage rates for all horizons). In terms of WIS and MAE, the Base_arima_4root model performed the best, followed by the Base_arima_noTrans model. Overall, for the US National level, it seems that there is a pattern that for coverage rates, the models without transformations perform better (and these tend to have smaller prediction intervals) while for WIS and MAE the fourth root transform models perform better; these patterns hold at all horizons. Further, there is a general order to model accuracy in terms of hierarchical structure used: the Base set performs the best, followed by the Topmost8 set, and finally the Multiple3 set.   
-
-For the state level, we see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models. (We also see shrunken WIS and MAE values, although this is likely partially due to the fact that the states have smaller scale values than the National level.) Interestingly, we see fewer improvements to MAE over the baseline but more substantial improvements in terms of coverage rates. It's a little harder to definitively say which models have the best coverage rates, as the results differ between the 50% and 95% intervals and the models are quite similar in coverage rates, especially for the 95% intervals. However, it seems that the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model.   
-
 
 ### Metrics by wave
 ```{r, warning=FALSE, message=FALSE}
@@ -655,9 +646,6 @@ if (analysis == "extended") {
 }
 ```
 
-For US National during the alpha wave, the Base_arima_noTrans model performed the best for coverage rates and second best for WIS and MAE at every horizon. The Base_arima_4root model performed best in terms of WIS and MAE but was third for coverage rate while the Topmost8_arima_noTrans model had the second best coverage rates and third best WIS and MAE. During the alpha wave, these models performed the best and tended to have more consistent values for their metrics. The winter21 wave saw noticeably worse values for all metrics at every horizon. Generally, the two models that use the base set hierarchy tended to perform the best for all metrics, although the coverage rates varied a lot by horizon, with the Topmost8_arima_4root and Multiple3_arima_noTrans achieving closer to nominal coverage rates for the 95% interval than even the Base models at horizons greater than 1 week ahead. These results are pretty consistent with improvements over the base-line, which ranged from modest to significant for the best performing models during the alpha wave, especially for WIS and 50% PI coverage. The winter21 wave saw fairly comparable or worse performance compared to the baseline for WIS and MAE. The 50% coverage was better than the baseline for all models, the greatest improvements for the best models, but the 95% coverage could be better or worse for the best models.   
-
-For states during both waves, we again see noticeably better coverage rates that approach the nominal level (or even exceed it) for all of the models, compared to those of the US National level when broken into waves. During the alpha wave, the Base_arima_4root model has the best performance for all metrics across all horizons. It is followed closely by the Topmost8_arima_noTrans and Base_arima_noTrans models, then the Topmost8_arima_4root and Multiple3_arima_noTrans models, all of which are much better than the Multiple3_arima_4root model. During the winter21 wave, the Base_arima_4root model is again generally the best for all metrics at all horizon weeks but sometimes loses out in terms of 95% coverage at longer horizons to other models. Notably during this wave, there are much greater similarities in coverage rates and certain models have better coverage rates for the 50% interval while others have better coverage reads for the 95% one. Similar patterns to the ones described above for the US national level when compared to the baseline were observed.   
 
 ### By forecast date (week)
 
@@ -1068,6 +1056,5 @@ print(fig_wis_loc)
 
 
 ### Scoring Conclusions   
-It seems that the best three models that should be passed onto the testing phase are the Base_arima_noTrans, the Base_arima_4root, and the Topmost8_arima_noTrans models, which seem to take turns being most accurate depending on state or national level overall and during different waves.
 
 
