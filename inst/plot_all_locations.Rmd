@@ -2,10 +2,11 @@
 title: "plot_all_locations"
 author: "Li Shandross"
 date: "`r Sys.Date()`"
+geometry: "left=1.25cm,right=0.75cm,top=1.5cm,bottom=1.5cm"
 output: 
   pdf_document: 
-    fig_width: 24
-    fig_height: 18
+    fig_width: 36
+    fig_height: 27
 classoption: landscape
 ---
 
@@ -34,7 +35,7 @@ load("../data/baseline_fc_scores_extended.RData")
 
 load("../data/extended_fcv_thief_old_small.RData")
 load("../data/extended_fcv_thief_new_small.RData")
-load("../data/extended_fcv_thief_ensemble_small2.RData")
+load("../data/extended_fcv_thief_ensemble_small.RData")
 load("../data/extended_fcv_sarima_small.RData")
 
 fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), pull(distinct(fcv_sarima_small, forecast_date)))
@@ -47,7 +48,9 @@ fc_ver <- fcv_thief_ensemble_small %>%
   rbind(filter(forecasts_baseline, forecast_date %in% fc_dates)) %>%
   mutate(model = ifelse(model == "COVIDhub-baseline", "zCOVIDhub-baseline", model))
 models <- fc_ver %>% distinct(model) %>% pull(1)
+```
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 for (i in 1:length(locs)) {
   fdat <- fc_ver %>% 
     filter(location == locs[i], 
