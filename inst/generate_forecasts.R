@@ -233,7 +233,7 @@ if (system == "linux") {
       for (i in date_indices[1]:date_indices[2]) {
         if (i == date_indices[1]) {message("entered for loop")}
         write.csv(fc_list[[i-date_indices[1]+1]], file=paste("data/", ensemble_name, "/", actual_fc_dates[i], "-", ensemble_name, ".csv", sep=""), row.names=FALSE)
-        message(paste(model, "week", i,"csv file written"))
+        message(paste(ensemble_name, "week", i,"csv file written"))
       }
     } else {
       if (model_spec[[1]] == "sarima") {
