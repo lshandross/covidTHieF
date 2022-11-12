@@ -15,4 +15,4 @@ module load bzip2/1.0.6_fPIC_lib
 module load pcre/8.40
 module load libtool/2.4.6
 
-R CMD BATCH --vanilla '--args linux 32 generate_forecasts thief 12 T 43 47' inst/generate_forecasts.R
+R CMD BATCH --vanilla '--args linux 32 generate_forecasts testing thief 6 T 1 12' inst/generate_forecasts.R
