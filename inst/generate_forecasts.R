@@ -10,6 +10,7 @@ library(thief)
 system <- "windows" # c("linux", "windows")
 num_cores <- 0 # NA if system == "windows"
 action <- "generate_forecasts" # c("load_truth", "load_testing_forecasts", "generate_forecasts")
+phase <- "training" # c("training", "testing")
 model_spec <- list("sarima", 1, TRUE) # list("THieF" or "sarima", thief_top_num or sarima_agg_num, transform.4root)
 date_indices <- c(1, 47)
 
@@ -19,26 +20,33 @@ args <- commandArgs(trailingOnly = TRUE) # system, num_cores, action, model_spec
 # test if there is at least one argument: if not, return an error
 if (length(args) < 2) {
   stop("At least 2 arguments must be supplied (input file).n", call.=FALSE)
-} else if (length(args) == 2) { # generate_forecasts, sarima_s1-4root, fc_dates[1:47]
+} else if (length(args) == 2) { # generate_forecasts, training, sarima_s1-4root, fc_dates[1:47]
   system <- args[1]
   num_cores <- as.numeric(args[2])
-} else if (length(args) == 3) { # sarima_s1-4root, fc_dates[1:47]
+} else if (length(args) == 3) { # training, sarima_s1-4root, fc_dates[1:47]
   system <- args[1]
   num_cores <- as.numeric(args[2])
   action <- args[3]
-} else if (length(args) %in% 4:5) {
+} else if (length(args) == 4) { # sarima_s1-4root, fc_dates[1:47]
+  system <- args[1]
+  num_cores <- as.numeric(args[2])
+  action <- args[3]
+  phase <- args[4]
+} else if (length(args) %in% 5:6) {
   stop("More arguments must be supplied (input file).n", call.=FALSE)
-} else if (length(args) %in% 6:7) { # fc_dates[1:47]
+} else if (length(args) %in% 7:8) { # fc_dates[1:47]
   system <- args[1]
   num_cores <- as.numeric(args[2])
   action <- args[3]
-  model_spec <- list(args[4], as.numeric(args[5]), as.logical(args[6]))
-} else if (length(args == 8)) {
+  phase <- args[4]
+  model_spec <- list(args[5], as.numeric(args[6]), as.logical(args[7]))
+} else if (length(args == 9)) {
   system <- args[1]
   num_cores <- as.numeric(args[2])
   action <- args[3]
-  model_spec <- list(args[4], as.numeric(args[5]), as.logical(args[6]))
-  date_indices <- c(as.numeric(args[7]), as.numeric(args[8]))
+  phase <- args[4]
+  model_spec <- list(args[5], as.numeric(args[6]), as.logical(args[7]))
+  date_indices <- c(as.numeric(args[8]), as.numeric(args[9]))
 }
 
 model_type <- ifelse(model_spec[[1]] == "thief", "THieF", model_spec[[1]])
@@ -54,9 +62,18 @@ transform_type <-
             is.na(pluck(model_spec, 3)) ~ "THieF")
 
 # Date Vectors
-mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:46))
-sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
-sun_testing_dates <- c(as.Date("2021-10-31") + weeks(0:21))
+mon_training_dates <- c(as.Date("2020-12-07") + weeks(0:46))
+sun_training_dates <- c(as.Date("2020-12-06") + weeks(0:46))
+mon_testing_dates <- c(as.Date("2021-11-01") + weeks(0:47))
+sun_testing_dates <- c(as.Date("2021-10-31") + weeks(0:47))
+
+if (phase == "training") {
+  mon_fc_dates <- mon_training_dates
+  sun_fc_dates <- sun_training_dates
+} else {
+  mon_fc_dates <- mon_testing_dates
+  sun_fc_dates <- sun_testing_dates
+}
 
 # Static Truth
 # full_hosp_truth <-
@@ -103,24 +120,32 @@ pull_forecasts <- function(fc_dates) {
 
 if (system == "linux") {
   if (action == "load_truth") {
-    # Run function across previously specified number of cores
-    mon_training_truth_list <- mclapply(mon_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
-    sun_training_truth_list <- mclapply(sun_fc_dates, mc.cores = num_cores, FUN = load_weekly_truth)
-
-    save(mon_training_truth_list, sun_training_truth_list, file="data/versioned_truth_training.RData")
-
+    if (phase == "training") {
+      mon_training_truth_list <- mclapply(mon_training_dates, mc.cores = num_cores, FUN = load_weekly_truth)
+      sun_training_truth_list <- mclapply(sun_training_dates, mc.cores = num_cores, FUN = load_weekly_truth)
+      save(mon_training_truth_list, sun_training_truth_list, file="data/versioned_truth_training.RData")
+    } else {
+      mon_testing_truth_list <- mclapply(mon_testing_dates, mc.cores = num_cores, FUN = pull_forecasts)
+      sun_testing_truth_list <- mclapply(sun_testing_dates, mc.cores = num_cores, FUN = pull_forecasts)
+      save(mon_testing_truth_list, sun_testing_truth_list, file="data/versioned_truth_testing.RData")
+    }
   } else if (action == "load_testing_forecasts") {
     # Pull forecasts from other models
-    forecast_testing_list <- mclapply(sun_testing_dates[date_indices], mc.cores = num_cores, FUN = pull_forecasts)
+    forecast_testing_list <- mclapply(sun_testing_dates, mc.cores = num_cores, FUN = pull_forecasts)
 
     save(forecast_testing_list, file=paste("data/", forecast_testing_list, ".RData", sep=""))
   } else { #action == "generate_forecasts"
-    load(file="data/versioned_truth_training.RData")
-
-    # Generate Forecasts
-    training_truth_df <- tibble(forecast_date=sun_fc_dates, truth_data=sun_training_truth_list)
-    actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
-      pull(target_end_date)
+    if (phase == "training") {
+      load(file="data/versioned_truth_training.RData")
+      truth_df <- tibble(forecast_date=sun_training_dates, truth_data=sun_training_truth_list)
+      actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
+        pull(target_end_date)
+    } else {
+      load(file="data/versioned_truth_testing.RData")
+      truth_df <- tibble(forecast_date=sun_testing_dates, truth_data=sun_testing_truth_list)
+      actual_fc_dates <- map_dfr(sun_testing_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
+        pull(target_end_date)
+    }
     
     top_level <- c(1:4, 6, 8, 12)
     agg_6wk <- list(42, 21, 14, 7, 1); agg_8wk <- list(56, 28, 14, 7, 1)
@@ -171,10 +196,10 @@ if (system == "linux") {
       func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
       lapply(func_list, source)
 
-      truth_df <- training_truth_df %>%
+      truth <- truth_df %>%
          filter(forecast_date == fc_dates) %>%
          pull(2) %>% pluck(1)
-      results <- covid_thief(truth_df, "value",
+      results <- covid_thief(truth, "value",
         as.Date("2020-07-27"), fc_dates, # change as needed
         fips_vec = states53, aggregate_levels = model_agg, frequency = model_freq,
         pi_levels = c(10 * (1:9), 95, 98), transform.4root = model_spec[[3]])
@@ -192,10 +217,10 @@ if (system == "linux") {
       func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
       lapply(func_list, source)
 
-      truth_df <- training_truth_df %>%
+      truth <- truth_df %>%
          filter(forecast_date == fc_dates) %>%
          pull(2) %>% pluck(1)
-      results <- covid_sarima(truth_df, "value",
+      results <- covid_sarima(truth, "value",
         as.Date("2020-07-27"), fc_dates,
         fips_vec = states53, frequency = model_spec[[2]],
         pi_levels = c(10 * (1:9), 95, 98), transform.4root = model_spec[[3]])
@@ -291,14 +316,14 @@ if (system == "linux") {
 
   if (action == "load_truth") {
     # Export our function on the cluster
-    clusterExport(cl, list('load_weekly_truth', 'sun_fc_dates'))
+    clusterExport(cl, list('load_weekly_truth', 'mon_testing_dates'))
 
     # Run function across previously specified number of cores
     system.time({
-      sun_training_truth_list <- c(parLapply(cl, sun_fc_dates, fun = load_weekly_truth))
+      mon_testing_truth_list <- c(parLapply(cl, mon_testing_dates, fun = load_weekly_truth))
     })
 
-    save(mon_training_truth_list, sun_training_truth_list, file="data/versioned_truth_training.RData")
+    save(mon_testing_truth_list, sun_testing_truth_list, file="data/versioned_truth_testing.RData")
 
   } else if (action == "load_testing_forecasts") {
     # Export our function on the cluster
@@ -315,7 +340,7 @@ if (system == "linux") {
     load(file="data/versioned_truth_training.RData")
 
     # Generate Forecasts
-    training_truth_df <- tibble(forecast_date=sun_fc_dates, truth_data=sun_training_truth_list)
+    truth_df <- tibble(forecast_date=sun_training_dates, truth_data=sun_training_truth_list)
     actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
       pull(target_end_date)
 
@@ -330,11 +355,11 @@ if (system == "linux") {
         func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
         lapply(func_list, source)
 
-        truth_df <- training_truth_df %>%
+        truth <- truth_df %>%
            filter(forecast_date == fc_dates) %>%
            pull(2) %>% pluck(1)
 
-        covid_thief(truth_df, "value",
+        covid_thief(truth, "value",
           as.Date("2020-07-27"), fc_dates, # change as needed
           fips_vec = states53,
           aggregate_levels = list(84, 42, 28, 21, 14, 7, 1), frequency = 84, # change as needed
@@ -350,18 +375,18 @@ if (system == "linux") {
         func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
         lapply(func_list, source)
 
-        truth_df <- training_truth_df %>%
+        truth <- truth_df %>%
            filter(forecast_date == fc_dates) %>%
            pull(2) %>% pluck(1)
 
-        covid_sarima(truth_df, "value",
+        covid_sarima(truth, "value",
           as.Date("2020-07-27"), fc_dates, # change as needed
           fips_vec = states53, frequency = 1, # change as needed
           pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
       }
 
     # Export our function on the cluster
-    clusterExport(cl, list('generate_thief_wk', 'generate_sarima_wk', 'states53', 'sun_fc_dates', 'training_truth_df'))
+    clusterExport(cl, list('generate_thief_wk', 'generate_sarima_wk', 'states53', 'sun_fc_dates', 'truth_df'))
 
     # Run function across previously specified number of cores
     system.time({
