@@ -22,8 +22,9 @@ all_thief <- sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), re
 thief_new <- sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep=""))
 thief_old <- sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))
 sarima_models <- sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))
+thief_ensembles <- paste("THieF_ensemble-", c("mean", paste(rep("train", 6), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")
 #models <- c(all_thief, sarima_models)
-models <- sarima_models
+models <- thief_ensembles
 
 # LOAD FORECASTS
 # forecasts_baseline <- load_forecasts(models = "COVIDhub-baseline",
@@ -40,7 +41,7 @@ models <- sarima_models
 
 # Load local formatted forecasts
 date_indices <- 1:47
-load_formatted_forecasts <- function(model_vector, date_indices) {
+load_formatted_forecasts <- function(model_vector) {
   library(tidyverse)
   library(covidHubUtils)
   files <- rep("path", length(date_indices))
@@ -52,7 +53,7 @@ load_formatted_forecasts <- function(model_vector, date_indices) {
     forecasts <- rbind(forecasts, df)
   }
 
-  forecasts %>%
+  forecasts <- forecasts %>%
     separate(target,
       into=c("horizon", "temp"),
       sep=" "
@@ -64,15 +65,19 @@ load_formatted_forecasts <- function(model_vector, date_indices) {
     ) %>%
     select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
     left_join(hub_locations, by=c("location"="fips"))
+    
+  return (forecasts)
 }
 
 # Export our function on the cluster
-clusterExport(cl, list('load_formatted_forecasts', 'models', 'all_thief', 'sarima_models', 'date_indices'))
+clusterExport(cl, list('load_formatted_forecasts', 'models', 'all_thief', 'date_indices'))
 
 # Run function across previously specified number of cores
 system.time({
-  fc_versioned_list <- c(parLapply(cl, models, fun = load_formatted_forecasts, date_indices))
+  fc_versioned_list <- c(parLapply(cl, models, fun = load_formatted_forecasts))
 })
+
+fc_version_thief_ensemble <- map_dfr(models, load_formatted_forecasts)
 
 # Split into data frames
 fc_version_thief_new <- c(); fc_version_thief_old <- c(); fc_version_sarima <- c()
@@ -105,7 +110,7 @@ full_hosp_truth <- load_truth("HealthData",
   # you will need to re-order the columns to correctly rbind them: score_baseline <- select(score_baseline, 1:7, 20, 9:19, 21:49, 8)
 
 # if forecasts are too big for a single call
-df_to_score <- fc_version_thief_new
+df_to_score <- fc_version_thief_ensemble
 parallel_scoring <- function (model_vector) { 
     library(tidyverse)
     library(covidHubUtils)
@@ -125,12 +130,12 @@ system.time({
   scores_list_temp <- c(parLapply(cl, models, fun = parallel_scoring))
 })
 
-scores_version_sarima <- c()
+scores_version_thief_ensemble <- c()
 for (i in 1:length(models)) {
-  scores_version_sarima <- rbind(scores_version_sarima, scores_list_temp[[i]])
+  scores_version_thief_ensemble <- rbind(scores_version_thief_ensemble, scores_list_temp[[i]])
 }
 
-# save(scores_version_sarima, file="data/extended_scv_.RData")
+save(scores_version_thief_ensemble, file="data/extended_scv_thief_ensemble.RData")
 
 # save(forecasts_ver, scores_ver, mon_dates_df, file="data/versioned_fc_df.RData")
 # save(forecasts_baseline, scores_base, file="data/baseline_fc_scores.RData")
