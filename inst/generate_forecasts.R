@@ -286,8 +286,10 @@ if (system == "linux") {
         model_df <- rbind(model_df, fc_list[[i-date_indices[1]+1]][[2]])
         if (i %in% c(6*(1:floor(47/6)), 47)) {
           assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
+          
   #        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
-          save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "/", model, "_", ceiling(i/6), ".RData", sep=""))
+          save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), 
+              file=paste("data/", model, "/", model, "_", ceiling(i/6) + ifelse(phase == "training", 0, ceiling(length(sun_training_dates)/6)), ".RData", sep=""))
         message(paste(model, "RData object", ceiling(i/6), "saved"))
         }
       }
