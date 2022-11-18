@@ -284,9 +284,8 @@ if (system == "linux") {
         message(paste(model, "week", i,"csv file written"))
         if (i %in% c(1 + 6*(0:ceiling(47/6)))) {model_df <- c()}
         model_df <- rbind(model_df, fc_list[[i-date_indices[1]+1]][[2]])
-        if (i %in% c(6*(1:floor(47/6)), 47)) {
+        if (i %in% c(6*(1:floor(47/6)), length(sun_fc_dates))) {
           assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
-          
   #        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
           save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), 
               file=paste("data/", model, "/", model, "_", ceiling(i/6) + ifelse(phase == "training", 0, ceiling(length(sun_training_dates)/6)), ".RData", sep=""))
