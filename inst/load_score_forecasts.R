@@ -34,25 +34,26 @@ testing_models <-c("sarima_s7-noTransform", "THieF_6wk-4root", "THieF_6wk-noTran
 models <- all_thief
 #models <- thief_ensembles
 
+if (phase == "training") {
+  date_indices <- 1:47
+} else {
+  date_indices <- 48:95
+}
+
 # LOAD FORECASTS
-# forecasts_baseline <- load_forecasts(models = "COVIDhub-baseline",
-#                                         dates = mon_testing_dates,
-#                                         date_window_size = 6, 
-#                                         locations = fips,
-#                                         types = c("point","quantile"),
-#                                         targets = inc_hosp_targets,
-#                                         source = "zoltar",
-#                                         verbose = FALSE,
-#                                         as_of=NULL,
-#                                         hub = c("US"))
-# 
+forecasts_testing_baseline <- load_forecasts(models = "COVIDhub-baseline",
+                                        dates = mon_testing_dates,
+                                        date_window_size = 6,
+                                        locations = fips,
+                                        types = c("point","quantile"),
+                                        targets = inc_hosp_targets,
+                                        source = "zoltar",
+                                        verbose = FALSE,
+                                        as_of=NULL,
+                                        hub = c("US"))
+#
 
 # Load local formatted forecasts
-if (phase == "training") {
-  date_indices <- 1:47 
-} else { 
-  date_indices <- 48:95 
-}
 load_formatted_forecasts <- function(model_vector) {
   library(tidyverse)
   library(covidHubUtils)
@@ -77,7 +78,7 @@ load_formatted_forecasts <- function(model_vector) {
     ) %>%
     select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
     left_join(hub_locations, by=c("location"="fips"))
-    
+
   return (forecasts)
 }
 
@@ -113,23 +114,52 @@ save(fc_testing_thief_old, file="data/testing_fcv_thief_old.RData")
 save(fc_testing_thief_new, file="data/testing_fcv_thief_new.RData")
 
 
+# CREATE SMALL FORECAST DF
+if (phase == "training") {
+  fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_fc_dates[1+4*(0:11)])
+} else if (phase == "testing") {
+  fc_dates <- c(as.Date("2020-11-01") + weeks(4*(0:11)), actual_fc_dates[1+4*(0:11)])
+} else {
+  fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)), actual_fc_dates[1+4*(0:7)])
+}
+
+load(file="data/testing_fcv_thief_new.RData")
+actual_fc_dates <- distinct(fc_testing_thief_new, forecast_date) %>% pull(1)
+
+fc_testing_thief_new_small <- fc_testing_thief_new %>%
+  filter(forecast_date %in% fc_dates, horizon <= 28)
+  
+save(fc_testing_thief_new_small, file="data/testing_fcv_thief_new_small.RData")
+
+
 # SCORE FORECASTS
-full_hosp_truth <- load_truth("HealthData", 
-                         "inc hosp", 
+training_hosp_truth <- load_truth("HealthData",
+                         "inc hosp",
                          as_of=as.Date("2022-04-06"),
                          temporal_resolution="weekly",
                          data_location = "covidData")
+testing_hosp_truth <- load_truth("HealthData",
+                         "inc hosp",
+                         as_of=as.Date("2022-10-01"),
+                         temporal_resolution="weekly",
+                         data_location = "covidData")
+
+if(phase == "testing") {
+  full_hosp_truth <- testing_hosp_truth
+} else {
+  full_hosp_truth <- training_hosp_truth
+}
 
 #scores_ver <- score_forecasts(forecasts=forecasts_ver, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
-#score_baseline <- score_forecasts(forecasts=forecasts_baseline, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
+#score_baseline <- score_forecasts(forecasts=forecasts_testing_baseline, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
   # note that the default column order may differ between these dfs due to existence of separate point forecasts
   # you will need to re-order the columns to correctly rbind them: score_baseline <- select(score_baseline, 1:7, 20, 9:19, 21:49, 8)
 
 # if forecasts are too big for a single call
-load(file="data/testing_fcv_thief_new.RData")
-#df_to_score <- fc_version_thief_ensemble
-df_to_score <- fc_testing_thief_new
-parallel_scoring <- function (model_vector) { 
+load(file="data/testing_fcv_thief_old.RData")
+df_to_score <- fc_testing_thief_old
+
+parallel_scoring <- function (model_vector) {
     library(tidyverse)
     library(covidHubUtils)
     score_forecasts(
@@ -141,7 +171,7 @@ parallel_scoring <- function (model_vector) {
 }
 
 # Export our function on the cluster
-models <- thief_new
+models <- thief_old
 clusterExport(cl, list('parallel_scoring', 'full_hosp_truth', 'models', 'df_to_score'))
 
 # Run function across previously specified number of cores
@@ -150,12 +180,12 @@ system.time({
 })
 
 # scores_version_thief_ensemble <- c()
-scores_testing_thief_new <- c()
+scores_testing_thief_old <- c()
 for (i in 1:length(models)) {
-  scores_testing_thief_new <- rbind(scores_testing_thief_new, scores_list_temp[[i]])
+  scores_testing_thief_old <- rbind(scores_testing_thief_old, scores_list_temp[[i]])
 }
 
-save(scores_testing_thief_new, file="data/testing_scv_thief_new.RData")
+save(scores_testing_thief_old, file="data/testing_scv_thief_old.RData")
 
 # save(forecasts_ver, scores_ver, mon_dates_df, file="data/versioned_fc_df.RData")
-# save(forecasts_baseline, scores_base, file="data/baseline_fc_scores.RData")
+# save(forecasts_testing_baseline, scores_testing_baseline, file="data/baseline_testing_fc_scores.RData")
