@@ -12,6 +12,7 @@ num_cores <- 0 # NA if system == "windows"
 action <- "generate_forecasts" # c("load_truth", "load_testing_forecasts", "generate_forecasts")
 phase <- "training" # c("training", "testing")
 model_spec <- list("sarima", 1, TRUE) # list("THieF" or "sarima", thief_top_num or sarima_agg_num, transform.4root)
+  # ensemble: list("ensemble",6.5, NA) -> "THieF_ensemble-train6.5"
 date_indices <- c(1, 47)
 
 # Get Command Line Arguments
@@ -66,6 +67,7 @@ mon_training_dates <- c(as.Date("2020-12-07") + weeks(0:46))
 sun_training_dates <- c(as.Date("2020-12-06") + weeks(0:46))
 mon_testing_dates <- c(as.Date("2021-11-01") + weeks(0:47))
 sun_testing_dates <- c(as.Date("2021-10-31") + weeks(0:47))
+mon_all_dates <- c(mon_training_dates, mon_testing_dates)
 
 if (phase == "training") {
   mon_fc_dates <- mon_training_dates
@@ -160,20 +162,31 @@ if (system == "linux") {
     
     if (model_spec[[1]] == "ensemble") {
       ensemble_name <- paste("THieF_ensemble-", ifelse(model_spec[[2]] == 0, "mean", paste("train", model_spec[[2]], sep="")), sep="")
+      descriptor <- ifelse(phase == "training", "extended", "testing")
       
-      load("data/extended_scv_thief_old.RData")
-      load("data/extended_scv_thief_new.RData")
+      load(paste("data/", descriptor,"_scv_thief_old.RData", sep=""))
+      load(paste("data/", descriptor,"_scv_thief_new.RData", sep=""))
       load("data/baseline_fc_scores_extended.RData")
 
       all_thief <- sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep=""))[c(3:14, 1:2)]
-      actual_fc_dates <- distinct(scores_version_thief_old, forecast_date) %>% pull(1)
-      mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
-      scores <- 
-        rbind(scores_version_thief_old, scores_version_thief_new) %>%
-        left_join(mon_dates_df, by = "forecast_date") %>%
-        mutate(horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_dates)/7)) %>%
-        select(-mon_fc_dates) %>%
-        filter(horizon_wk %in% 1:4)
+
+      if (phase == "training") {
+        actual_fc_dates <- distinct(scores_version_thief_old, forecast_date) %>% pull(1)
+        mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
+        scores <- 
+          rbind(scores_version_thief_old, scores_version_thief_new) %>%
+          left_join(mon_dates_df, by = "forecast_date") %>%
+          mutate(horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_dates)/7)) %>%
+          select(-mon_fc_dates) %>%
+          filter(horizon_wk %in% 1:4)
+      } else if (phase == "testing") {
+        load("data/all_thief_scv.RData")
+        load(paste("data/baseline_fc_scores_", descriptor, ".RData", sep=""))
+        actual_fc_dates <- distinct(scores_testing_thief_old, forecast_date) %>% pull(1)
+        mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
+        scores <- scores_full
+        score_baseline <- rbind(scores_testing_baseline, score_baseline)
+      }
         
       scores_baseline <- score_baseline %>%
         mutate(horizon=as.numeric(horizon),
@@ -181,6 +194,7 @@ if (system == "linux") {
         filter(horizon_wk %in% 1:4)
       
       scores_clean <- scores %>%
+        filter(model %in% all_thief) %>%
         rbind(scores_baseline) %>%
         filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US"))
     }
@@ -279,17 +293,18 @@ if (system == "linux") {
       
       for (i in date_indices[1]:date_indices[2]) {
         if (i == date_indices[1]) {message("entered for loop")}
-  #      write.csv(fc_list[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""), row.names=FALSE)
-        write.csv(fc_list[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""), row.names=FALSE)
+        write.csv(fc_list[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""), row.names=FALSE)
+#        write.csv(fc_list[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""), row.names=FALSE)
         message(paste(model, "week", i,"csv file written"))
         if (i %in% c(1 + 6*(0:ceiling(47/6)))) {model_df <- c()}
         model_df <- rbind(model_df, fc_list[[i-date_indices[1]+1]][[2]])
         if (i %in% c(6*(1:floor(47/6)), length(sun_fc_dates))) {
-          assign(paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), model_df)
-  #        save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), file=paste("data/", model, "_", ceiling(i/6), ".RData", sep=""))
+          assign(paste("modfc", specification, transform_type, ceiling(i/6) + ifelse(phase == "training", 0, ceiling(length(sun_training_dates)/6)), sep="_"), model_df)
           save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), 
-              file=paste("data/", model, "/", model, "_", ceiling(i/6) + ifelse(phase == "training", 0, ceiling(length(sun_training_dates)/6)), ".RData", sep=""))
-        message(paste(model, "RData object", ceiling(i/6), "saved"))
+              file=paste("data/", model, "_", ceiling(i/6) + ifelse(phase == "training", 0, ceiling(length(sun_training_dates)/6)), ".RData", sep=""))
+#          save(list=paste("modfc", specification, transform_type, ceiling(i/6), sep="_"), 
+#              file=paste("data/", model, "/", model, "_", ceiling(i/6) + ifelse(phase == "training", 0, ceiling(length(sun_training_dates)/6)), ".RData", sep=""))
+        message(paste(model, "RData object", ceiling(i/6) + ifelse(phase == "training", 0, ceiling(length(sun_training_dates)/6)), "saved"))
         }
       }
     }

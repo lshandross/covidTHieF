@@ -31,7 +31,7 @@ build_composite_ensemble <- function(forecast_df = NULL, composite_models, score
   rolling_end_date <- floor_date(forecast_date-1, "week", 1)
   rolling_start_date <- rolling_end_date - rolling_period
 
-  date_index <- match(rolling_end_date + weeks(1), reference_dates)
+  date_index <- match(rolling_end_date + weeks(1), reference_dates) + ifelse(forecast_date >= as.Date("2021-11-01"), 47, 0)
   
   if (is.null(forecast_df)) {
     forecast_df <- map_dfr(composite_models, load_formatted_forecasts, date_index)
