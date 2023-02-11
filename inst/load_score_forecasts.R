@@ -66,19 +66,20 @@ load_formatted_forecasts <- function(model_vector) {
     forecasts <- rbind(forecasts, df)
   }
 
-  forecasts <- forecasts %>%
-    separate(target,
-      into=c("horizon", "temp"),
-      sep=" "
-    ) %>%
-    mutate(
-      horizon=as.numeric(horizon),
-      temporal_resolution="day",
-      target_variable="inc hosp"
-    ) %>%
-    select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
-    left_join(hub_locations, by=c("location"="fips"))
-
+  if (!all(model_vector %in% thief_ensembles)) {
+    forecasts <- forecasts %>%
+      separate(target,
+        into=c("horizon", "temp"),
+        sep=" "
+      ) %>%
+      mutate(
+        horizon=as.numeric(horizon),
+        temporal_resolution="day",
+        target_variable="inc hosp"
+      ) %>%
+      select(model, forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date:value) %>%
+      left_join(hub_locations, by=c("location"="fips"))
+  }
   return (forecasts)
 }
 
@@ -115,6 +116,9 @@ save(fc_testing_thief_new, file="data/testing_fcv_thief_new.RData")
 
 
 # CREATE SMALL FORECAST DF
+load(file="data/testing_fcv_thief_new.RData")
+actual_fc_dates <- distinct(fc_testing_thief_new, forecast_date) %>% pull(1)
+
 if (phase == "training") {
   fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_fc_dates[1+4*(0:11)])
 } else if (phase == "testing") {
@@ -123,13 +127,10 @@ if (phase == "training") {
   fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:7)), actual_fc_dates[1+4*(0:7)])
 }
 
-load(file="data/testing_fcv_thief_new.RData")
-actual_fc_dates <- distinct(fc_testing_thief_new, forecast_date) %>% pull(1)
-
-fc_testing_thief_new_small <- fc_testing_thief_new %>%
+fc_testing_models_small <- fc_testing_models %>%
   filter(forecast_date %in% fc_dates, horizon <= 28)
   
-save(fc_testing_thief_new_small, file="data/testing_fcv_thief_new_small.RData")
+save(fc_testing_models_small, file="data/testing_fcv_models_small.RData")
 
 
 # SCORE FORECASTS
@@ -157,7 +158,7 @@ if(phase == "testing") {
 
 # if forecasts are too big for a single call
 load(file="data/testing_fcv_thief_old.RData")
-df_to_score <- fc_testing_thief_old
+df_to_score <- fc_testing_models
 
 parallel_scoring <- function (model_vector) {
     library(tidyverse)
@@ -171,7 +172,7 @@ parallel_scoring <- function (model_vector) {
 }
 
 # Export our function on the cluster
-models <- thief_old
+models <- testing_models
 clusterExport(cl, list('parallel_scoring', 'full_hosp_truth', 'models', 'df_to_score'))
 
 # Run function across previously specified number of cores
@@ -180,12 +181,12 @@ system.time({
 })
 
 # scores_version_thief_ensemble <- c()
-scores_testing_thief_old <- c()
+scores_testing_models <- c()
 for (i in 1:length(models)) {
-  scores_testing_thief_old <- rbind(scores_testing_thief_old, scores_list_temp[[i]])
+  scores_testing_models <- rbind(scores_testing_models, scores_list_temp[[i]])
 }
 
-save(scores_testing_thief_old, file="data/testing_scv_thief_old.RData")
+save(scores_testing_models, file="data/testing_scv_models.RData")
 
 # save(forecasts_ver, scores_ver, mon_dates_df, file="data/versioned_fc_df.RData")
 # save(forecasts_testing_baseline, scores_testing_baseline, file="data/baseline_testing_fc_scores.RData")
