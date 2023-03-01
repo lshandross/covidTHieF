@@ -1,5 +1,4 @@
-# library(dplyr); library(lubricate); library(covidHubUtils)
-model_levels <- pull(overall_metrics_states, model)
+# library(dplyr); library(lubridate); library(covidHubUtils)
 
 ###################################################################################################
 # Helper functions
@@ -130,6 +129,7 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
 
   ## plot of true data by state, tiled
   truth_dat <- truth %>%
+    filter(geo_type == "state", population >= 500000) %>%
     group_by(location, location_name) %>%
     summarize(cum_value=sum(value)) %>%
     ungroup() %>%
@@ -144,7 +144,7 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
     filter(!is.na(relative_wis))
 
   # plot:
-  fig_wis_loc <- average_by_loc_to_plot_%>%
+  fig_wis_loc <- average_by_loc_to_plot %>%
     ggplot(aes(x=model, y=location_name,
                fill= scales::oob_squish(log_relative_wis, range = c(-2, 1.5)))) +
     geom_tile() +
@@ -173,3 +173,5 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
 }
 
 
+# model_levels <- pull(overall_metrics_states, model)
+# plot_wis_loc(combined_scores, full_hosp_truth, model_levels, baseline_name = "COVIDhub-baseline")

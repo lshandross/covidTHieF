@@ -5,14 +5,13 @@
 #' @param model_colors An ordered vector of model colors. Must match with `model_names` order
 #' @param y_var A string specifying which metric to plot as the y-variable
 #' @param main A string specifying the plot title
-#' @param xlab A string specifying the x-axis label
 #'
 #' @return A scatter plot (with observations connected by lines) of the specified summary metric vs horizon week
 #' @export
 #'
 #' @examples
 plot_summarized_metrics <-
-  function(summarized_metrics, model_names, model_colors, y_var="wis", main, xlab) {
+  function(summarized_metrics, model_names, model_colors, y_var="wis", main) {
     data_to_plot <- summarized_metrics %>%
       mutate(
         specification = gsub(".*_(.+)-.*", "\\1", model),
@@ -26,16 +25,20 @@ plot_summarized_metrics <-
       )
 
     if (y_var == "wis") {
-      gg <- ggplot(data_to_plot, mapping=aes(x=forecast_date, y=wis, group=model)) +
-        coord_cartesian(ylim = c(min(data_to_plot$wis)*0.9, median(data_to_plot$wis)*1.5))
+      gg <- ggplot(data_to_plot, mapping=aes(x=horizon_wk, y=wis, group=model)) +
+        coord_cartesian(
+          ylim = c(min(data_to_plot$wis)*0.9, median(filter(data_to_plot, horizon_wk==4)$wis)*1.5)
+        )
     } else if (y_var == "mae") {
-      gg <- ggplot(data_to_plot, mapping=aes(x=forecast_date, y=mae, group=model)) +
-        coord_cartesian(ylim = c(min(data_to_plot$mae)*0.9, median(data_to_plot$mae)*1.5))
+      gg <- ggplot(data_to_plot, mapping=aes(x=horizon_wk, y=mae, group=model)) +
+        coord_cartesian(
+          ylim = c(min(data_to_plot$wis)*0.9, median(filter(data_to_plot, horizon_wk==4)$wis)*1.5)
+        )
     } else if (y_var == "cov_95") {
-      gg <- ggplot(data_to_plot, mapping=aes(x=forecast_date, y=cov95, group=model)) +
+      gg <- ggplot(data_to_plot, mapping=aes(x=horizon_wk, y=cov95, group=model)) +
         geom_hline(aes(yintercept=0.95))
     } else if (y_var == "cov_50") {
-      gg <- ggplot(data_to_plot, mapping=aes(x=forecast_date, y=cov_95, group=model)) +
+      gg <- ggplot(data_to_plot, mapping=aes(x=horizon_wk, y=cov_95, group=model)) +
         geom_hline(aes(yintercept=0.50))
     }
 
@@ -44,12 +47,18 @@ plot_summarized_metrics <-
       geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
       scale_color_manual(breaks = model_names, values = model_colors) +
       scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
-      labs(title=main, x=xlab, y=paste("average", y_var))
+      labs(title=main, x="horizon week", y=paste("average", y_var))
 }
 
+# wis_US <- plot_summarized_metrics(horizon_test_US, model_names, model_colors, y_var = "wis", main="US")
+# wis_states <- plot_summarized_metrics(horizon_test_states, model_names, model_colors, y_var="wis", main="states")
+# wis_US + wis_states +
+#   plot_layout(ncol = 2, guides='collect') &
+#   theme(legend.position='bottom')
+
 # if wave-specific
-wave_metrics %>% filter(wave == "alpha") %>%
-  plot_summarized_metrics(model_names, model_colors, y_var, main, xlab)
+# wis_winter21_US <- wave_test_US %>% filter(wave == "winter21") %>%
+#   plot_summarized_metrics(model_names, model_colors, y_var = "wis", main="US")
 
 
 #' Plot summarized metrics against forecast date
@@ -81,30 +90,31 @@ plot_forecast_date_metrics <-
       )
 
     if (y_var == "wis") {
-      gg <- ggplot(data_to_plot, mapping=aes(x=forecast_date, y=wis, group=model)) +
-        coord_cartesian(ylim = c(0, max(data_to_plot$mae)*1.25))
+      gg <- ggplot(data_to_plot, mapping=aes(x=mon_fc_date, y=wis, group=model)) +
+        coord_cartesian(ylim = c(0, sum(quantile(data_to_plot$wis, prob=c(0.25, 0.99)))))
     } else if (y_var == "mae") {
-      gg <- ggplot(data_to_plot, mapping=aes(x=forecast_date, y=mae, group=model)) +
-        coord_cartesian(ylim = c(0, max(data_to_plot$mae)*1.25))
+      gg <- ggplot(data_to_plot, mapping=aes(x=mon_fc_date, y=mae, group=model)) +
+        coord_cartesian(ylim = c(0, sum(quantile(data_to_plot$mae, prob=c(0.25, 0.99)))))
     } else if (y_var == "cov_95") {
-      gg <- ggplot(data_to_plot, mapping=aes(x=forecast_date, y=cov95, group=model)) +
+      gg <- ggplot(data_to_plot, mapping=aes(x=mon_fc_date, y=cov_95, group=model)) +
         geom_hline(aes(yintercept=0.95))
     } else if (y_var == "cov_50") {
-      gg <- ggplot(data_to_plot, mapping=aes(x=forecast_date, y=cov_95, group=model)) +
+      gg <- ggplot(data_to_plot, mapping=aes(x=mon_fc_date, y=cov_50, group=model)) +
         geom_hline(aes(yintercept=0.50))
     }
 
     gg +
       geom_point(mapping=aes(col=model, shape=type), alpha = 0.8) +
       geom_line(mapping=aes(col=model, linetype=transform), alpha = 0.8) +
-      coord_cartesian(ylim = c(0, max(data_to_plot$wis)*1.25)) +
       scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") +
       scale_color_manual(breaks = model_names, values = model_colors) +
       scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
-      labs(title=main, y=paste("average", y_var)) +
+      labs(title=main, x="forecast date", y=paste("average", y_var)) +
       theme(
         axis.ticks.length.x = unit(0.1, "cm"),
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
         legend.position = 'bottom'
       )
   }
+
+# plot_forecast_date_metrics(forecast_date_test_US, model_names, model_colors, y_var="wis", horizon_week=1, main="WIS (1-week)") 
