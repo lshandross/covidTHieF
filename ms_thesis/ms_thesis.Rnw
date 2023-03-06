@@ -1,0 +1,331 @@
+%%
+%% This is a sample doctoral dissertation.  It shows the appropriate
+%% structure for your dissertation.  It should handle most of the
+%% strange requirements imposed by the Grad school; like the different
+%% handling of titles of one/many appendices.  It will automatically
+%% handle the linespacing changes.  The body default is double-spaced
+%% (except when you use the singlespace or condensed options).  The
+%% default for quotations is single-space, and the default for tabular
+%% environments is also single-space.
+%%
+%% This class adds the following commands and environments to the
+%% report class, upon which it is based:
+%% Commands
+%% ------------
+%% \degree{name}{abbrv} -- Sets the name and abbreviation for the degree.
+%%                         These default to ``Doctor of Philosopy''
+%%                         and ``Ph.D.'', respectively.
+%% \copyrightyear{year} -- for the copyright page.
+%% \bachelors{degree}{institution} -- for the abstract
+%% \masters{degree}{institution}   --  "
+%%     if you have other degrees you may use
+%% \secondbachelors{degree}{institution}
+%% \thirdbachelors{degree}{institution}
+%% \secondmasters{degree}{institution}
+%% \thirdmasters{degree}{institution}
+%% \priordoctorate{degree}{institution}
+%%
+%% \committeechair{name}           -- for the signature page
+%% or, if you have two co-chairs:
+%% \cochairs{first name}{second name}
+%%
+%% \firstreader{name}              --  "
+%% \secondreader{name}             --  "
+%% \thirdreader{name}              -- (optional)
+%% \fourthreader{name}             --  "
+%% \fifthreader{name}              --  "
+%% \sixthreader{name}              --  "
+%% \departmentchair{name}          -- for the signature page
+%% \departmentname{name}           --  "
+%%
+%% \copyrightpage                  -- produces the copyright page
+%% \signaturepage                  -- produces the signature page
+%%
+%% \frontmatter                    -- these are required in their various
+%% \mainmatter                     -- appropriate locations
+%% \backmatter                     --
+%%
+%% \unnumberedchapter[toc]{name}   -- like \chapter, except that it
+%%                                    produces an unnumbered chapter;
+%%                                    alternatively, like \chapter*,
+%%                                    except that it lists the chapter
+%%                                    in the table of contents.
+%%
+%% New environments:
+%%   dedication  -- for the dedication
+%%   abstract    -- for the abstract
+%%
+%% The thesis documentclass is built on top of the report document class.
+%% It accepts all of the options that the report class accepts, plus the
+%% following:
+%%     doublespace -- the default, indicates double spacing as per U.Mass.
+%%                    requirements.  You will need this when you do your
+%%                    final copy.
+%%     singlespace -- for earlier work, not acceptable to the Grad school
+%%     condensed   -- for earlier work, not acceptable to the Grad school,
+%%                    creates condensed versions of the frontmatter.
+%%                    Condensed implies singlespace.
+%%     dissertation - the default, indicates that this document is a
+%%                    dissertation.
+%%     proposal    -- indicates that this document is a dissertation proposal,
+%%                    rather than a dissertation.  This will only change the
+%%                    wording on the title and signature pages.
+%%     thesis      -- indicates that this document is a Master's thesis
+%%                    rather than a doctoral dissertation.  This also changes
+%%                    the default for \degree to Master of Science, M.S.
+%%     allowlisthypenation -- (the default), allows hyphenation of words in
+%%                    the table of contents, the list of figures, and the list
+%%                    of tables.  I believe that this is acceptable to the
+%%                    Graduate School.
+%%     nolisthyphenation -- disallows hyphenation of words in the table of
+%%                    contents and the list of figures and tables.  Use this
+%%                    option if the Grad School doesn't like your hyphenation.
+%%     nicerdraft  -- relaxes some of the Grad School's rules for working with
+%%                    drafts -- has no effect when doublespace is in effect
+%%     nonicerdraft -- the default, leaves things in draft as they will be in
+%%                     the final version
+%% umassthesis changes the default font size to 12pt, but you may specify 10pt or
+%%   11pt in the options.
+%% \documentclass{umassthesis}          % for Ph.D. dissertation or proposal
+ \documentclass[thesis]{umassthesis}  % for Master's thesis
+
+%%
+%% If you have enough figures or tables that you run out of space for their
+%% numbers in the List of Tables or List of figures, you can use the following
+%% command to adjust the space left for numbers.  The default is shown:
+%%
+%% \setlength{\tablenumberwidth}{2.3em}
+
+%% Use the hyperref package if you're producing a version for online
+%% distribution and you want hyperlinks.  Note that the Grad School doesn't want
+%% their PDF viewers to colorize or otherwise highlight the links; use the
+%% hidelinks option to hyperref to avoid decorating links.
+\usepackage[hidelinks]{hyperref}
+
+\usepackage{graphicx}
+
+%% One way of formatting the epigraph/frontispiece is to use this package.
+%\usepackage{epigraph}
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+
+<<include=FALSE, echo=FALSE>>=
+library(knitr)
+opts_chunk$set(
+concordance=TRUE
+)
+@
+
+%%
+%% You must fill in all of these appropriately
+\title{Forecasting COVID-19 with\protect\\Temporal Hierarchies}
+\author{Li Shandross}
+\date{May 2023} % The date you'll actually graduate -- must be
+                     % February, May, or September
+\copyrightyear{2023}
+\bachelors{B.Sc.}{University of Massachusetts Amherst}
+\committeechair{Nicholas G. Reich}
+\firstreader{Evan L. Ray}
+\secondreader{Benjamin W. Rogers}
+%% \thirdreader{Bill Shepherd}
+\departmentchair{Lisa Chasan-Taber} % Default uses "Department Chair" as the title. To
+% use an alternate title, such as "Chair", use \departmentchair[Chair]{Pete Shearer}
+% CICS uses "Chair of the Faculty" as of 2019.
+\departmentname{Biostatistics and Epidemiology}
+% \departmentname{Robert and Donna Manning College of \\Information and Computer Sciences}
+
+%% If your degree is something other than a Ph.D. (for a dissertation), or
+%% an M.S. (for a thesis), you will need to uncomment the appropriate
+%% following line:
+%%
+%% \degree{Doctor of Education}{Ed.D.}
+%% \degree{Doctor of Philosophy}{Ph.D.}
+%%
+%% \degree{Master of Arts}{M.A.}
+%% \degree{Master of Arts in Teaching}{M.A.T.}
+%% \degree{Master of Business Administration}{M.B.A.}
+%% \degree{Master of Education}{M.Ed.}
+%% \degree{Master of Fine Arts}{M.F.A.}
+%% \degree{Master of Landscape Architecture}{M.L.A.}
+%% \degree{Master of Music}{M.M.}
+%% \degree{Master of Public Administration}{M.P.A.}
+%% \degree{Master of Public Health}{M.P.H.}
+%% \degree{Master of Regional Planning}{M.R.P.}
+%% \degree{Master of Science}{M.S.}
+%% \degree{Master of Science in Accounting}{M.S. Acctg.}
+%% \degree{Master of Science in Chemical Engineering}{M.S. Ch.E.}
+%% \degree{Master of Science in Civil Engineering}{M.S.C.E.}
+%% \degree{Master of Science in Electrical and Computer Engineering}{M.S.E.C.E.}
+%% \degree{Master of Science in Engineering Management}{M.S. Eng. Mgt.}
+%% \degree{Master of Science in Environmental Engineering}{M.S. Env. E.}
+%% \degree{Master of Science in Industrial Engineering and Operations Research}{M.S.I.E.O.R.}
+%% \degree{Master of Science in Manufacturing Engineering}{M.S. Mfg. Eng.}
+%% \degree{Master of Science in Mechanical Engineering}{M.S.M.E.}
+%%
+%% \degree{Professional Master of Business Administration}{P.M.B.A.}
+
+
+%%
+%% These lines produce the title, copyright, and  signature pages.
+%% They are Mandatory; except that you could leave out the copyright page
+%% if you were preparing an M.S. thesis instead of a PhD dissertation.
+\frontmatter
+\maketitle
+%% \copyrightpage     %% not required for an M.S. thesis
+\signaturepage
+
+%%
+%% Dedication is optional -- but this is how you create it
+%% \begin{dedication}              % Dedication page
+%%   \begin{center}
+%%     \emph{To those little lost sheep.}
+%%   \end{center}
+%% \end{dedication}
+
+%%
+%% Epigraph (aka frontispiece) is also optional, but this is one way you
+%% can create it
+%\begin{frontispiece}
+%  %% Format to your liking -- see documentation of epigraph package
+%  \setlength{\epigraphrule}{0pt}
+%
+%  \begin{epigraphs}
+%    \qitem{%
+%      \itshape
+%      Mary had a little lamb,\\
+%      Her fleece was white as snow.\\
+%      \vspace{\baselineskip}
+%      And everywhere that Mary went\\
+%      The lamb was sure to go.
+%      \vspace{\baselineskip}}
+%    {Sarah Josepha Hale}
+%
+%    \vspace{2\baselineskip}
+%    \qitem{%
+%      \itshape
+%      Baa, baa, black sheep,\\
+%      Have you any wool?\\
+%      Yes, sir, yes, sir,\\
+%      Three bags full;\\
+%      One for the master,\\
+%      And one for the dame,\\
+%      And one for the little boy\\
+%      Who lives down the lane.
+%      \vspace{\baselineskip}}
+%    {English Nursery Rhyme}
+%
+%  \end{epigraphs}
+%\end{frontispiece}
+
+%%
+%% Acknowledgements are optional...yeah, right.
+%% \chapter{Acknowledgments}             % Acknowledgements page
+%%   Thanks to all those fine shepherds. Not to mention all the great
+%%    border collies and suchlike fine animals.
+
+%%
+%% Abstract is MANDATORY. -- Except for MS theses
+\begin{abstract}                % Abstract
+Infectious disease forecasting efforts underwent rapid growth during the COVID-19 pandemic, providing guidance for pandemic response and about potential future trends. Yet despite their importance, these short-term forecasting models often struggled to produce accurate real-time predictions of a complex and rapidly-changing system. This gap in accuracy, which persists three years into the pandemic, warrants the exploration and testing of new methods to glean fresh insights.
+
+In this work, we examine the application of the temporal hierarchical forecasting (THieF) methodology to probabilistic forecasting of COVID-19 hospital admissions in the United States. THieF is a recent, innovative forecasting technique that aggregates time-series data into a hierarchy made up of different temporal scales, produces forecasts at each level of the hierarchy, then reconciles those forecasts using optimized weighted forecast combination. While THieF's unique approach has shown substantial accuracy improvements in a diverse range of applications, such as operations management and predicting emergency room admissions, this technique has not previously been applied to outbreak forecasting.
+
+We generate candidate models formulated using the THieF methodology, which differ by their hierarchy schemes and data transformations, and weighted ensembles of the THieF models. The models are validated using weighted interval score (WIS), and the top-performing subset are compared to two categories of models: simple ARIMA and SARIMA models and operational incident hospitalization models from the US COVID-19 Forecasts Hub. The latter group includes benchmark models like a naive baseline and a median ensemble of all submitted models. Preliminary work demonstrates accuracy improvements in WIS, MAE, and prediction interval coverage from the THieF models over the baseline and simple ARIMA and SARIMA models during the training phase, suggesting potentially similar accuracy gains in the testing phase.
+\end{abstract}
+
+%%
+%% Preface goes here...would be just like Acknowledgements -- optional
+%% \chapter{Preface}
+%% ...
+
+%%
+%% Table of contents is mandatory, lists of tables and figures are
+%% mandatory if you have any tables or figures; must be in this order.
+\tableofcontents                % Table of contents
+\listoftables                   % List of Tables
+\listoffigures                  % List of Figures
+
+%%
+%% We don't handle List of Abbreviations
+%% We don't handle Glossary
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Time for the body of the dissertation
+\mainmatter   %% <-- This line is mandatory
+
+% \chapter{Introduction}
+% \section{Infectious disease forecasting}
+% \section{COVID-19 forecasting}
+% \subsection{US COVID-19 Forecast Hub}
+% \section{Temporal hierarchical forecasting}
+% \section{Goals}
+%
+% \chapter{Methods}
+% \section{Surveillance data}
+% \section{Forecasts}
+% \subsection{Forecast quantiles}
+% \subsection{Forecast locations}
+% \subsection{Forecast horizons}
+% \section{Date range of analysis}
+% \section{Comparison model inclusion criteria}
+% \section{Temporal hierarchical forecasting (THieF)}
+% \section{Model specifications}
+% \subsection{THieF models}
+% \subsection{THieF ensemble models}
+% \subsection{ARIMA and SARIMA models}
+% \section{Metrics and Evaluation}
+% \subsection{Validation phase}
+% \subsection{Testing phase}
+%
+
+<<echo=FALSE, eval=FALSE>>=
+knitr::kable(tar_load(overall_metrics_us))
+knitr::kable(tar_load(overall_metrics_states))
+
+@
+
+\chapter{Results}
+\section{Validation phase}
+\section{Testing phase}
+\subsection{Summary of comparison models}
+\subsection{Overall model performance}
+\subsection{Model performance by horizon week}
+\subsection{Model performance by pandemic wave}
+\subsection{Model performance by location}
+\subsection{Model performance by forecast week}
+
+\chapter{Discussion}
+
+
+
+%% End of body
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\appendix
+\unnumberedchapter{Appendix: Supplemental materials}
+%% \chapter{THE FIRST APPENDIX TITLE}
+%% ...
+%% \chapter{THE SECOND APPENDIX TITLE}
+%% ...
+
+%%
+%% Beginning of back matter
+\backmatter  %% <--- mandatory
+
+%%
+%% We don't support endnotes
+
+%%
+%% A bibliography is required.
+\interlinepenalty=10000  % prevent split bibliography entries
+\bibliographystyle{umassthesis}
+\bibliography{umthsmpl}
+\end{document}
+
+%%% Local Variables:
+%%% mode: latex
+%%% TeX-master: t
+%%% End:
+
