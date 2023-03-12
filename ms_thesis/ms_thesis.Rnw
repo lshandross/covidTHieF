@@ -101,7 +101,6 @@
 %% their PDF viewers to colorize or otherwise highlight the links; use the
 %% hidelinks option to hyperref to avoid decorating links.
 \usepackage[hidelinks]{hyperref}
-
 \usepackage{graphicx}
 
 %% One way of formatting the epigraph/frontispiece is to use this package.
@@ -110,8 +109,16 @@
 \begin{document}
 \SweaveOpts{concordance=TRUE}
 
-<<include=FALSE, echo=FALSE>>=
+<<include=FALSE, echo=FALSE, message=FALSE, warning=FALSE, results=hide>>=
 library(knitr)
+library(tidyverse)
+library(tables)
+library(patchwork)
+library(targets)
+
+func_list <- list.files(path = "../R", pattern=".R", full.names=TRUE)
+lapply(func_list, source)
+
 opts_chunk$set(
 concordance=TRUE
 )
@@ -119,7 +126,7 @@ concordance=TRUE
 
 %%
 %% You must fill in all of these appropriately
-\title{Forecasting COVID-19 with\protect\\Temporal Hierarchies}
+\title{Forecasting COVID-19 with\protect\\Temporal Hierarchies and Ensemble Methods}
 \author{Li Shandross}
 \date{May 2023} % The date you'll actually graduate -- must be
                      % February, May, or September
@@ -227,11 +234,11 @@ concordance=TRUE
 %%
 %% Abstract is MANDATORY. -- Except for MS theses
 \begin{abstract}                % Abstract
-Infectious disease forecasting efforts underwent rapid growth during the COVID-19 pandemic, providing guidance for pandemic response and about potential future trends. Yet despite their importance, these short-term forecasting models often struggled to produce accurate real-time predictions of a complex and rapidly-changing system. This gap in accuracy, which persists three years into the pandemic, warrants the exploration and testing of new methods to glean fresh insights.
+Infectious disease forecasting efforts underwent rapid growth during the COVID-19 pandemic, providing guidance for pandemic response and about potential future trends. Yet despite their importance, short-term forecasting models often struggled to produce accurate real-time predictions of a complex and rapidly changing system. This gap in accuracy, which persists three years into the pandemic, warrants the exploration and testing of new methods to glean fresh insights.
 
-In this work, we examine the application of the temporal hierarchical forecasting (THieF) methodology to probabilistic forecasting of COVID-19 hospital admissions in the United States. THieF is a recent, innovative forecasting technique that aggregates time-series data into a hierarchy made up of different temporal scales, produces forecasts at each level of the hierarchy, then reconciles those forecasts using optimized weighted forecast combination. While THieF's unique approach has shown substantial accuracy improvements in a diverse range of applications, such as operations management and predicting emergency room admissions, this technique has not previously been applied to outbreak forecasting.
+In this work, we examine the application of the temporal hierarchical forecasting (THieF) methodology to probabilistic forecasts of COVID-19 incident hospital admissions in the United States. THieF is a recent, innovative forecasting technique that aggregates time-series data into a hierarchy made up of different temporal scales, produces forecasts at each level of the hierarchy, then reconciles those forecasts using optimized weighted forecast combination. While THieF's unique approach has shown substantial accuracy improvements in a diverse range of applications, such as operations management and emergency room admission predictions, this technique has not previously been applied to outbreak forecasting.
 
-We generate candidate models formulated using the THieF methodology, which differ by their hierarchy schemes and data transformations, and weighted ensembles of the THieF models. The models are validated using weighted interval score (WIS), and the top-performing subset are compared to two categories of models: simple ARIMA and SARIMA models and operational incident hospitalization models from the US COVID-19 Forecasts Hub. The latter group includes benchmark models like a naive baseline and a median ensemble of all submitted models. Preliminary work demonstrates accuracy improvements in WIS, MAE, and prediction interval coverage from the THieF models over the baseline and simple ARIMA and SARIMA models during the training phase, suggesting potentially similar accuracy gains in the testing phase.
+We generate candidate models formulated using the THieF methodology, which differ by their hierarchy schemes and data transformations, and weighted ensembles of the THieF models. The models are validated using weighted interval score (WIS), and the top-performing subset is compared to several benchmark models. These models include simple SARIMA models, a naive baseline model, and a median ensemble of operational incident hospitalization models from the US COVID-19 Forecast Hub. The THieF models and THieF ensembles demonstrate improvements in WIS and MAE, as well as competitive prediction interval coverage, over the benchmark models for both the validation and testing phases. These accuracy improvements suggest the THieF methodology may serve as a promising new technique for infectious disease forecasting that makes better predictions in real-time.
 \end{abstract}
 
 %%
@@ -255,46 +262,117 @@ We generate candidate models formulated using the THieF methodology, which diffe
 %% Time for the body of the dissertation
 \mainmatter   %% <-- This line is mandatory
 
-% \chapter{Introduction}
-% \section{Infectious disease forecasting}
-% \section{COVID-19 forecasting}
-% \subsection{US COVID-19 Forecast Hub}
-% \section{Temporal hierarchical forecasting}
-% \section{Goals}
-%
-% \chapter{Methods}
-% \section{Surveillance data}
-% \section{Forecasts}
-% \subsection{Forecast quantiles}
-% \subsection{Forecast locations}
-% \subsection{Forecast horizons}
-% \section{Date range of analysis}
-% \section{Comparison model inclusion criteria}
-% \section{Temporal hierarchical forecasting (THieF)}
-% \section{Model specifications}
-% \subsection{THieF models}
-% \subsection{THieF ensemble models}
-% \subsection{ARIMA and SARIMA models}
-% \section{Metrics and Evaluation}
-% \subsection{Validation phase}
-% \subsection{Testing phase}
-%
+\chapter{Introduction}
+\section{Infectious disease forecasting}
+\section{COVID-19 forecasting}
+\subsection{US COVID-19 Forecast Hub}
+\section{Temporal hierarchical forecasting}
+\section{Goals}
 
-<<echo=FALSE, eval=FALSE>>=
-knitr::kable(tar_load(overall_metrics_us))
-knitr::kable(tar_load(overall_metrics_states))
-
-@
+\chapter{Methods}
+\section{Surveillance data}
+\section{Forecasts}
+\subsection{Forecast quantiles}
+\subsection{Forecast locations}
+\subsection{Forecast horizons}
+\section{Date range of analysis}
+\section{Comparison model inclusion criteria}
+\section{Temporal hierarchical forecasting (THieF)}
+\section{Model specifications}
+\subsection{THieF models}
+\subsection{THieF ensemble models}
+\subsection{ARIMA and SARIMA models}
+\section{Metrics and Evaluation}
+\subsection{Validation phase}
+\subsection{Testing phase}
 
 \chapter{Results}
 \section{Validation phase}
+
 \section{Testing phase}
+
+\begin{figure}[h]
+\label{fig:figure_forecasts_plot1}
+% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
+<<forecast_models_plot, echo=FALSE, fig=TRUE>>=
+tar_read(plot_models_1, store="../_targets")
+@
+\caption{}
+\end{figure}
+
 \subsection{Summary of comparison models}
 \subsection{Overall model performance}
+
+<<echo=FALSE>>=
+table_overall_us <- tar_read(overall_metrics_us, store="../_targets")
+@
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_overall_us}
+<<echo=FALSE, eval=TRUE>>=
+knitr::kable(table_overall_us)
+@
+\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+\end{center}
+\end{table}
+
+<<echo=FALSE, eval=TRUE>>=
+knitr::kable(tar_read(overall_metrics_us, store="../_targets"))
+knitr::kable(tar_read(overall_metrics_states, store="../_targets"))
+@
+
+
 \subsection{Model performance by horizon week}
+\begin{figure}[h]
+\label{fig:figure_horizon_plot}
+% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
+<<horizon_plot, echo=FALSE, fig=TRUE>>=
+tar_read(combined_wis_plot, store="../_targets")
+@
+\caption{Average WIS by the horizon week for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week compared to being aggregated across horizon weeks. All models show worse performance relative to the baseline at the 1-week ahead horizon, likely a result of being overconfident at this horizon. Once again, the THieF-4wk-4root model performs the best for WIS. Plots for average MAE are not shown due to their similarity to the average WIS plots.}
+\end{figure}
+
 \subsection{Model performance by pandemic wave}
+\begin{figure}[h]
+\label{fig:figure_wave_plot}
+% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
+<<wave_plot, echo=FALSE, fig=TRUE>>=
+tar_read(combined_wis_wave_plot, store="../_targets")
+@
+\caption{Average WIS by the horizon week and pandemic wave for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week and pandemic wave compared to being stratified only across horizon week. Again, all models show worse performance relative to the baseline at the 1-week ahead horizon likely due to being overconfident at this horizon. Model performance is more similar among the top four models during the Alpha wave compared to during the Winter21 wave. Notably, although the THieF-4wk-4root models largely show the lowest WIS, longer horizons during the Winter21 wave saw better performance by the poor-performing THieF-12wk models. Plots for average MAE are not shown due to their similarity to the average WIS plots.}
+\end{figure}
+
+
 \subsection{Model performance by location}
+\begin{figure}[h]
+\label{fig:figure_location_plot}
+% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
+<<location_plot, echo=FALSE, fig=TRUE>>=
+tar_read(wis_location_plot, store="../_targets")
+@
+\caption{Relative WIS by location for each model across all horizons for the entire testing phase. Each square contains the average relative WIS or a model at a particular location, colored based on the relative WIS compare to the baseline. Blue indicates model outperformed the baseline for that location on average, while red indicates the model performed worse than the baseline. Locations are sorted based on cumulative hospitalizations during the testing phase while models are sorted from lowest to highest overall relative WIS, aggregated across states (Table 2). The top three models by relative WIS overall during the testing phase outperformed the baseline in every location.}
+\end{figure}
+
 \subsection{Model performance by forecast week}
+\begin{figure}[h]
+\label{fig:figure_date_plot_us}
+% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
+<<us_date_plot, echo=FALSE, fig=TRUE>>=
+tar_read(combined_wis_cov95_plot_us, store="../_targets")
+@
+\caption{Average h-week ahead WIS and 95\% PI coverage for each model for the US national level. Model performance differs from week to week: the WIS is the lowest during weeks with stable and low incident hospitalization values. The THieF-4wk models show the best performance with lower or comparable WIS to the baseline during the majority of the training period with especially good performance for 1-week ahead horizons. Meanwhile, the THieF-12wk showed lower or comparable WIS to the baseline during high incidence and changed points, which have been historically found difficult to forecast accurately. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. All THieF models show very variable coverage rates, especially for a 1 week ahead horizon, only the models without a data transformation showing stable coverage starting around February 2021.}
+\end{figure}
+
+\begin{figure}[h]
+\label{fig:figure_date_plot_states}
+% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
+<<states_date_plot, echo=FALSE, fig=TRUE>>=
+tar_read(combined_wis_cov95_plot_states, store="../_targets")
+@
+\caption{Average h-week ahead WIS and 95\% PI coverage for each model for the states level. Once again, model performance differs from week to week with the lowest WIS values during weeks with stable and low incident hospitalization values and the THieF-4wk models showing the best performance. However, the THieF-12wk did not show good performance during high incidence and changed points for the states level; instead, THieF-12-4root actually showed some strangely large WIS values during April and May 2021. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. One-week ahead coverage rates generally improved as time went on, the best models gaining stable and fairly good coverage rates starting in February 2021. For the 4-week ahead horizon, models without a data transformation showed the best performance and stable coverage starting around February 2021, though THieF-4wk-4root and THieF-8wk-4root also saw decent and fairly stable coverage rates after the downward Winter 21 change point.}
+\end{figure}
+
 
 \chapter{Discussion}
 
@@ -309,6 +387,17 @@ knitr::kable(tar_load(overall_metrics_states))
 %% ...
 %% \chapter{THE SECOND APPENDIX TITLE}
 %% ...
+
+<<echo=FALSE, eval=TRUE>>=
+knitr::kable(tar_read(horizon_metrics_us, store="../_targets"))
+knitr::kable(tar_read(horizon_metrics_states, store="../_targets"))
+@
+
+<<echo=FALSE, eval=TRUE>>=
+knitr::kable(tar_read(wave_metrics_us, store="../_targets"))
+knitr::kable(tar_read(wave_metrics_states, store="../_targets"))
+@
+
 
 %%
 %% Beginning of back matter
