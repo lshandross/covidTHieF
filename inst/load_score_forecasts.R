@@ -51,7 +51,18 @@ forecasts_testing_baseline <- load_forecasts(models = "COVIDhub-baseline",
                                         verbose = FALSE,
                                         as_of=NULL,
                                         hub = c("US"))
-#
+
+forecasts_testing_ensemble <- load_forecasts(models = "COVIDhub-4_week_ensemble",
+                                        dates = mon_testing_dates,
+                                        date_window_size = 6,
+                                        locations = fips,
+                                        types = c("point","quantile"),
+                                        targets = inc_hosp_targets,
+                                        source = "zoltar",
+                                        verbose = FALSE,
+                                        as_of=NULL,
+                                        hub = c("US"))
+write_rds(forecasts_testing_ensemble, "data/testing_fcv_ensemble.rds", "xz", compression = 9L)
 
 # Load local formatted forecasts
 load_formatted_forecasts <- function(model_vector) {
@@ -152,9 +163,10 @@ if(phase == "testing") {
 }
 
 #scores_ver <- score_forecasts(forecasts=forecasts_ver, return_format="wide", truth=full_hosp_truth, use_median_as_point=TRUE)
-#score_baseline <- score_forecasts(forecasts=forecasts_testing_baseline, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
+score_ensemble <- score_forecasts(forecasts=forecasts_testing_ensemble, return_format="wide", truth=full_hosp_truth, use_median_as_point=FALSE)
+write_rds(score_ensemble, "data/testing_scv_ensemble.rds", "xz", compression = 9L)
   # note that the default column order may differ between these dfs due to existence of separate point forecasts
-  # you will need to re-order the columns to correctly rbind them: score_baseline <- select(score_baseline, 1:7, 20, 9:19, 21:49, 8)
+  # you don't need to re-order the columns to correctly rbind them (but left in for reference): score_baseline <- select(score_baseline, 1:7, 20, 9:19, 21:49, 8)
 
 # if forecasts are too big for a single call
 load(file="data/testing_fcv_thief_old.RData")
