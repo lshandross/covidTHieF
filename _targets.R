@@ -26,13 +26,365 @@ tar_source()
 
 # Replace the target list below with your own:
 list(
+  tar_target(inc_hosp_targets, paste(0:30, "day ahead inc hosp")),
   tar_target(
-    name = data,
-    command = tibble(x = rnorm(100), y = rnorm(100))
-#   format = "feather" # efficient storage of large data frames # nolint
+    fips, 
+    hub_locations %>% 
+      filter(geo_type == "state", population >= 500000) %>%
+      pull(fips)
+  ),
+  tar_target(validation_forecast_range, c(as.Date("2020-12-07"), as.Date("2021-10-31"))),
+  tar_target(testing_forecast_range, c(as.Date("2021-11-01"), as.Date("2022-10-02"))),
+
+  # model names
+  tar_target(all_thief, sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep=""))[c(3:14, 1:2)]),
+  tar_target(thief_new, sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep=""))),
+  tar_target(thief_old, sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))),
+  tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))),
+  tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 6), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")),
+  tar_target(training_models, c(all_thief, sarima_models, thief_ensembles)),
+  tar_target(testing_models, c("sarima_s7-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-noTransform", "THieF_ensemble-mean", "THieF_ensemble-train3")),
+
+  tar_target(training_model_names, c("COVIDhub-baseline", training_models)),
+  tar_target(
+    training_model_colors, 
+    c(
+      "black", 
+      rep(c("red", "orange", "yellow", "green", "blue", "purple", "magenta", "#b9865f", "#644e3d"), each=2), 
+      "#dfdfdf", "#cacaca", "#a8a8a8", "#878787", "#6d6d6d", "#5f5f5f", "#4a4a4a", "#3d3d3d"
+    )
+  ),
+  tar_target(testing_model_names, c("COVIDhub-baseline", "COVIDhub-4_week_ensemble", testing_models)),
+  tar_target(
+    testing_model_colors, 
+    c("black", "darkgrey", "red", "orange", "yellow", "green", "blue", "magenta")
+  ),
+  
+  # ADD FILEPATHS TO DATA
+#  tar_target(all_data, list.files("data", full.names=TRUE), format="file"), # if using Arrow package
+#  tar_target(test_path, "data/baseline_forecasts.rds", format="file"),
+  tar_target(scores_sarima_validation_path, "data/extended_scv_sarima.RData", format="file"),
+  tar_target(scores_thief_new_validation_path, "data/extended_scv_thief_new.RData", format="file"),
+  tar_target(scores_thief_old_validation_path, "data/extended_scv_thief_old.RData", format="file"),
+  tar_target(scores_thief_ensemble_validation_path, "data/extended_scv_thief_ensemble.RData", format="file"),
+
+  tar_target(forecasts_baseline_testing_path, "data/testing_fcv_baseline.rds", format="file"),
+  tar_target(forecasts_ensemble_testing_path, "data/testing_fcv_ensemble.rds", format="file"),
+  tar_target(forecasts_models_small_testing_path, "data/testing_fcv_models_small.rds", format="file"),
+  tar_target(scores_baseline_testing_path, "data/testing_scv_baseline.rds", format="file"),
+  tar_target(scores_ensemble_testing_path, "data/testing_scv_ensemble.rds", format="file"),
+  tar_target(scores_models_testing_path, "data/testing_scv_models.rds", format="file"),
+
+  tar_target(sunday_testing_truth_path, "data/testing_truth_sunday.rds", format="file"),
+  tar_target(monday_testing_truth_path, "data/testing_truth_monday.rds", format="file"),
+  
+  # READ IN DATA
+#  tar_target(list_data, map_dfr(all_data, read_csv, col_types=cols())),
+#  tar_target(baseline_forecasts, read_rds(test_path)),
+  tar_target(forecasts_baseline_testing, read_rds(forecasts_baseline_testing_path)),
+  tar_target(forecasts_ensemble_testing, read_rds(forecasts_ensemble_testing_path)),
+  tar_target(forecasts_models_small_testing, read_rds(forecasts_models_small_testing_path)),
+  tar_target(scores_baseline_testing, read_rds(scores_baseline_testing_path)),
+  tar_target(scores_ensemble_testing, read_rds(scores_ensemble_testing_path)),
+  tar_target(scores_models_testing, read_rds(scores_models_testing_path)),
+  
+  tar_target(sunday_testing_truth_list, read_rds(sunday_testing_truth_path)),
+  tar_target(monday_testing_truth_list, read_rds(monday_testing_truth_path)),
+  
+  tar_target(
+    actual_testing_dates, 
+    distinct(scores_models_testing, forecast_date) %>% pull(1)
+  ),
+# tar_target(
+#   training_dates_to_plot, 
+#   c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_training_dates[1+4*(0:11)])
+# ),
+ tar_target(
+   testing_dates_to_plot, 
+   c(as.Date("2021-11-01") + weeks(4*(0:11)), actual_testing_dates[1+4*(0:11)])
+ ),
+  # mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
+  tar_target(
+    testing_forecasts_to_plot, #fc_plot (bind small fc and baseline together)
+    rbind(forecasts_models_small_testing, forecasts_baseline_testing, forecasts_ensemble_testing)
   ),
   tar_target(
-    name = model,
-    command = coefficients(lm(y ~ x, data = data))
+    testing_scores, #scores(bind not baseline scores together, create horizon_wk)
+    rbind(scores_models_testing, scores_baseline_testing, scores_ensemble_testing) %>%
+      mutate(
+        mon_fc_date = 
+          floor_date(
+            forecast_date - days(1), 
+            unit = "weeks", 
+            week_start = getOption("lubricate.week.start", 1)
+          ) + weeks(1),
+        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7)
+      ) %>%
+      #select(-mon_fc_date) %>%
+      filter(horizon_wk %in% 1:4)
+  ),
+  tar_target(
+    full_hosp_truth, 
+    load_truth("HealthData", "inc hosp", as_of=as.Date("2022-10-01"), temporal_resolution="weekly", data_location = "covidData")
+  ),
+  
+  tar_target(ordered_testing_locations, 
+    full_hosp_truth %>%
+      filter(target_end_date %in% testing_forecast_range[1]:testing_forecast_range[2]) %>%
+      group_by(location) %>%
+      summarize(cum_value=sum(value)) %>%
+      ungroup() %>%
+      arrange(desc(cum_value)) %>%
+#      filter(row_number() %in% c(1, 2, 53)) %>% # can change values
+      pull(location)
+  ),
+  tar_target(plot_models_1, 
+    plot_models_one_location(
+      forecasts=testing_forecasts_to_plot, 
+      truth=full_hosp_truth, 
+      fips=ordered_testing_locations[1], 
+      fc_dates=testing_dates_to_plot, 
+      facet_nrow = 6, 
+      date_limits = c(as.Date("2020-10-01"), testing_forecast_range[2]))
+  ),
+  tar_target(plot_models_2, 
+    plot_models_one_location(
+      forecasts=testing_forecasts_to_plot, 
+      truth=full_hosp_truth, 
+      fips=ordered_testing_locations[2], 
+      fc_dates=testing_dates_to_plot, 
+      facet_nrow = 6, 
+      date_limits = c(as.Date("2020-10-01"), testing_forecast_range[2]))
+  ),
+  tar_target(plot_models_53, 
+    plot_models_one_location(
+      forecasts=testing_forecasts_to_plot, 
+      truth=full_hosp_truth, 
+      fips=ordered_testing_locations[53], 
+      fc_dates=testing_dates_to_plot, 
+      facet_nrow = 6, 
+      date_limits = c(as.Date("2020-10-01"), testing_forecast_range[2]))
+  ),
+
+  tar_target(
+    overall_metrics_us,
+    summarize_overall_metrics(testing_scores, baseline_name="COVIDhub-baseline", us_only=TRUE)
+  ),
+  tar_target(
+    overall_metrics_states,
+    summarize_overall_metrics(testing_scores, baseline_name="COVIDhub-baseline", us_only=FALSE)
+  ),
+  
+  tar_target(
+    horizon_metrics_us,
+    summarize_horizon_metrics(testing_scores, baseline_name="COVIDhub-baseline", us_only=TRUE)
+  ),
+  tar_target(
+    horizon_metrics_states,
+    summarize_horizon_metrics(testing_scores, baseline_name="COVIDhub-baseline", us_only=FALSE)
+  ),
+  tar_target(
+    wis_plot_us, 
+    plot_summarized_metrics(
+      summarized_metrics=horizon_metrics_us, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="wis", 
+      main="us")
+  ),
+  tar_target(
+    wis_plot_states, 
+    plot_summarized_metrics(
+      summarized_metrics=horizon_metrics_states, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="wis", 
+      main="states")
+  ),
+  tar_target(
+    combined_wis_plot,
+      wis_plot_us + wis_plot_states +
+      plot_layout(ncol = 2, guides='collect') &
+      theme(legend.position='bottom')
+  ),
+  
+  tar_target(
+    wave_metrics_us,
+    summarize_wave_metrics(testing_scores, baseline_name="COVIDhub-baseline", us_only=TRUE)
+  ),
+  tar_target(
+    wave_metrics_states,
+    summarize_wave_metrics(testing_scores, baseline_name="COVIDhub-baseline", us_only=FALSE)
+  ),
+  tar_target(
+    wis_plot_omicron_us, 
+    filter(wave_metrics_us, wave=="omicron") %>%
+      plot_summarized_metrics(
+        testing_model_names, 
+        testing_model_colors, 
+        y_var="wis", 
+        main="omicron (us)"
+      )
+  ),
+  tar_target(
+    wis_plot_omicron_states, 
+    filter(wave_metrics_states, wave=="omicron") %>%
+      plot_summarized_metrics(
+        testing_model_names, 
+        testing_model_colors, 
+        y_var="wis", 
+        main="omicron (states)"
+      )
+  ),
+  tar_target(
+    wis_plot_ba4ba5_us, 
+    filter(wave_metrics_us, wave=="ba4_ba5") %>%
+      plot_summarized_metrics(
+        testing_model_names, 
+        testing_model_colors, 
+        y_var="wis", 
+        main="ba4/ba5 (us)"
+      )
+  ),
+  tar_target(
+    wis_plot_ba4ba5_states, 
+    filter(wave_metrics_states, wave=="ba4_ba5") %>%
+      plot_summarized_metrics(
+        testing_model_names, 
+        testing_model_colors, 
+        y_var="wis", 
+        main="ba4/ba5 (states)"
+      )
+  ),
+  tar_target(
+    combined_wis_wave_plot,
+    wis_plot_omicron_us + wis_plot_omicron_states + wis_plot_ba4ba5_us + wis_plot_ba4ba5_states +
+      plot_layout(ncol = 2, guides='collect') &
+      theme(legend.position='bottom')
+  ),
+  
+  tar_target(
+    forecast_date_metrics_us,
+    summarize_forecast_date_metrics(testing_scores, us_only=TRUE)
+  ),
+  tar_target(
+    wis_plot_date_1week_us, 
+    plot_forecast_date_metrics(
+      forecast_date_metrics=forecast_date_metrics_us, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="wis", 
+      horizon_week=1,
+      main="wis (1 week)"
+    )
+  ),
+  tar_target(
+    wis_plot_date_4week_us, 
+    plot_forecast_date_metrics(
+      forecast_date_metrics=forecast_date_metrics_us, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="wis", 
+      horizon_week=4,
+      main="wis (4 week)"
+    )
+  ),
+  tar_target(
+    cov95_plot_date_1week_us, 
+    plot_forecast_date_metrics(
+      forecast_date_metrics=forecast_date_metrics_us, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="cov_95", 
+      horizon_week=1,
+      main="95% coverage (1 week)"
+    )
+  ),
+  tar_target(
+    cov95_plot_date_4week_us, 
+    plot_forecast_date_metrics(
+      forecast_date_metrics=forecast_date_metrics_us, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="cov_95", 
+      horizon_week=4,
+      main="95% coverage (4 week)"
+    )
+  ),
+  tar_target(
+    combined_wis_cov95_plot_us,
+    wis_plot_date_1week_us + wis_plot_date_4week_us +
+      cov95_plot_date_1week_us + cov95_plot_date_4week_us +
+      plot_layout(ncol = 2, guides='collect') &
+      theme(legend.position='bottom')
+  ),
+  
+  tar_target(
+    forecast_date_metrics_states,
+    summarize_forecast_date_metrics(testing_scores, us_only=FALSE)
+  ),
+  tar_target(
+    wis_plot_date_1week_states, 
+    plot_forecast_date_metrics(
+      forecast_date_metrics=forecast_date_metrics_states, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="wis", 
+      horizon_week=1,
+      main="wis (1 week)"
+    )
+  ),
+  tar_target(
+    wis_plot_date_4week_states, 
+    plot_forecast_date_metrics(
+      forecast_date_metrics=forecast_date_metrics_states, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="wis", 
+      horizon_week=4,
+      main="wis (4 week)"
+    )
+  ),
+  tar_target(
+    cov95_plot_date_1week_states, 
+    plot_forecast_date_metrics(
+      forecast_date_metrics=forecast_date_metrics_states, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="cov_95", 
+      horizon_week=1,
+      main="95% coverage (1 week)"
+    )
+  ),
+  tar_target(
+    cov95_plot_date_4week_states, 
+    plot_forecast_date_metrics(
+      forecast_date_metrics=forecast_date_metrics_states, 
+      testing_model_names, 
+      testing_model_colors, 
+      y_var="cov_95", 
+      horizon_week=4,
+      main="95% coverage (4 week)"
+    )
+  ),
+  tar_target(
+    combined_wis_cov95_plot_states,
+    wis_plot_date_1week_states + wis_plot_date_4week_states +
+      cov95_plot_date_1week_states + cov95_plot_date_4week_states +
+      plot_layout(ncol = 2, guides='collect') &
+      theme(legend.position='bottom')
+  ),
+ 
+  tar_target(ordered_testing_models, pull(overall_metrics_states, model)),
+  tar_target(
+    wis_location_plot,
+    plot_wis_loc(
+      testing_scores, 
+      full_hosp_truth, 
+      ordered_testing_models, 
+      baseline_name = "COVIDhub-baseline"
+    )
   )
+
 )
+

@@ -1,0 +1,113 @@
+name|type|data|command|depend|seed|path|time|size|bytes|format|repository|iteration|parent|children|seconds|warnings|error
+actual_testing_dates|stem|c16a1502a104752f|73dfe5544530f657|6dee85d50b0b167c|-1517343847||t19422.7682917726s|7ef6a54c598fd8bf|203|rds|local|vector|||0.01||
+aggregate_thief_df|function|e19224f5240373f3|||||||||||||||
+all_thief|stem|f085b27d420312d5|ff73a4bf0a1a3b83|c500007dc4585805|-1351197935||t19422.7268488334s|f2000359ad1073b7|131|rds|local|vector|||2.31||
+baseline_forecasts|stem|7ce49ba79b1f6fa6|9751a4dd94f5251d|02290272e88a831c|-121948429||t19417.8817086908s||9627483|rds|local|vector|||2.94||object test_path not found
+baseline_testing_path|stem|11529b623263411a|5accdb1fbbaff599|ef46db3751d8e999|2109552012|data/baseline_fc_scores_testing.RData|t19344.6829569791s|9a875ab3d167e2d3|10815711|file|local|vector|||0||
+baseline_validation|stem|030fa15a775bcbdd|de9fa02b619f5ca6|dd0ff78f8d38654e|-44725429||t19417.8498302463s|038c34709d13f879|81|rds|local|vector|||3.46||
+baseline_validation_path|stem|4e67352a16fb9ca2|3f313dfc6c14a6d5|ef46db3751d8e999|1879195614|data/baseline_fc_scores_extended.RData|t19251.8587154873s|b76d24c7cf8f5f13|11533902|file|local|vector|||0||
+build_composite_ensemble|function|cd337eb6e6845e95|||||||||||||||
+combined_wis_cov95_plot_states|stem|4a843c90f181e414|0d725ebcd9ba5eb0|f6caa5996f171c7f|-726626314||t19428.6950920139s|255948e3d13f69aa|394593|rds|local|vector|||0||
+combined_wis_cov95_plot_us|stem|8aa7d43f922f8696|1b3ed7750f625ba4|c73c395f5aeae400|-1142336950||t19428.6950860473s|f70d51338f6c935f|355218|rds|local|vector|||0||
+combined_wis_plot|stem|4267a4a619f50fba|e203023752eaba69|bde1364d2a13f01b|-1587369533||t19428.6950817768s|8a63e380b3a16d88|71381|rds|local|vector|||0||
+combined_wis_wave_plot|stem|5913947ce35fce9c|8eba32a2c8124595|545d27eeeae927fe|1474096603||t19428.6973168412s|058e3e6522408957|86558|rds|local|vector|||0||
+compute_base_forecasts|function|5053abc845d629e3|||||||||||||||
+cov95_plot_date_1week_states|stem|b7ac38b16a3605fc|d0192c26b638b53d|caea99c978f164a5|1185652155||t19428.6950424827s|2c6a8720f294bf5a|157455|rds|local|vector|||1.12||
+cov95_plot_date_1week_us|stem|7bdd7a6019359d4d|fd1774f659246030|a3127c39355645bf|676320750||t19428.6949838405s|feae039c60fdb82e|147503|rds|local|vector|||1.33||
+cov95_plot_date_4week_states|stem|bd4879203677162a|5ae7d37b8bc5aeca|caea99c978f164a5|222519514||t19428.6950288269s|41b883345bbacd6d|155102|rds|local|vector|||1.04||
+cov95_plot_date_4week_us|stem|90e3b52923e68b4c|9fd896a4cc8545bb|a3127c39355645bf|-59419567||t19428.694967849s|3300fcd6f49469e1|145261|rds|local|vector|||1.33||
+covid_sarima|function|a237c9ed4f7921a3|||||||||||||||
+covid_thief|function|6b058ab072a6c014|||||||||||||||
+extended_truth_data|function|008f2da0b5ff3a67|||||||||||||||
+fips|stem|03834d123ed4579c|a1b34421acc599a5|5ac7b7d11ef54cea|-926945001||t19422.7229231417s|79ead61f7c8922c9|161|rds|local|vector|||2.22||
+forecast_date_metrics_states|stem|815741fe6105b442|7e50866c3930150b|017affce0377a68e|771184230||t19428.6938404734s|0edd37246364f8ec|33766|rds|local|vector|||0.64||
+forecast_date_metrics_us|stem|c76ee01ebe08f1f5|91802d728f1c9d61|017affce0377a68e|-1436790734||t19428.6938329952s|70c1b4f2dc7e64a8|28831|rds|local|vector|||0.11||
+forecasts_baseline_testing|stem|4087ba97e1ba7351|344766ae76b10cbb|081427587a7aa49b|-313810066||t19422.7198524233s|30c8c775230aef87|8977473|rds|local|vector|||4.88||
+forecasts_baseline_testing_path|stem|abf3506a6d0de8ee|c76d571bdd4e5609|ef46db3751d8e999|1034956369|data/testing_fcv_baseline.rds|t19417.8902327565s|cb1dc3883f5fa315|6283420|file|local|vector|||2.34||
+forecasts_ensemble_testing|stem|1062bd6cdd623c08|30b2e55324133ccb|32dcf2e8271d3f5b|-1402820914||t19428.6927614093s|3c97f931919c1fd5|3437035|rds|local|vector|||4.46||
+forecasts_ensemble_testing_path|stem|83ce510fadbd70f0|2f7c1c19ba7e4e9e|ef46db3751d8e999|-818763226|data/testing_fcv_ensemble.rds|t19428.6888899535s|cc3e736bea008adb|1376520|file|local|vector|||2.61||
+forecasts_models_small_testing|stem|da8dfe6f3894f7f2|e68254e10fcc26f2|39f45b36f00320c0|1975160005||t19422.7199787449s|583e216474c1b367|19165452|rds|local|vector|||6.14||
+forecasts_models_small_testing_path|stem|4adf8636a287432d|40524fede3b3f13e|ef46db3751d8e999|-703974012|data/testing_fcv_models_small.rds|t19417.893052611s|5ea91f70de9cc695|16260096|file|local|vector|||0||
+forecasts_models_testing_path|stem|36fdb5a49b1633c7|552b2c310b275e3d|ef46db3751d8e999|1044198893|data/testing_fcv_models.RData|t19383.7864983774s|e06bc0ffc2a21a3f|103241325|file|local|vector|||0||
+full_hosp_truth|stem|46be873dd6532566|c831681d0681668e|c427264593091588|1917413459||t19422.7761679239s|ad9d8211fc5abcef|541404|rds|local|vector|||31.13||
+get_truth_ts|function|1ff1baf4bc714de5|||||||||||||||
+get_ts_dates|function|e94d97f698c68154|||||||||||||||
+hello|function|0844653942da9e72|||||||||||||||
+horizon_metrics_states|stem|f7f8a217b5c87079|b4b27f381246e49d|7c505cd9755dceac|-1547172354||t19428.6932580207s|42230b82ad44e347|1517|rds|local|vector|||2.4||
+horizon_metrics_us|stem|7c991c79b14789da|e05c8490f1dd89e7|7c505cd9755dceac|-136437723||t19428.6932299275s|434aa9f1d56b5df4|1414|rds|local|vector|||3.19|1m22mThere was 1 warning in mutate.1m22m36mi39m In argument acrosswhereis.numeric, round, digits  3.36mi39m In group 1 model  COVIDhub4_week_ensemble.Caused by warning1m22m33m39m The ... argument of across is deprecated as of dplyr 1.1.0.Supply arguments directly to .fns through an anonymous function instead.   Previously  acrossab, mean, na.rm  TRUE   Now  acrossab, \x meanx, na.rm  TRUE|
+hub_locations|stem|99eb888b2d66381e|fd1f0461a0a1b75a|b7119b48552d1da3|-176456964||t19422.7197505777s|316cc09d68060f29|67|rds|local|vector|||0.01||
+hub_locations_df|stem|99eb888b2d66381e|fd1f0461a0a1b75a|b7119b48552d1da3|-970167327||t19422.7205439762s|316cc09d68060f29|67|rds|local|vector|||2.81||
+inc_hosp_targets|stem|72645c2f7805c339|1c9d4050991e8c49|297c1b50a3b4a4d5|157965389||t19422.7268490554s|f59c97cd75ee97ec|166|rds|local|vector|||0||
+load_formatted_forecasts|function|3cdf660c5c9b4857|||||||||||||||
+models|stem|f64156894f7ba8c9|76122fa08cacd288|0ec07da05182230f|-252836656||t19422.768277964s|b431599f80fdb77d|202|rds|local|vector|||0||
+monday_testing_truth_list|stem|c5d7a996d148ef16|52412aa985226464|98065f903515f0e4|-1513513775||t19417.8992190368s|8c5305073c2fca51|4030955|rds|local|vector|||3.33||
+monday_testing_truth_path|stem|1903782605a65481|9ae6206d57ba4335|ef46db3751d8e999|-612526001|data/testing_truth_monday.rds|t19417.8945188996s|f8b0b319532fc3eb|149792|file|local|vector|||0||
+next_monday|function|98684c489c4166f7|||||||||||||||
+ordered_testing_locations|stem|5e14778b4f7b8a53|4410f640019a1e2a|57c2b1c89f35b161|-600449888||t19423.6705666155s|74cdc8843d650642|174|rds|local|vector|||0.06||
+ordered_testing_models|stem|846488d38aa51e19|415f4745492759b8|bc93ddfed0ab00fe|-1297698174||t19428.6950712582s|ba1fa23e8a34eb4d|168|rds|local|vector|||0||
+overall_metrics_states|stem|41fad62282747b3d|1cf1db402114ddaf|68756910685b6b06|-1919861335||t19428.6938437621s|6e44e235c1196fc7|626|rds|local|vector|||0.26||
+overall_metrics_us|stem|8fed00923e0f4a16|59f1395391a22d50|68756910685b6b06|-135344680||t19428.694332692s|d4a8333f64ab2f2b|583|rds|local|vector|||0.11||
+pairwise_comparison|function|ee9126a1d26b7ce8|||||||||||||||
+plot_forecast_date_metrics|function|4ec5fa87523b8a6a|||||||||||||||
+plot_models_1|stem|ac51623b9b6d97c7|53be7aae00d30a6a|7fba47ba9eb4341d|-230678281||t19428.6947510057s|c46e13e09124b837|33905257|rds|local|vector|||2.62|1m22mRemoved 2 rows containing missing values geom_line.. 1m22mRemoved 4 rows containing missing values geom_line.. 1m22mRemoved 4 rows containing missing values geom_point.. 1m22mRemoved 222 rows containing missing values geom_line.. 1m22mRemoved 1776 rows containing missing values geom_point.|
+plot_models_2|stem|40f73a232258b8b7|5415b688f315943e|7fba47ba9eb4341d|-931279501||t19428.6949422215s|f314b7a4a1119905|33852444|rds|local|vector|||2.72|1m22mRemoved 2 rows containing missing values geom_line.. 1m22mRemoved 4 rows containing missing values geom_line.. 1m22mRemoved 4 rows containing missing values geom_point.. 1m22mRemoved 235 rows containing missing values geom_line.. 1m22mRemoved 1880 rows containing missing values geom_point.|
+plot_models_53|stem|359cccd9eeaee79d|7633f0a89d400e48|7fba47ba9eb4341d|903331774||t19428.6945593462s|63e57614adacfae5|33692320|rds|local|vector|||5.33|1m22mRemoved 2 rows containing missing values geom_line.. 1m22mRemoved 4 rows containing missing values geom_line.. 1m22mRemoved 4 rows containing missing values geom_point.. 1m22mRemoved 235 rows containing missing values geom_line.. 1m22mRemoved 1880 rows containing missing values geom_point.|
+plot_models_one_location|function|b412406c9cf77dd4|||||||||||||||
+plot_summarized_metrics|function|786b202ffc6f9a0e|||||||||||||||
+plot_thief|function|b55353f3e1c2e1a4|||||||||||||||
+plot_thief_agg|function|e3e569bc9804913d|||||||||||||||
+plot_wis_loc|function|b968f4bd44ca3429|||||||||||||||
+raw_data_file|stem||b6df0c34fc22d1b9|ef46db3751d8e999|2110307107|data/raw_data.csv|t19417.8491746182s||0|file|local|vector|||||_paths_ 31mmissing files dataraw_data.csv39m
+sarima_models|stem|2c48826bbecb4f6e|77a3cc831a061128|a9563735a33087e5|550418820||t19422.7682775912s|e4a07f799c897d8d|92|rds|local|vector|||0||
+sarima_wrapper|function|9505fa817ebed84e|||||||||||||||
+scores_baseline_testing|stem|805bc25d79d0c297|021efe6b147a64b9|ebd67120b01d873a|1179004106||t19422.7197569961s|4cfc1247e80ef833|1839992|rds|local|vector|||0.25||
+scores_baseline_testing_path|stem|fab6b39721c45ca5|166959d805b331f5|ef46db3751d8e999|-1346006734|data/testing_scv_baseline.rds|t19417.8908901978s|a98a37b45813ee16|1554164|file|local|vector|||0||
+scores_ensemble_testing|stem|61e674b8f895ed68|c37ab4c477a2f382|20c59941f9d48c70|1206350494||t19428.6927702093s|82e1161e0eba1614|1160499|rds|local|vector|||0.34||
+scores_ensemble_testing_path|stem|17584adf9dc671ab|98ee46f9bb81fa24|ef46db3751d8e999|1567367888|data/testing_scv_ensemble.rds|t19428.6921175888s|953cefa38121a5a2|762812|file|local|vector|||0||
+scores_models_small_testing|stem||1ade1ba5580af28f|396fa2cd7b7d5b3b|1179931991||t19422.7189950941s||0|rds|local|vector|||2.46||object scores_models_small_testing_path not found
+scores_models_testing|stem|c60cf9d045fc91ac|32860829b50f3cb0|00dcc0dd6b7dfbcf|-658961435||t19422.7200388669s|142aaf85a4356ec9|19537541|rds|local|vector|||2.82||
+scores_models_testing_path|stem|95c225233a6788fe|c15c7ceeee082487|ef46db3751d8e999|954463201|data/testing_scv_models.rds|t19417.8919896427s|e884b57ef90358af|17199296|file|local|vector|||0||
+scores_sarima_filtered|stem||86a6c6f04b2943ff|97c0c1681ae9642a|-129474056||t19417.8696168063s||0|rds|local|vector|||0||no applicable method for filter applied to an object of class character
+scores_sarima_validation|stem|6633fdd295197d8a|5e869ccb7a43b10c|fa129b5e98ee848e|1201463873||t19417.8683003544s|4a624d5a12449f88|75|rds|local|vector|||1.76||
+scores_sarima_validation_path|stem|178c0cf80cec7579|b0459223e4b9891d|ef46db3751d8e999|-1262402121|data/extended_scv_sarima.RData|t19263.6767511703s|ee94754882a4d7e0|15237814|file|local|vector|||0||
+scores_thief_ensemble_validation_path|stem|605637a7b8d5faf8|0acd80d18b4747b1|ef46db3751d8e999|1846698239|data/extended_scv_thief_ensemble.RData|t19300.9135785222s|854192e59d79bdef|26626155|file|local|vector|||2.17||
+scores_thief_new_validation_path|stem|68a19e3a448d9ef1|3fd0beb598471bb3|ef46db3751d8e999|-301391244|data/extended_scv_thief_new.RData|t19263.6425238694s|5498aa7d45d2fe92|26432435|file|local|vector|||0||
+scores_thief_old_validation_path|stem|be426207f2e473b4|8d1d338b6372ed7e|ef46db3751d8e999|857495384|data/extended_scv_thief_old.RData|t19263.5964527471s|0515a104a332134b|19742614|file|local|vector|||0||
+summarize_forecast_date_metrics|function|e50864e037361e60|||||||||||||||
+summarize_horizon_metrics|function|fb6f647edaa0f7ee|||||||||||||||
+summarize_overall_metrics|function|6690d396bd558afc|||||||||||||||
+summarize_wave_metrics|function|14360ab8973a7319|||||||||||||||
+sunday_testing_truth_list|stem|89cdd757d1f81ad5|6a4c914880619ccc|7ba5845207f75364|369019806||t19422.720106381s|d5c9083b5d32ed4a|4008985|rds|local|vector|||2.92||
+sunday_testing_truth_path|stem|958d3d820925d07b|b72885ee29274979|ef46db3751d8e999|-972054355|data/testing_truth_sunday.rds|t19417.8999977617s|bc304ec841579cb6|148316|file|local|vector|||2.36||
+test_path|stem|3b1b70d1252c8507|12073cc7eba30b17|ef46db3751d8e999|1994664167|data/test.rds|t19417.880943721s||6874788|file|local|vector|||||_paths_ 31mmissing files datatest.rds39m
+testing_dates_to_plot|stem|5bee61f9743b79b2|43c0695481fb5421|f2eb5c64ed5ad532|-59091126||t19423.6705676705s|31a61c22599c2a35|149|rds|local|vector|||0||
+testing_forecast_range|stem|6a8c065f2d0d0ddb|cf90df9e1896ed58|0e4df9e1e46e27e0|-470675105||t19423.6705638499s|7d689a0df52fd58a|90|rds|local|vector|||2.31||
+testing_forecasts_to_plot|stem|c354f2d2446d91f2|0ed3ad1cdb39ae67|c5f149a07d12621e|592375912||t19428.6930763279s|be65b80319e13972|31604173|rds|local|vector|||4.85||
+testing_model_colors|stem|d4d82fbffc31c0d2|024bb57dfbdeacdb|a3dad144c40657ed|-580276789||t19428.6582633092s|f2bc8ae0479b08af|114|rds|local|vector|||4.47||
+testing_model_names|stem|34d9af7fb3f85796|9f8e62740be84a9a|caefcb3fa4a1c6fb|-1753924379||t19428.6926654514s|999d91c8435f59d2|165|rds|local|vector|||0||
+testing_models|stem|2d50b19dfea99352|8da1f62422257eda|a3dad144c40657ed|-1746339953||t19428.6582638005s|f2000359ad1073b7|131|rds|local|vector|||0||
+testing_scores|stem|3d90866204b320bf|510574ed3119c4e5|3c803a5605e7e0d7|1999237372||t19428.6931895847s|15433572a3febaa8|17629873|rds|local|vector|||4.12||
+thief_ensembles|stem|80eeba93d832394c|980a2a9db695028f|288bd661bb16feb9|1351664603||t19422.7678426376s|7fabc27342db198c|111|rds|local|vector|||0||
+thief_new|stem|3f61a254f9dbf0ad|183cc73e6fcb700e|1e8cc6cf17bf2a0f|-676089484||t19422.7678428839s|1990819d57dec260|107|rds|local|vector|||0||
+thief_old|stem|598b45870f172b16|138be291c0edf86f|a9563735a33087e5|1556419398||t19422.7678425076s|ea34dd6afd444aa1|104|rds|local|vector|||2.63||
+thief_wrapper|function|f7d9ffe7ecbe4234|||||||||||||||
+training_model_colors|stem|6fab3b0b21ebc33e|b2eb36c7e9dc7d81|90e633d2513c5a02|911676200||t19423.670564571s|999d91c8435f59d2|165|rds|local|vector|||0||
+training_model_names|stem|9cbb325fe045ecda|40f1fd7e27363417|a38b5af0c23a7b3b|-1095957668||t19423.6705674433s|69d210fc5c226c18|220|rds|local|vector|||0||
+training_models|stem|f64156894f7ba8c9|76122fa08cacd288|0ec07da05182230f|641362891||t19423.670567018s|b431599f80fdb77d|202|rds|local|vector|||0||
+transform_to_hub_df|function|e3c447fc35650a5c|||||||||||||||
+truth_versioned_testing_path|stem|dc44d6c6503a45e7|177e338b233871a8|ef46db3751d8e999|-1564538227|data/versioned_truth_testing.RData|t19308.7525273597s|fde49b83e635c0ef|8056225|file|local|vector|||0||
+truth_versioned_training|stem|77f1d8da277afe19|d26dbff4857aa6a7|ef46db3751d8e999|-787609691|data/versioned_truth_training.RData|t19184.8100967426s|46f4bc522450462f|3975932|file|local|vector|||0||
+validation_forecast_range|stem|ae051bf92fe80d75|f3f70dd8eef61e17|0e4df9e1e46e27e0|-966018265||t19423.6705643263s|7d689a0df52fd58a|90|rds|local|vector|||0||
+wave_metrics_states|stem|2567fb2ec7c63452|798abbdf172abf67|a7a7c94627a79bd4|-1716732831||t19428.6938314833s|0129ae6598daaf9c|3026|rds|local|vector|||49.53|1m22mThere were 960 warnings in mutate.The first warning was1m22m36mi39m In argument rwis  case_when....36mi39m In group 9 model  THieF_12wknoTransform, horizon_wk  1.Caused by warning in wis  pullfiltersummarized_metrics, model  baseline_name, horizon_wk  1,  433m39m longer object length is not a multiple of shorter object length1m22m36mi39m Run dplyrlast_dplyr_warnings to see the 959 remaining warnings.|
+wave_metrics_us|stem|7e847fd11120f370|92934a807a69c84c|a7a7c94627a79bd4|-1595555337||t19428.6943299466s|489617db252f2f44|2713|rds|local|vector|||42|1m22mThere were 960 warnings in mutate.The first warning was1m22m36mi39m In argument rwis  case_when....36mi39m In group 9 model  THieF_12wknoTransform, horizon_wk  1.Caused by warning in wis  pullfiltersummarized_metrics, model  baseline_name, horizon_wk  1,  433m39m longer object length is not a multiple of shorter object length1m22m36mi39m Run dplyrlast_dplyr_warnings to see the 959 remaining warnings.|
+wis_location_plot|stem|e82dad2ef809fa66|4862c6d13eaaddd1|2e0685d4da314e1e|1339402923||t19428.6973078792s|4cb7d10c3c1e157a|43349530|rds|local|vector|||184.91||
+wis_plot_ba4ba5_states|stem|4fe0f67d5b9406be|e875e5316668a42b|f2c8be14133d94a0|1946811967||t19428.6949518304s|5abd9e380881ce08|63597|rds|local|vector|||0.12||
+wis_plot_ba4ba5_us|stem|de9f3852955927bd|cae1a4e35cdfc82e|23301111f997fb3b|1961530359||t19428.6950789907s|ce32563267f396c1|63251|rds|local|vector|||0.13||
+wis_plot_date_1week_states|stem|878c3f6aea85ffd0|ee49c8fef29dbc6d|caea99c978f164a5|-1011677022||t19428.6950559479s|85ab38e7fd0bc875|153190|rds|local|vector|||1.11||
+wis_plot_date_1week_us|stem|9ef16c87aaaaabe7|80fcdc175811fe33|a3127c39355645bf|-1301286046||t19428.6950160729s|540d757b066e6ed8|144330|rds|local|vector|||1.48||
+wis_plot_date_4week_states|stem|b1d8c9736a3bd547|1ddacddb49389ff4|caea99c978f164a5|-924386596||t19428.6950688388s|3cbf16f7d00dcb9f|151291|rds|local|vector|||1.07||
+wis_plot_date_4week_us|stem|39da840425972edc|50ead2208f2e8d60|a3127c39355645bf|1421230032||t19428.6949981973s|f861861cf929611c|142745|rds|local|vector|||1.19||
+wis_plot_omicron_states|stem|1018218ba3bb0d5b|7890f391bea7d0dd|f2c8be14133d94a0|1683495992||t19428.6949500382s|8d861743dbc17dff|63895|rds|local|vector|||0.13||
+wis_plot_omicron_us|stem|a5744b067d451e43|5da99bdc7c43f968|23301111f997fb3b|-700507249||t19428.6950741578s|70b8a8cee159eec8|63576|rds|local|vector|||0.1||
+wis_plot_states|stem|cd23dd8da88d7d71|132ea0824a4c78df|cf3d1e70162a198b|-1947131142||t19428.6949481434s|663775476ac54c38|63509|rds|local|vector|||0.05||
+wis_plot_us|stem|4a3e4b29bd43f722|748bbde3c40c0ab8|7ef5f8abcdaf60ec|1816475610||t19428.6949472653s|5104315d682aacc6|63266|rds|local|vector|||0.08||
