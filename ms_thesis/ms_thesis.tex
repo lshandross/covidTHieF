@@ -249,30 +249,48 @@ We generate candidate models formulated using the THieF methodology, which diffe
 %% Time for the body of the dissertation
 \mainmatter   %% <-- This line is mandatory
 
-% \chapter{Introduction}
-% \section{Infectious disease forecasting}
-% \section{COVID-19 forecasting}
-% \subsection{US COVID-19 Forecast Hub}
-% \section{Temporal hierarchical forecasting}
-% \section{Goals}
-%
-% \chapter{Methods}
-% \section{Surveillance data}
-% \section{Forecasts}
-% \subsection{Forecast quantiles}
-% \subsection{Forecast locations}
-% \subsection{Forecast horizons}
-% \section{Date range of analysis}
-% \section{Comparison model inclusion criteria}
-% \section{Temporal hierarchical forecasting (THieF)}
-% \section{Model specifications}
-% \subsection{THieF models}
-% \subsection{THieF ensemble models}
-% \subsection{ARIMA and SARIMA models}
-% \section{Metrics and Evaluation}
-% \subsection{Validation phase}
-% \subsection{Testing phase}
-%
+\chapter{Introduction}
+
+\section{Infectious disease forecasting}
+\section{COVID-19 forecasting}
+\subsection{US COVID-19 Forecast Hub}
+\section{Temporal hierarchical forecasting}
+\section{Goals}
+
+\chapter{Methods}
+\section{Surveillance data}
+- data used: HealthData.gov COVID-19 Reported Patient Impact and Hospital Capacity by State Time Series (reports daily incident hospitalizations for all 50 states, several US territories, and the AGGREGATED US national level)
+- dataset sources: HHSTeleTracking, state/territorial health departments which report to HHS Protect, and National Health Care Safety Network (prior to July 15, 2020). Note that the first date of truth data used is July 27, 2020 (see Date range of analysis)
+- This data set designated official ground truth data for COVID-19 incident hospitalizations on December 1, 2020 by the US COVID-19 Forecast Hub [https://covid19forecast-hub.org/], for usage as both input training data and to compare against for accuracy evaluations
+- hospitalization reporting sporadic for first four months of pandemic, consistency only achieved for all locations in late July 2020 (all territories designated "states" had consistent reporting starting [date])
+- Hospitalization data became more reliable compared to case and death data due to reporting for Medicare reimbursement. Case and death data have suffering major under reporting issues that only grew worse as the pandemic continued on
+- Truth data collection for COVID-19 incident cases and incident deaths was discontinued in March 2023, with John Hopkins University (the official ground truth data source for those targets) shutting down their COVID dashboard(?)
+- Note though that hospitalization data is not perfect and values may be updated, especially within the first few weeks and incident hospitalization value is posted. However, models are training on the currently available data to them, which may not reflect the finalized truth value
+- Truth data is queried through Zoltar, a data repository set up by..., which includes past versions of the truth data so that original values may be obtained. The data used to train the models in this analysis is queried such that it would be the data available as of the date that the retrospective forecast is "made on" so as to be comparable to other models.
+
+\section{Forecasts}
+\subsection{Forecast quantiles}
+\subsection{Forecast locations}
+\subsection{Forecast horizons}
+\section{Date range of analysis}
+
+\section{Comparison models}
+- COVIDhub-baseline: A naive baseline model created and run by the US COVID-19 Forecast Hub meant to serve as a benchmark model to compare against. This model makes forecasts using the previous day's incident hospitalization value as the point forecast (and 0.5 quantile for the probabilistic forecast) and past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts. Beating the baseline is typically seen as one marker of a useful model \cite{cramer}
+%- COVIDhub-4_week_ensemble: A median ensemble of all the submitting models for incident hospitalizations at the COVID-19 Forecast Hub, run by the Hub team that includes forecasts up to 28 day (4 week) ahead horizons. This model produces the same 1 to 14 day (1 to 2 week) ahead horizon forecasts as the COVIDhub-ensemble model, but also forecasts longer horizons. These longer horizons were removed from the main ensemble model due to research showing a sharp decline in accuracy in forecasts predicting beyond 2 week aheads (see Forecast horizons). However, these longer horizons are useful as a comparison for research purposes. Note that this ensemble model included slightly different contributing models based on what models were submitting to the COVID-19 Forecast Hub at a different times (check for specifics).
+\cite{ensembles_info}, \cite{short_horizons}
+
+\section{Temporal hierarchical forecasting (THieF)}
+- Add more mathematical detail here
+- Aggregation: We start with data at a daily scale. Then, based on the aggregation levels of interests for a particular model (e.g. weekly, every two weeks, every four weeks, etc), we induce this sort of artificial aggregation so that we have vectors of data add each of these time scales. Next, forecasts are made using each of these datasets separately. The reason that we are interested in different time scales is that there may be important patterns that are lost add higher time scales amid the noise of lower ones. More often than not, different patterns will be picked up at different aggregation levels, which means we get forecasts for the same future time periods that may not agree. This is where reconciliation comes into play, in which we combine all of the forecasts that we made.
+
+\section{Model specifications}
+\subsection{THieF models}
+\subsection{THieF ensemble models}
+\subsection{ARIMA and SARIMA models}
+\section{Metrics and Evaluation}
+\subsection{Validation phase}
+\subsection{Testing phase}
+
 \chapter{Results}
 \section{Validation phase}
 
