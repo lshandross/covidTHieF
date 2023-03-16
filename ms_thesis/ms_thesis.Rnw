@@ -312,8 +312,8 @@ print(quant_int_table, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
-
 \subsection{Forecast locations}
+
 \subsection{Forecast horizons}
 \section{Date range of analysis}
 
@@ -355,21 +355,32 @@ tar_read(plot_models_1, store="../_targets")
 \subsection{Summary of comparison models}
 \subsection{Overall model performance}
 
-<<echo=FALSE>>=
-table_overall_us <- tar_read(overall_metrics_us, store="../_targets")
-@
 
 \begin{table}[h]
 \begin{center}
 \label{tab:table_overall_us}
-<<echo=FALSE, eval=TRUE>>=
-knitr::kable(table_overall_us)
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_overall_us <- tar_read(overall_metrics_us, store="../_targets") %>%
+  xtable()
+print(table_overall_us, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
 \end{center}
 \end{table}
 
-<<echo=FALSE, eval=TRUE>>=
+\begin{table}[h]
+\begin{center}
+\label{tab:table_overall_states}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_overall_states <- tar_read(overall_metrics_states, store="../_targets") %>%
+  xtable()
+print(table_overall_states, booktabs=FALSE, floating=FALSE)
+@
+\caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{center}
+\end{table}
+
+<<echo=FALSE, eval=FALSE>>=
 knitr::kable(tar_read(overall_metrics_us, store="../_targets"))
 knitr::kable(tar_read(overall_metrics_states, store="../_targets"))
 @
@@ -440,12 +451,61 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 %% \chapter{THE SECOND APPENDIX TITLE}
 %% ...
 
-<<echo=FALSE, eval=TRUE>>=
+\begin{table}[h]
+\begin{center}
+\label{tab:table_horizon_us}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
+  xtable()
+print(table_horizon_us, booktabs=FALSE, floating=FALSE)
+@
+\caption{Summary of model performance stratified by horizon week for the US national level, aggregated across forecast week. The results from this table were used to create Figure 4 that summarized average WIS by horizon week for the US national level and the states level. The table is ordered by ascending horizon week and WIS, with THieF-4wk-4root having the lowest WIS except for the 4 week ahead horizon. The baseline consistently does not have the best WIS.}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_horizon_states}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
+  xtable()
+print(table_horizon_states, booktabs=FALSE, floating=FALSE)
+@
+\caption{Summary of model performance stratified by horizon week for the states level, aggregated across forecast week. The results from this table were used to create Figure 4 that summarized average WIS by horizon week for the US national level and the states level. The table is ordered by ascending horizon week and WIS, with THieF-4wk-4root having the lowest WIS except for the 3 week (although it is second lowest) and 4 week ahead horizon. The baseline again consistently does not have the best WIS, performing progressively worse compared to the other models for each additional week ahead horizon.}
+\end{center}
+\end{table}
+
+<<echo=FALSE, eval=FALSE>>=
 knitr::kable(tar_read(horizon_metrics_us, store="../_targets"))
 knitr::kable(tar_read(horizon_metrics_states, store="../_targets"))
 @
 
-<<echo=FALSE, eval=TRUE>>=
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_wave_us}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
+  xtable()
+print(table_wave_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE)
+@
+\caption{Summary of model performance stratified by horizon week and pandemic waves for the US national level, aggregated across forecast week. The results from this table were used to create Figure 5 that summarized average WIS by horizon week and pandemic wave for the US national level and the states level. The table is ordered by ascending pandemic wave, horizon week, and WIS, with THieF-4wk-4root having the lowest WIS for all horizons of the alpha wave and shorter horizons of the Winter 21 wave. The THieF-12wk-noTrans and THieF-12wk-4root models have the lowest and second lowest WIS for 3 week ahead and 4 week ahead horizons during the Winter 21 wave. The baseline consistently does not have the best WIS.}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_wave_states}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
+  xtable()
+print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE)
+@
+\caption{Summary of model performance stratified by horizon week and pandemic waves for the states level, aggregated across forecast week. The results from this table were used to create Figure 5 that summarized average WIS by horizon week and pandemic wave for the US national level and the states level. The table is ordered by ascending pandemic wave, horizon week, and WIS, with THieF-4wk-4root again having the lowest WIS for all horizons of the alpha wave and shorter horizons of the Winter 21 wave. The THieF-12wk-noTrans has the lowest WIS for 3 week ahead and 4 week ahead horizons during the Winter 21 wave. The baseline only has the best WIS for the 1 week ahead horizon during the Winter 21 wave.}
+\end{center}
+\end{table}
+
+<<echo=FALSE, eval=FALSE>>=
 knitr::kable(tar_read(wave_metrics_us, store="../_targets"))
 knitr::kable(tar_read(wave_metrics_states, store="../_targets"))
 @
