@@ -284,16 +284,19 @@ We query these confirmed hospitalizations from the `covidData` package through t
 
 \section{Forecasts}
 \subsection{Forecast quantiles}
+
 \subsection{Forecast locations}
 \subsection{Forecast horizons}
 \section{Date range of analysis}
 
-\section{Comparison models}
-We query these confirmed hospitalizations through the Zoltar forecast archive, a research data repository developed by Reich Lab.
+\section{Benchmark comparison models}
+Two models from the Forecast Hub---the COVIDhub-baseline and COVIDhub-4\_week\_ensemble---are selected to serve as comparisons for the models in this analysis during the testing phase evaluation. Many of the metrics used in this evaluation are not especially meaningful on their own, requiring a relative comparison among models forecasting the same targets (1 to 28 day ahead incident hospitalizations for COVID-19).
 
-- COVIDhub-baseline: A naive baseline model created and run by the US COVID-19 Forecast Hub meant to serve as a benchmark model to compare against. This model makes forecasts using the previous day's incident hospitalization value as the point forecast (and 0.5 quantile for the probabilistic forecast) and past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts. Beating the baseline is typically seen as one marker of a useful model \cite{cramer}
+The COVIDhub-baseline: A naive baseline model created and run by the US COVID-19 Forecast Hub meant to serve as a benchmark model to compare against. This model makes forecasts using the previous day's incident hospitalization value as the point forecast (and 0.5 quantile for the probabilistic forecast) and past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts. Beating the baseline is typically seen as one marker of a useful model \cite{cramer}
 
-- COVIDhub-4\_week\_ensemble: A median ensemble of all the submitting models for incident hospitalizations at the COVID-19 Forecast Hub, run by the Hub team that includes forecasts up to 28 day (4 week) ahead horizons. This model produces the same 1 to 14 day (1 to 2 week) ahead horizon forecasts as the COVIDhub-ensemble model, but also forecasts longer horizons. These longer horizons were removed from the main ensemble model due to research showing a sharp decline in accuracy in forecasts predicting beyond 2 week aheads (see Forecast horizons). However, these longer horizons are useful as a comparison for research purposes. Note that this ensemble model included slightly different contributing models based on what models were submitting to the COVID-19 Forecast Hub at a different times (check for specifics). \cite{ensembles_info}, \cite{short_horizons}
+The COVIDhub-4\_week\_ensemble: A median ensemble of all the submitting models for incident hospitalizations at the COVID-19 Forecast Hub, run by the Hub team that includes forecasts up to 28 day (4 week) ahead horizons. This model produces the same 1 to 14 day (1 to 2 week) ahead horizon forecasts as the COVIDhub-ensemble model, but also forecasts longer horizons. These longer horizons were removed from the main ensemble model due to research showing a sharp decline in accuracy in forecasts predicting beyond 2 week aheads (see Forecast horizons). However, these longer horizons are useful as a comparison for research purposes. Note that this ensemble model included slightly different contributing models based on what models were submitting to the COVID-19 Forecast Hub at a different times (check for specifics). \cite{ensembles_info}, \cite{short_horizons}
+
+The forecasts for the comparison models are obtained from the Zoltar forecast archive, a research data repository developed by Reich Lab.
 
 \section{Temporal hierarchical forecasting (THieF)}
 - Add more mathematical detail here
