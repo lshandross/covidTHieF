@@ -280,7 +280,7 @@ Hospitalization reporting was sporadic for the first four months of the pandemic
 
 Surveillance data, like the HealthData.gov confirmed hospitalizations, sometimes required revisions due to reporting anomalies. Hospitalizations might be entered on incorrect dates or added after COVID-19 was determined to be the cause of hospitalization. Updates to values usually occurred within the first week or so of posting. As a result, real-time forecast models might train on data that include incident hospitalization numbers for location-date combinations that do not reflect the finalized values.
 
-We query these confirmed hospitalizations through Zoltar, a data repository set up by..., which includes past versions of the truth data so that original values may be obtained. The data used to train the models in this analysis is queried such that it would be the data available as of the date that the retrospective forecast is "made on" so as to be comparable to other models.
+We query these confirmed hospitalizations from the `covidData` package through the `covidHubUtils` package, both developed by Reich Lab at the University of Massachusetts Amherst to deal with COVID-19 surveillance data. Versions of this data are stored such that users may access the truth data as of a specified date. For example, it is possible to retrieve of version of the confirmed hospitalization data set as of July 27, 2020. To ensure fair comparisons between the models developed for this analysis and some real-time models, our models are trained on the confirmed hospitalizations that would have been available as of the "forecast date" of the retrospective forecast.   
 
 \section{Forecasts}
 \subsection{Forecast quantiles}
@@ -289,6 +289,8 @@ We query these confirmed hospitalizations through Zoltar, a data repository set 
 \section{Date range of analysis}
 
 \section{Comparison models}
+We query these confirmed hospitalizations through the Zoltar forecast archive, a research data repository developed by Reich Lab.
+
 - COVIDhub-baseline: A naive baseline model created and run by the US COVID-19 Forecast Hub meant to serve as a benchmark model to compare against. This model makes forecasts using the previous day's incident hospitalization value as the point forecast (and 0.5 quantile for the probabilistic forecast) and past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts. Beating the baseline is typically seen as one marker of a useful model \cite{cramer}
 
 - COVIDhub-4\_week\_ensemble: A median ensemble of all the submitting models for incident hospitalizations at the COVID-19 Forecast Hub, run by the Hub team that includes forecasts up to 28 day (4 week) ahead horizons. This model produces the same 1 to 14 day (1 to 2 week) ahead horizon forecasts as the COVIDhub-ensemble model, but also forecasts longer horizons. These longer horizons were removed from the main ensemble model due to research showing a sharp decline in accuracy in forecasts predicting beyond 2 week aheads (see Forecast horizons). However, these longer horizons are useful as a comparison for research purposes. Note that this ensemble model included slightly different contributing models based on what models were submitting to the COVID-19 Forecast Hub at a different times (check for specifics). \cite{ensembles_info}, \cite{short_horizons}
