@@ -313,6 +313,7 @@ print(quant_int_table, booktabs=FALSE, floating=FALSE)
 \end{table}
 
 \subsection{Forecast locations}
+We make forecasts for 53 of 55 locations from the HealthData.gov confirmed hospitalizations dataset during the period of analysis. These locations include the 50 states, four jurisdictions/territories (Washington D.C., Puerto Rico, American Samoa, and Guam), and a U.S. national level. American Samoa and Guam are excluded due to their very low or zero COVID-19 incident hospitalizations over the entire pandemic. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations do not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches \cite{cramer}.
 
 \subsection{Forecast horizons}
 \section{Date range of analysis}
