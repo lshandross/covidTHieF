@@ -30,6 +30,11 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {1.2.1}US COVID-19 Forecast Hub}{1}{subsection.1.2.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {1.3}Temporal hierarchical forecasting}{1}{section.1.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {1.4}Goals}{1}{section.1.4}\protected@file@percent }
+\citation{hhs_data}
+\citation{hub_data_repo}
+\citation{cramer}
+\citation{mech_bayes}
+\citation{jhu_covid}
 \@writefile{toc}{\contentsline {Chapter}{\numberline {2.}\MakeUppercase    []{Methods}}{2}{chapter.2}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
@@ -43,52 +48,56 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2.3}Forecast horizons}{3}{subsection.2.2.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2.3}Date range of analysis}{3}{section.2.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {2.4}Comparison models}{3}{section.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.5}Temporal hierarchical forecasting (THieF)}{3}{section.2.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.6}Model specifications}{4}{section.2.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.6.1}THieF models}{4}{subsection.2.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.6.2}THieF ensemble models}{4}{subsection.2.6.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.6.3}ARIMA and SARIMA models}{4}{subsection.2.6.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.7}Metrics and Evaluation}{4}{section.2.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.1}Validation phase}{4}{subsection.2.7.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.2}Testing phase}{4}{subsection.2.7.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {Chapter}{\numberline {3.}\MakeUppercase    []{Results}}{5}{chapter.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}Temporal hierarchical forecasting (THieF)}{4}{section.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.6}Model specifications}{5}{section.2.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6.1}THieF models}{5}{subsection.2.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6.2}THieF ensemble models}{5}{subsection.2.6.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6.3}ARIMA and SARIMA models}{5}{subsection.2.6.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.7}Metrics and Evaluation}{5}{section.2.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.1}Validation phase}{5}{subsection.2.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.2}Testing phase}{5}{subsection.2.7.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {Chapter}{\numberline {3.}\MakeUppercase    []{Results}}{6}{chapter.3}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\@writefile{toc}{\contentsline {section}{\numberline {3.1}Validation phase}{5}{section.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.2}Testing phase}{5}{section.3.2}\protected@file@percent }
-\newlabel{fig:figure_forecasts_plot1}{{3.2}{5}{Testing phase}{section.3.2}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces }}{5}{figure.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}Summary of comparison models}{6}{subsection.3.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.2}Overall model performance}{6}{subsection.3.2.2}\protected@file@percent }
-\newlabel{tab:table_overall_us}{{3.2.2}{6}{Overall model performance}{subsection.3.2.2}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}}{6}{table.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.3}Model performance by horizon week}{7}{subsection.3.2.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.4}Model performance by pandemic wave}{7}{subsection.3.2.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{7}{subsection.3.2.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.6}Model performance by forecast week}{7}{subsection.3.2.6}\protected@file@percent }
-\newlabel{fig:figure_horizon_plot}{{3.2.3}{8}{Model performance by horizon week}{subsection.3.2.3}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.2}{\ignorespaces Average WIS by the horizon week for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week compared to being aggregated across horizon weeks. All models show worse performance relative to the baseline at the 1-week ahead horizon, likely a result of being overconfident at this horizon. Once again, the THieF-4wk-4root model performs the best for WIS. Plots for average MAE are not shown due to their similarity to the average WIS plots.}}{8}{figure.3.2}\protected@file@percent }
-\newlabel{fig:figure_wave_plot}{{3.2.4}{9}{Model performance by pandemic wave}{subsection.3.2.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.3}{\ignorespaces Average WIS by the horizon week and pandemic wave for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week and pandemic wave compared to being stratified only across horizon week. Again, all models show worse performance relative to the baseline at the 1-week ahead horizon likely due to being overconfident at this horizon. Model performance is more similar among the top four models during the Alpha wave compared to during the Winter21 wave. Notably, although the THieF-4wk-4root models largely show the lowest WIS, longer horizons during the Winter21 wave saw better performance by the poor-performing THieF-12wk models. Plots for average MAE are not shown due to their similarity to the average WIS plots.}}{9}{figure.3.3}\protected@file@percent }
-\newlabel{fig:figure_location_plot}{{3.2.5}{10}{Model performance by location}{subsection.3.2.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.4}{\ignorespaces Relative WIS by location for each model across all horizons for the entire testing phase. Each square contains the average relative WIS or a model at a particular location, colored based on the relative WIS compare to the baseline. Blue indicates model outperformed the baseline for that location on average, while red indicates the model performed worse than the baseline. Locations are sorted based on cumulative hospitalizations during the testing phase while models are sorted from lowest to highest overall relative WIS, aggregated across states (Table 2). The top three models by relative WIS overall during the testing phase outperformed the baseline in every location.}}{10}{figure.3.4}\protected@file@percent }
-\newlabel{fig:figure_date_plot_us}{{3.2.6}{11}{Model performance by forecast week}{subsection.3.2.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.5}{\ignorespaces Average h-week ahead WIS and 95\% PI coverage for each model for the US national level. Model performance differs from week to week: the WIS is the lowest during weeks with stable and low incident hospitalization values. The THieF-4wk models show the best performance with lower or comparable WIS to the baseline during the majority of the training period with especially good performance for 1-week ahead horizons. Meanwhile, the THieF-12wk showed lower or comparable WIS to the baseline during high incidence and changed points, which have been historically found difficult to forecast accurately. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. All THieF models show very variable coverage rates, especially for a 1 week ahead horizon, only the models without a data transformation showing stable coverage starting around February 2021.}}{11}{figure.3.5}\protected@file@percent }
-\newlabel{fig:figure_date_plot_states}{{3.2.6}{12}{Model performance by forecast week}{figure.3.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {3.6}{\ignorespaces Average h-week ahead WIS and 95\% PI coverage for each model for the states level. Once again, model performance differs from week to week with the lowest WIS values during weeks with stable and low incident hospitalization values and the THieF-4wk models showing the best performance. However, the THieF-12wk did not show good performance during high incidence and changed points for the states level; instead, THieF-12-4root actually showed some strangely large WIS values during April and May 2021. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. One-week ahead coverage rates generally improved as time went on, the best models gaining stable and fairly good coverage rates starting in February 2021. For the 4-week ahead horizon, models without a data transformation showed the best performance and stable coverage starting around February 2021, though THieF-4wk-4root and THieF-8wk-4root also saw decent and fairly stable coverage rates after the downward Winter 21 change point.}}{12}{figure.3.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {Chapter}{\numberline {4.}\MakeUppercase    []{Discussion}}{13}{chapter.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Validation phase}{6}{section.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Testing phase}{6}{section.3.2}\protected@file@percent }
+\newlabel{fig:figure_forecasts_plot1}{{3.2}{6}{Testing phase}{section.3.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.1}{\ignorespaces }}{6}{figure.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.1}Summary of comparison models}{7}{subsection.3.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.2}Overall model performance}{7}{subsection.3.2.2}\protected@file@percent }
+\newlabel{tab:table_overall_us}{{3.2.2}{7}{Overall model performance}{subsection.3.2.2}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {3.1}{\ignorespaces Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}}{7}{table.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.3}Model performance by horizon week}{8}{subsection.3.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.4}Model performance by pandemic wave}{8}{subsection.3.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{8}{subsection.3.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {3.2.6}Model performance by forecast week}{8}{subsection.3.2.6}\protected@file@percent }
+\newlabel{fig:figure_horizon_plot}{{3.2.3}{9}{Model performance by horizon week}{subsection.3.2.3}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.2}{\ignorespaces Average WIS by the horizon week for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week compared to being aggregated across horizon weeks. All models show worse performance relative to the baseline at the 1-week ahead horizon, likely a result of being overconfident at this horizon. Once again, the THieF-4wk-4root model performs the best for WIS. Plots for average MAE are not shown due to their similarity to the average WIS plots.}}{9}{figure.3.2}\protected@file@percent }
+\newlabel{fig:figure_wave_plot}{{3.2.4}{10}{Model performance by pandemic wave}{subsection.3.2.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.3}{\ignorespaces Average WIS by the horizon week and pandemic wave for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week and pandemic wave compared to being stratified only across horizon week. Again, all models show worse performance relative to the baseline at the 1-week ahead horizon likely due to being overconfident at this horizon. Model performance is more similar among the top four models during the Alpha wave compared to during the Winter21 wave. Notably, although the THieF-4wk-4root models largely show the lowest WIS, longer horizons during the Winter21 wave saw better performance by the poor-performing THieF-12wk models. Plots for average MAE are not shown due to their similarity to the average WIS plots.}}{10}{figure.3.3}\protected@file@percent }
+\newlabel{fig:figure_location_plot}{{3.2.5}{11}{Model performance by location}{subsection.3.2.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.4}{\ignorespaces Relative WIS by location for each model across all horizons for the entire testing phase. Each square contains the average relative WIS or a model at a particular location, colored based on the relative WIS compare to the baseline. Blue indicates model outperformed the baseline for that location on average, while red indicates the model performed worse than the baseline. Locations are sorted based on cumulative hospitalizations during the testing phase while models are sorted from lowest to highest overall relative WIS, aggregated across states (Table 2). The top three models by relative WIS overall during the testing phase outperformed the baseline in every location.}}{11}{figure.3.4}\protected@file@percent }
+\newlabel{fig:figure_date_plot_us}{{3.2.6}{12}{Model performance by forecast week}{subsection.3.2.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.5}{\ignorespaces Average h-week ahead WIS and 95\% PI coverage for each model for the US national level. Model performance differs from week to week: the WIS is the lowest during weeks with stable and low incident hospitalization values. The THieF-4wk models show the best performance with lower or comparable WIS to the baseline during the majority of the training period with especially good performance for 1-week ahead horizons. Meanwhile, the THieF-12wk showed lower or comparable WIS to the baseline during high incidence and changed points, which have been historically found difficult to forecast accurately. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. All THieF models show very variable coverage rates, especially for a 1 week ahead horizon, only the models without a data transformation showing stable coverage starting around February 2021.}}{12}{figure.3.5}\protected@file@percent }
+\newlabel{fig:figure_date_plot_states}{{3.2.6}{13}{Model performance by forecast week}{figure.3.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {3.6}{\ignorespaces Average h-week ahead WIS and 95\% PI coverage for each model for the states level. Once again, model performance differs from week to week with the lowest WIS values during weeks with stable and low incident hospitalization values and the THieF-4wk models showing the best performance. However, the THieF-12wk did not show good performance during high incidence and changed points for the states level; instead, THieF-12-4root actually showed some strangely large WIS values during April and May 2021. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. One-week ahead coverage rates generally improved as time went on, the best models gaining stable and fairly good coverage rates starting in February 2021. For the 4-week ahead horizon, models without a data transformation showed the best performance and stable coverage starting around February 2021, though THieF-4wk-4root and THieF-8wk-4root also saw decent and fairly stable coverage rates after the downward Winter 21 change point.}}{13}{figure.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {Chapter}{\numberline {4.}\MakeUppercase    []{Discussion}}{14}{chapter.4}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \@writefile{toc}{\setcounter {tocdepth}{0}}
-\@writefile{toc}{\contentsline {Appendix}{\MakeUppercase    []{Appendix: Supplemental materials}}{14}{appendix*.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {Appendix}{\MakeUppercase    []{Appendix: Supplemental materials}}{15}{appendix*.5}\protected@file@percent }
 \bibstyle{umassthesis}
 \bibdata{umthsmpl}
 \bibcite{ensembles_info}{1}
-\bibcite{cramer}{2}
-\bibcite{short_horizons}{3}
+\bibcite{hub_data_repo}{2}
+\bibcite{cramer}{3}
+\bibcite{jhu_covid}{4}
+\bibcite{mech_bayes}{5}
+\bibcite{short_horizons}{6}
+\bibcite{hhs_data}{7}
 \setcounter{count@FrontMatter}{4}
 \setcounter{count@Chapter}{4}
 \setcounter{count@Appendix}{1}
 \setcounter{count@BackMatter}{1}
-\@writefile{toc}{\contentsline {BackMatter}{\MakeUppercase    []{Bibliography}}{24}{appendix*.6}\protected@file@percent }
-\gdef \@abspage@last{33}
+\@writefile{toc}{\contentsline {BackMatter}{\MakeUppercase    []{Bibliography}}{25}{appendix*.6}\protected@file@percent }
+\gdef \@abspage@last{34}
