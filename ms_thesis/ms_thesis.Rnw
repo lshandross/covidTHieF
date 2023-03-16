@@ -102,6 +102,13 @@
 %% hidelinks option to hyperref to avoid decorating links.
 \usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{lipsum}
+\usepackage{amsmath}
+\usepackage{latexsym}
+% Useful for Knitr. Otherwise, I use memoir class's 'ctabular' env.
+\usepackage{longtable}
 
 %% One way of formatting the epigraph/frontispiece is to use this package.
 %\usepackage{epigraph}
@@ -115,6 +122,10 @@ library(tidyverse)
 library(tables)
 library(patchwork)
 library(targets)
+library(GGally) # For pairplots, disable if it causes ggplot errors
+library(xtable) # For pretty tables
+library(ggthemes) # plot themes?
+library(xkcd) # How about xkcd themes?
 
 func_list <- list.files(path = "../R", pattern=".R", full.names=TRUE)
 lapply(func_list, source)
@@ -280,10 +291,27 @@ Hospitalization reporting was sporadic for the first four months of the pandemic
 
 Surveillance data, like the HealthData.gov confirmed hospitalizations, sometimes required revisions due to reporting anomalies. Hospitalizations might be entered on incorrect dates or added after COVID-19 was determined to be the cause of hospitalization. Updates to values usually occurred within the first week or so of posting. As a result, real-time forecast models might train on data that include incident hospitalization numbers for location-date combinations that do not reflect the finalized values.
 
-We query these confirmed hospitalizations from the `covidData` package through the `covidHubUtils` package, both developed by Reich Lab at the University of Massachusetts Amherst to deal with COVID-19 surveillance data. Versions of this data are stored such that users may access the truth data as of a specified date. For example, it is possible to retrieve of version of the confirmed hospitalization data set as of July 27, 2020. To ensure fair comparisons between the models developed for this analysis and some real-time models, our models are trained on the confirmed hospitalizations that would have been available as of the "forecast date" of the retrospective forecast.   
+We query these confirmed hospitalizations from the `covidData` package through the `covidHubUtils` package, both developed by Reich Lab at the University of Massachusetts Amherst to deal with COVID-19 surveillance data. Versions of this data are stored such that users may access the truth data as of a specified date. For example, it is possible to retrieve of version of the confirmed hospitalization data set as of July 27, 2020. To ensure fair comparisons between the models developed for this analysis and some real-time models, our models are trained on the confirmed hospitalizations that would have been available as of the "forecast date" of the retrospective forecast.
 
 \section{Forecasts}
 \subsection{Forecast quantiles}
+The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We follow this construction, though with a slight modification: prediction intervals are used to define a full distribution of forecasts. The bounds of these intervals can be used to obtain the desired quantiles, as shown in the table below. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where "L" and "U" represent the lower and upper bounds, respectively).
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_quant_int}
+<<quant_int_table, message=FALSE, warning=FALSE, echo=FALSE, results=tex>>=
+Quantile <- c(".010", ".025", ".050", "0.100", "0.150", "...", "0.500", "...", "0.900", "0.950", ".975", ".990")
+Interval <- c("98L", "95L", "90L", "80L", "70L", "...", "Median", "...", "80U", "90U", "95U", "98U")
+quant_int_table <- rbind(Quantile, Interval) %>%
+  xtable()
+colnames(quant_int_table) <- NULL
+print(quant_int_table, booktabs=FALSE, floating=FALSE)
+@
+\caption{Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}
+\end{center}
+\end{table}
+
 
 \subsection{Forecast locations}
 \subsection{Forecast horizons}
