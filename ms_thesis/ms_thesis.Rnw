@@ -340,6 +340,8 @@ The forecasts for the comparison models are obtained from the Zoltar forecast ar
 \subsection{THieF ensemble models}
 \subsection{ARIMA and SARIMA models}
 \section{Metrics and Evaluation}
+Despite being made on a daily scale, hospitalization forecasts have been evaluated on a weekly scale by the Forecast Hub, and we follow this convention. However, modeling teams have made forecasts on different days (e.g. Saturday vs Sunday vs Monday), leading to a mismatch between what day an $h$-day ahead forecast is predicting for. Hence, for the models we construct, we actually use 3- to 30-day ahead horizons to ensure all forecasts are predicting for the same dates. It should be noted, however, this may result in a slight disadvantage for models whose 3- to 30-day ahead forecasts are being compared to 1- to 28-day ahead forecasts.
+
 \subsection{Validation phase}
 \subsection{Testing phase}
 
