@@ -332,7 +332,7 @@ The first day of the period of analysis (July 27, 2020) was selected as the firs
 tar_read(evaluation_period_plot, store="../_targets")
 @
 \caption{Overview of the period of analysis included in the paper, superimposed over COVID-19 incident hospitalizations for the entire United States. Vertical dashed lines indicate divisions between phases. The training phase begins on Monday, July 27, 2020 and ends on Monday, July 5, 2021. This phase covers 343 days, or 49 weeks. Forecasts for the training phase are made starting on Monday, December 7, 2020. The testing phase, although not included in this paper, begins Tuesday, July 6, 2021 and ends Monday, November 1, 2021. The division is based on including two waves (the Winter 2020-21 and the Alpha variant) of the pandemic in the training phase and one (Delta variant) in the testing phase. July 27, 2020 marks the beginning of when the forecast locations of interest had reliable truth data.}
-\end{figure}   
+\end{figure}
 
 
 \section{Benchmark comparison models}
@@ -356,7 +356,13 @@ The forecasts for the comparison models are obtained from the Zoltar forecast ar
 Despite being made on a daily scale, hospitalization forecasts have been evaluated on a weekly scale by the Forecast Hub, and we follow this convention. However, modeling teams have made forecasts on different days (e.g. Saturday vs Sunday vs Monday), leading to a mismatch between what day an $h$-day ahead forecast is predicting for. Hence, for the models we construct, we actually use 3- to 30-day ahead horizons to ensure all forecasts are predicting for the same dates. It should be noted, however, this may result in a slight disadvantage for models whose 3- to 30-day ahead forecasts are being compared to 1- to 28-day ahead forecasts.
 
 \subsection{Validation phase}
+- Serves as time during which to train the candidate models, calibrate the forecasts, and to select the best models to pass on to the testing phase
+- All validation phase evaluations are restricted to forecasts with target end dates (date for which the prediction of instant hospitalizations is being made) within the validation phase (July 27, 2020 to October 31, 2021)
+- Models passed on: single best stratified by location (states or U.S. national) and model class (regular THieF, SARIMA, THieF ensemble), best regular THieF in last 17 weeks (to account for any models that perform better with more data to train on, especially since they will have a greater amount of data to inform their forecasts during the testing face)
+
 \subsection{Testing phase}
+- True time to evaluate the best subset against the two comparison models
+- All testing phase evaluations are restricted to forecasts with target end dates (date for which the prediction of instant hospitalizations is being made) within the testing phase (November 1, 2021 to October 2, 2022)
 
 \chapter{Results}
 \section{Validation phase}
