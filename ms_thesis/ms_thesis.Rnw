@@ -294,6 +294,8 @@ Surveillance data, like the HealthData.gov confirmed hospitalizations, sometimes
 We query these confirmed hospitalizations from the `covidData` package through the `covidHubUtils` package, both developed by Reich Lab at the University of Massachusetts Amherst to deal with COVID-19 surveillance data. Versions of this data are stored such that users may access the truth data as of a specified date. For example, it is possible to retrieve of version of the confirmed hospitalization data set as of July 27, 2020. To ensure fair comparisons between the models developed for this analysis and some real-time models, our models are trained on the confirmed hospitalizations that would have been available as of the "forecast date" of the retrospective forecast.
 
 \section{Forecasts}
+A forecast for a target-location combination (e.g. "1 day ahead incident hospitalizations in Massachusetts") is defined by one or both of a point forecast and a probabilistic forecast, represented by a set of 23 quantiles \cite{cramer}. More information is given about forecast targets, horizons, locations, and quantiles in the following subsections.
+
 \subsection{Forecast quantiles}
 The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We follow this construction, though with a slight modification: prediction intervals are used to define a full distribution of forecasts. The bounds of these intervals can be used to obtain the desired quantiles, as shown in the table below. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where "L" and "U" represent the lower and upper bounds, respectively).
 
@@ -316,6 +318,7 @@ print(quant_int_table, booktabs=FALSE, floating=FALSE)
 We make forecasts for 53 of 55 locations from the HealthData.gov confirmed hospitalizations dataset during the period of analysis. These locations include the 50 states, four jurisdictions/territories (Washington D.C., Puerto Rico, American Samoa, and Guam), and a U.S. national level. American Samoa and Guam are excluded due to their very low or zero COVID-19 incident hospitalizations over the entire pandemic. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations do not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches \cite{cramer}.
 
 \subsection{Forecast horizons}
+
 \section{Date range of analysis}
 
 \section{Benchmark comparison models}
