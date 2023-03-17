@@ -102,6 +102,13 @@
 %% hidelinks option to hyperref to avoid decorating links.
 \usepackage[hidelinks]{hyperref}
 \usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{lipsum}
+\usepackage{amsmath}
+\usepackage{latexsym}
+% Useful for Knitr. Otherwise, I use memoir class's 'ctabular' env.
+\usepackage{longtable}
 
 %% One way of formatting the epigraph/frontispiece is to use this package.
 %\usepackage{epigraph}
@@ -265,20 +272,59 @@ On December 1, 2020, the U.S. COVID-19 Forecast Hub designated this dataset as t
 
 Hospitalization reporting was sporadic for the first four months of the pandemic, with consistent, reliable values for major states and territories achieved only in late July 2020. Specifically, reports of daily confirmed hospitalizations for all 50 states, Washington D.C., Puerto Rico, and the U.S. as a whole began on July 27, 2020. Although COVID-19 hospitalization reporting stabilized after that for cases and deaths, hospitalization values are often more reliable due to requirements for Medicare reimbursement. COVID-19 cases have been vastly underreported for the entire duration of the pandemic \cite{mech_bayes}, and this problem has worsened with dwindling testing. Further, truth data collection and reporting for COVID-19 incident cases and deaths has been discontinued by Johns Hopkins University (the official ground truth data source) as of March 10, 2023 \cite{jhu_covid}.
 
+Surveillance data, like the HealthData.gov confirmed hospitalizations, sometimes required revisions due to reporting anomalies. Hospitalizations might be entered on incorrect dates or added after COVID-19 was determined to be the cause of hospitalization. Updates to values usually occurred within the first week or so of posting. As a result, real-time forecast models might train on data that include incident hospitalization numbers for location-date combinations that do not reflect the finalized values.
 
-- Note though that hospitalization data is not perfect and values may be updated, especially within the first few weeks and incident hospitalization value is posted. However, models are training on the currently available data to them, which may not reflect the finalized truth value
-- Truth data is queried through Zoltar, a data repository set up by..., which includes past versions of the truth data so that original values may be obtained. The data used to train the models in this analysis is queried such that it would be the data available as of the date that the retrospective forecast is "made on" so as to be comparable to other models.
+We query these confirmed hospitalizations from the `covidData` package through the `covidHubUtils` package, both developed by Reich Lab at the University of Massachusetts Amherst to deal with COVID-19 surveillance data. Versions of this data are stored such that users may access the truth data as of a specified date. For example, it is possible to retrieve of version of the confirmed hospitalization data set as of July 27, 2020. To ensure fair comparisons between the models developed for this analysis and some real-time models, our models are trained on the confirmed hospitalizations that would have been available as of the "forecast date" of the retrospective forecast.
 
 \section{Forecasts}
-\subsection{Forecast quantiles}
-\subsection{Forecast locations}
+A forecast for a target-location combination (e.g. "1 day ahead incident hospitalizations in Massachusetts") is defined by one or both of a point forecast and a probabilistic forecast, represented by a set of 23 quantiles \cite{cramer}. More information is given about forecast targets, horizons, locations, and quantiles in the following subsections.
+
 \subsection{Forecast horizons}
+Short-term forecasts for COVID-19 have been defined to encapsulate horizons of 1- to 4-weeks ahead, or, equivalently, 1- to 28-days ahead \cite{cramer}. Forecasts for incident hospitalizations are made on a daily time scale, so we choose to restrict\footnote{Some models make up to 84-day ahead forecasts due to the THieF methodology construction.} the forecast horizons we evaluate to 1- to 28-days ahead.\footnote{Note, there is a slight exception to this restriction. See Metrics and Evaluation for more information.}
+
+\subsection{Forecast locations}
+We make forecasts for 53 of 55 locations from the HealthData.gov confirmed hospitalizations dataset during the period of analysis. These locations include the 50 states, four jurisdictions/territories (Washington D.C., Puerto Rico, American Samoa, and Guam), and a U.S. national level. American Samoa and Guam are excluded due to their very low or zero COVID-19 incident hospitalizations over the entire pandemic. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations do not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches \cite{cramer}.
+
+\subsection{Forecast quantiles}
+The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We follow this construction, though with a slight modification: prediction intervals are used to define a full distribution of forecasts. The bounds of these intervals can be used to obtain the desired quantiles, as shown in the table below. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where "L" and "U" represent the lower and upper bounds, respectively).
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_quant_int}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Fri Mar 17 18:28:06 2023
+\begin{tabular}{rllllllllllll}
+  \hline
+ &  \\ 
+  \hline
+Quantile & .010 & .025 & .050 & 0.100 & 0.150 & ... & 0.500 & ... & 0.900 & 0.950 & .975 & .990 \\ 
+  Interval & 98L & 95L & 90L & 80L & 70L & ... & Median & ... & 80U & 90U & 95U & 98U \\ 
+   \hline
+\end{tabular}\caption{Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}
+\end{center}
+\end{table}
+
 \section{Date range of analysis}
+We focused on the period between Monday, July 27, 2020 and Sunday, October 2, 2022. This date range spans 798 days, or 114 weeks, which is just over 26 months. The entire period of analysis is split into two main phases: a validation phase of 462 days (66 weeks) and a testing phase of 236 days (48 weeks). The split between these two phases is such that the validation phase ends on Sunday, October 31, 2021 and the testing phase begins on Monday, November 1, 2021.
 
-\section{Comparison models}
-- COVIDhub-baseline: A naive baseline model created and run by the US COVID-19 Forecast Hub meant to serve as a benchmark model to compare against. This model makes forecasts using the previous day's incident hospitalization value as the point forecast (and 0.5 quantile for the probabilistic forecast) and past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts. Beating the baseline is typically seen as one marker of a useful model \cite{cramer}
+The first day of the period of analysis (July 27, 2020) was selected as the first day of reliable truth data for all locations of interests. Forecasting for the validation phase began on Monday, December 7, 2020, as this is the first Monday after the HealthData.gov confirmed hospitalizations data set was declared the official ground truth data. The division between the validation and testing phases was chosen to encapsulate three COVID-19 variant-based waves in the validation phase (Winter 2020-21, Alpha, and Delta) and two waves in the testing phase (Omicron and BA.4/BA.5). The separation between pandemic waves is made based on U.S. national level incident hospitalizations, pictured below in [Figure X].
 
-- COVIDhub-4\_week\_ensemble: A median ensemble of all the submitting models for incident hospitalizations at the COVID-19 Forecast Hub, run by the Hub team that includes forecasts up to 28 day (4 week) ahead horizons. This model produces the same 1 to 14 day (1 to 2 week) ahead horizon forecasts as the COVIDhub-ensemble model, but also forecasts longer horizons. These longer horizons were removed from the main ensemble model due to research showing a sharp decline in accuracy in forecasts predicting beyond 2 week aheads (see Forecast horizons). However, these longer horizons are useful as a comparison for research purposes. Note that this ensemble model included slightly different contributing models based on what models were submitting to the COVID-19 Forecast Hub at a different times (check for specifics). \cite{ensembles_info}, \cite{short_horizons}
+\begin{figure}
+\label{fig:figure_evaluate_period_plot"}
+% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
+\includegraphics{ms_thesis-evaluation_period_plot}
+\caption{Overview of the period of analysis included in the paper, superimposed over COVID-19 incident hospitalizations for the entire United States. Vertical dashed lines indicate divisions between phases. The training phase begins on Monday, July 27, 2020 and ends on Monday, July 5, 2021. This phase covers 343 days, or 49 weeks. Forecasts for the training phase are made starting on Monday, December 7, 2020. The testing phase, although not included in this paper, begins Tuesday, July 6, 2021 and ends Monday, November 1, 2021. The division is based on including two waves (the Winter 2020-21 and the Alpha variant) of the pandemic in the training phase and one (Delta variant) in the testing phase. July 27, 2020 marks the beginning of when the forecast locations of interest had reliable truth data.}
+\end{figure}
+
+
+\section{Benchmark comparison models}
+Two models from the Forecast Hub---the COVIDhub-baseline and COVIDhub-4\_week\_ensemble---are selected to serve as comparisons for the models in this analysis during the testing phase evaluation. Many of the metrics used in this evaluation are not especially meaningful on their own, requiring a relative comparison among models forecasting the same targets (1 to 28 day ahead incident hospitalizations for COVID-19).
+
+The COVIDhub-baseline: A naive baseline model created and run by the US COVID-19 Forecast Hub meant to serve as a benchmark model to compare against. This model makes forecasts using the previous day's incident hospitalization value as the point forecast (and 0.5 quantile for the probabilistic forecast) and past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts. Beating the baseline is typically seen as one marker of a useful model \cite{cramer}
+
+The COVIDhub-4\_week\_ensemble: A median ensemble of all the submitting models for incident hospitalizations at the COVID-19 Forecast Hub, run by the Hub team that includes forecasts up to 28 day (4 week) ahead horizons. This model produces the same 1 to 14 day (1 to 2 week) ahead horizon forecasts as the COVIDhub-ensemble model, but also forecasts longer horizons. These longer horizons were removed from the main ensemble model due to research showing a sharp decline in accuracy in forecasts predicting beyond 2 week aheads (see Forecast horizons). However, these longer horizons are useful as a comparison for research purposes. Note that this ensemble model included slightly different contributing models based on what models were submitting to the COVID-19 Forecast Hub at a different times (check for specifics). \cite{ensembles_info}, \cite{short_horizons}
+
+The forecasts for the comparison models are obtained from the Zoltar forecast archive, a research data repository developed by Reich Lab.
 
 \section{Temporal hierarchical forecasting (THieF)}
 - Add more mathematical detail here
@@ -289,15 +335,23 @@ Hospitalization reporting was sporadic for the first four months of the pandemic
 \subsection{THieF ensemble models}
 \subsection{ARIMA and SARIMA models}
 \section{Metrics and Evaluation}
+Despite being made on a daily scale, hospitalization forecasts have been evaluated on a weekly scale by the Forecast Hub, and we follow this convention. However, modeling teams have made forecasts on different days (e.g. Saturday vs Sunday vs Monday), leading to a mismatch between what day an $h$-day ahead forecast is predicting for. Hence, for the models we construct, we actually use 3- to 30-day ahead horizons to ensure all forecasts are predicting for the same dates. It should be noted, however, this may result in a slight disadvantage for models whose 3- to 30-day ahead forecasts are being compared to 1- to 28-day ahead forecasts.
+
 \subsection{Validation phase}
+- Serves as time during which to train the candidate models, calibrate the forecasts, and to select the best models to pass on to the testing phase
+- All validation phase evaluations are restricted to forecasts with target end dates (date for which the prediction of instant hospitalizations is being made) within the validation phase (July 27, 2020 to October 31, 2021)
+- Models passed on: single best stratified by location (states or U.S. national) and model class (regular THieF, SARIMA, THieF ensemble), best regular THieF in last 17 weeks (to account for any models that perform better with more data to train on, especially since they will have a greater amount of data to inform their forecasts during the testing face)
+
 \subsection{Testing phase}
+- True time to evaluate the best subset against the two comparison models
+- All testing phase evaluations are restricted to forecasts with target end dates (date for which the prediction of instant hospitalizations is being made) within the testing phase (November 1, 2021 to October 2, 2022)
 
 \chapter{Results}
 \section{Validation phase}
 
 \section{Testing phase}
 
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_forecasts_plot1}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-forecast_models_plot}
@@ -311,54 +365,51 @@ Hospitalization reporting was sporadic for the first four months of the pandemic
 \begin{table}[h]
 \begin{center}
 \label{tab:table_overall_us}
-\begin{Schunk}
-\begin{Soutput}
-|model                    |    wis|    mae| cov_50| cov_95|  rwis|  rmae|
-|:------------------------|------:|------:|------:|------:|-----:|-----:|
-|COVIDhub-4_week_ensemble | 1401.3| 2085.1|  0.629|  0.912| 0.750| 0.829|
-|THieF_6wk-4root          | 1642.5| 2358.8|  0.400|  0.817| 0.880| 0.938|
-|THieF_ensemble-train3    | 1687.4| 2443.4|  0.358|  0.829| 0.904| 0.972|
-|THieF_ensemble-mean      | 1700.5| 2458.9|  0.388|  0.836| 0.911| 0.978|
-|THieF_6wk-noTransform    | 1727.7| 2504.8|  0.457|  0.862| 0.925| 0.996|
-|COVIDhub-baseline        | 1867.5| 2514.1|  0.715|  0.852| 1.000| 1.000|
-|THieF_12wk-noTransform   | 2074.1| 2908.3|  0.367|  0.864| 1.111| 1.157|
-|sarima_s7-noTransform    | 2316.8| 3042.4|  0.409|  0.798| 1.241| 1.210|
-\end{Soutput}
-\end{Schunk}
-\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Fri Mar 17 18:28:20 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & COVIDhub-4\_week\_ensemble & 1401.30 & 2085.10 & 0.63 & 0.91 & 0.75 & 0.83 \\ 
+  2 & THieF\_6wk-4root & 1642.50 & 2358.80 & 0.40 & 0.82 & 0.88 & 0.94 \\ 
+  3 & THieF\_ensemble-train3 & 1687.40 & 2443.40 & 0.36 & 0.83 & 0.90 & 0.97 \\ 
+  4 & THieF\_ensemble-mean & 1700.50 & 2458.90 & 0.39 & 0.84 & 0.91 & 0.98 \\ 
+  5 & THieF\_6wk-noTransform & 1727.70 & 2504.80 & 0.46 & 0.86 & 0.92 & 1.00 \\ 
+  6 & COVIDhub-baseline & 1867.50 & 2514.10 & 0.71 & 0.85 & 1.00 & 1.00 \\ 
+  7 & THieF\_12wk-noTransform & 2074.10 & 2908.30 & 0.37 & 0.86 & 1.11 & 1.16 \\ 
+  8 & sarima\_s7-noTransform & 2316.80 & 3042.40 & 0.41 & 0.80 & 1.24 & 1.21 \\ 
+   \hline
+\end{tabular}\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
 \end{center}
 \end{table}
 
-\begin{Schunk}
-\begin{Soutput}
-|model                    |    wis|    mae| cov_50| cov_95|  rwis|  rmae|
-|:------------------------|------:|------:|------:|------:|-----:|-----:|
-|COVIDhub-4_week_ensemble | 1401.3| 2085.1|  0.629|  0.912| 0.750| 0.829|
-|THieF_6wk-4root          | 1642.5| 2358.8|  0.400|  0.817| 0.880| 0.938|
-|THieF_ensemble-train3    | 1687.4| 2443.4|  0.358|  0.829| 0.904| 0.972|
-|THieF_ensemble-mean      | 1700.5| 2458.9|  0.388|  0.836| 0.911| 0.978|
-|THieF_6wk-noTransform    | 1727.7| 2504.8|  0.457|  0.862| 0.925| 0.996|
-|COVIDhub-baseline        | 1867.5| 2514.1|  0.715|  0.852| 1.000| 1.000|
-|THieF_12wk-noTransform   | 2074.1| 2908.3|  0.367|  0.864| 1.111| 1.157|
-|sarima_s7-noTransform    | 2316.8| 3042.4|  0.409|  0.798| 1.241| 1.210|
-\end{Soutput}
-\begin{Soutput}
-|model                    |    wis|    mae| cov_50| cov_95|  rwis|  rmae|
-|:------------------------|------:|------:|------:|------:|-----:|-----:|
-|COVIDhub-4_week_ensemble | 30.181| 44.870|  0.644|  0.945| 0.725| 0.790|
-|THieF_6wk-4root          | 34.549| 50.116|  0.512|  0.895| 0.830| 0.883|
-|THieF_ensemble-train3    | 35.625| 51.574|  0.558|  0.906| 0.856| 0.908|
-|THieF_ensemble-mean      | 35.914| 51.805|  0.570|  0.906| 0.863| 0.913|
-|THieF_6wk-noTransform    | 39.508| 56.867|  0.546|  0.878| 0.949| 1.002|
-|COVIDhub-baseline        | 41.629| 56.772|  0.790|  0.957| 1.000| 1.000|
-|THieF_12wk-noTransform   | 41.656| 60.970|  0.510|  0.877| 1.001| 1.074|
-|sarima_s7-noTransform    | 43.538| 58.935|  0.596|  0.868| 1.046| 1.038|
-\end{Soutput}
-\end{Schunk}
+\begin{table}[h]
+\begin{center}
+\label{tab:table_overall_states}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Fri Mar 17 18:28:20 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & COVIDhub-4\_week\_ensemble & 30.18 & 44.87 & 0.64 & 0.94 & 0.72 & 0.79 \\ 
+  2 & THieF\_6wk-4root & 34.55 & 50.12 & 0.51 & 0.90 & 0.83 & 0.88 \\ 
+  3 & THieF\_ensemble-train3 & 35.62 & 51.57 & 0.56 & 0.91 & 0.86 & 0.91 \\ 
+  4 & THieF\_ensemble-mean & 35.91 & 51.80 & 0.57 & 0.91 & 0.86 & 0.91 \\ 
+  5 & THieF\_6wk-noTransform & 39.51 & 56.87 & 0.55 & 0.88 & 0.95 & 1.00 \\ 
+  6 & COVIDhub-baseline & 41.63 & 56.77 & 0.79 & 0.96 & 1.00 & 1.00 \\ 
+  7 & THieF\_12wk-noTransform & 41.66 & 60.97 & 0.51 & 0.88 & 1.00 & 1.07 \\ 
+  8 & sarima\_s7-noTransform & 43.54 & 58.94 & 0.60 & 0.87 & 1.05 & 1.04 \\ 
+   \hline
+\end{tabular}\caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{center}
+\end{table}
+
 
 
 \subsection{Model performance by horizon week}
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_horizon_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-horizon_plot}
@@ -366,7 +417,7 @@ Hospitalization reporting was sporadic for the first four months of the pandemic
 \end{figure}
 
 \subsection{Model performance by pandemic wave}
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_wave_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-wave_plot}
@@ -375,7 +426,7 @@ Hospitalization reporting was sporadic for the first four months of the pandemic
 
 
 \subsection{Model performance by location}
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_location_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-location_plot}
@@ -383,14 +434,14 @@ Hospitalization reporting was sporadic for the first four months of the pandemic
 \end{figure}
 
 \subsection{Model performance by forecast week}
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_date_plot_us}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-us_date_plot}
 \caption{Average h-week ahead WIS and 95\% PI coverage for each model for the US national level. Model performance differs from week to week: the WIS is the lowest during weeks with stable and low incident hospitalization values. The THieF-4wk models show the best performance with lower or comparable WIS to the baseline during the majority of the training period with especially good performance for 1-week ahead horizons. Meanwhile, the THieF-12wk showed lower or comparable WIS to the baseline during high incidence and changed points, which have been historically found difficult to forecast accurately. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. All THieF models show very variable coverage rates, especially for a 1 week ahead horizon, only the models without a data transformation showing stable coverage starting around February 2021.}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_date_plot_states}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-states_date_plot}
@@ -412,267 +463,306 @@ Hospitalization reporting was sporadic for the first four months of the pandemic
 %% \chapter{THE SECOND APPENDIX TITLE}
 %% ...
 
-\begin{Schunk}
-\begin{Soutput}
-|model                    | horizon_wk|    wis|    mae| cov_50| cov_95|  rwis|  rmae|
-|:------------------------|----------:|------:|------:|------:|------:|-----:|-----:|
-|COVIDhub-4_week_ensemble |          1|  659.8|  966.8|  0.682|  0.937| 0.693| 0.768|
-|THieF_ensemble-train3    |          1|  909.6| 1348.8|  0.366|  0.859| 0.955| 1.071|
-|THieF_ensemble-mean      |          1|  930.9| 1372.9|  0.381|  0.859| 0.978| 1.091|
-|COVIDhub-baseline        |          1|  952.2| 1258.8|  0.733|  0.916| 1.000| 1.000|
-|THieF_6wk-4root          |          1| 1007.4| 1419.1|  0.447|  0.787| 1.058| 1.127|
-|THieF_6wk-noTransform    |          1| 1028.7| 1467.4|  0.465|  0.877| 1.080| 1.166|
-|sarima_s7-noTransform    |          1| 1143.4| 1533.9|  0.321|  0.811| 1.201| 1.219|
-|THieF_12wk-noTransform   |          1| 1272.4| 1793.6|  0.402|  0.883| 1.336| 1.425|
-|COVIDhub-4_week_ensemble |          2| 1156.2| 1694.7|  0.663|  0.920| 0.720| 0.802|
-|THieF_6wk-4root          |          2| 1413.2| 2029.0|  0.420|  0.847| 0.881| 0.960|
-|THieF_ensemble-train3    |          2| 1417.1| 2046.9|  0.393|  0.844| 0.883| 0.969|
-|THieF_ensemble-mean      |          2| 1436.9| 2070.8|  0.405|  0.847| 0.895| 0.980|
-|THieF_6wk-noTransform    |          2| 1528.5| 2177.0|  0.469|  0.865| 0.952| 1.030|
-|COVIDhub-baseline        |          2| 1604.9| 2113.3|  0.742|  0.853| 1.000| 1.000|
-|THieF_12wk-noTransform   |          2| 1858.5| 2558.3|  0.380|  0.853| 1.158| 1.211|
-|sarima_s7-noTransform    |          2| 1923.1| 2536.3|  0.408|  0.825| 1.198| 1.200|
-|COVIDhub-4_week_ensemble |          3| 1670.6| 2528.8|  0.602|  0.900| 0.754| 0.845|
-|THieF_6wk-4root          |          3| 1867.4| 2715.3|  0.367|  0.840| 0.842| 0.907|
-|THieF_ensemble-train3    |          3| 1979.6| 2845.1|  0.351|  0.815| 0.893| 0.950|
-|THieF_6wk-noTransform    |          3| 1989.0| 2883.6|  0.458|  0.853| 0.897| 0.963|
-|THieF_ensemble-mean      |          3| 1989.0| 2860.1|  0.389|  0.834| 0.897| 0.955|
-|COVIDhub-baseline        |          3| 2217.0| 2993.7|  0.712|  0.834| 1.000| 1.000|
-|THieF_12wk-noTransform   |          3| 2369.9| 3313.8|  0.373|  0.865| 1.069| 1.107|
-|sarima_s7-noTransform    |          3| 2738.4| 3581.4|  0.458|  0.796| 1.235| 1.196|
-|COVIDhub-4_week_ensemble |          4| 2173.4| 3232.7|  0.564|  0.891| 0.787| 0.855|
-|THieF_6wk-4root          |          4| 2330.0| 3341.7|  0.362|  0.795| 0.844| 0.884|
-|THieF_6wk-noTransform    |          4| 2414.9| 3567.4|  0.433|  0.853| 0.875| 0.943|
-|THieF_ensemble-train3    |          4| 2501.1| 3615.3|  0.321|  0.795| 0.906| 0.956|
-|THieF_ensemble-mean      |          4| 2502.2| 3613.6|  0.375|  0.804| 0.906| 0.955|
-|COVIDhub-baseline        |          4| 2761.4| 3782.1|  0.670|  0.801| 1.000| 1.000|
-|THieF_12wk-noTransform   |          4| 2852.5| 4049.1|  0.308|  0.856| 1.033| 1.071|
-|sarima_s7-noTransform    |          4| 3549.4| 4630.4|  0.452|  0.756| 1.285| 1.224|
-\end{Soutput}
-\begin{Soutput}
-|model                    | horizon_wk|    wis|    mae| cov_50| cov_95|  rwis|  rmae|
-|:------------------------|----------:|------:|------:|------:|------:|-----:|-----:|
-|COVIDhub-4_week_ensemble |          1| 16.698| 25.106|  0.646|  0.957| 0.698| 0.788|
-|THieF_ensemble-train3    |          1| 20.324| 30.035|  0.547|  0.927| 0.850| 0.943|
-|THieF_ensemble-mean      |          1| 20.763| 30.521|  0.560|  0.927| 0.868| 0.958|
-|THieF_6wk-4root          |          1| 22.500| 32.973|  0.491|  0.892| 0.941| 1.035|
-|sarima_s7-noTransform    |          1| 23.110| 31.921|  0.573|  0.888| 0.966| 1.002|
-|COVIDhub-baseline        |          1| 23.921| 31.867|  0.797|  0.970| 1.000| 1.000|
-|THieF_6wk-noTransform    |          1| 25.168| 36.407|  0.525|  0.893| 1.052| 1.142|
-|THieF_12wk-noTransform   |          1| 29.174| 42.199|  0.492|  0.886| 1.220| 1.324|
-|COVIDhub-4_week_ensemble |          2| 25.421| 37.901|  0.658|  0.951| 0.688| 0.766|
-|THieF_6wk-4root          |          2| 30.099| 43.938|  0.515|  0.906| 0.815| 0.888|
-|THieF_ensemble-train3    |          2| 30.663| 44.487|  0.565|  0.913| 0.830| 0.899|
-|THieF_ensemble-mean      |          2| 31.037| 44.798|  0.578|  0.913| 0.840| 0.905|
-|THieF_6wk-noTransform    |          2| 34.995| 50.267|  0.559|  0.885| 0.947| 1.016|
-|COVIDhub-baseline        |          2| 36.947| 49.477|  0.804|  0.960| 1.000| 1.000|
-|sarima_s7-noTransform    |          2| 37.319| 50.281|  0.602|  0.873| 1.010| 1.016|
-|THieF_12wk-noTransform   |          2| 37.354| 54.313|  0.529|  0.883| 1.011| 1.098|
-|COVIDhub-4_week_ensemble |          3| 35.219| 52.519|  0.645|  0.942| 0.726| 0.792|
-|THieF_6wk-4root          |          3| 38.976| 56.363|  0.523|  0.899| 0.803| 0.850|
-|THieF_ensemble-train3    |          3| 41.597| 59.884|  0.565|  0.896| 0.857| 0.903|
-|THieF_ensemble-mean      |          3| 41.852| 60.071|  0.577|  0.896| 0.862| 0.906|
-|THieF_6wk-noTransform    |          3| 45.108| 64.825|  0.555|  0.872| 0.929| 0.978|
-|THieF_12wk-noTransform   |          3| 46.500| 68.160|  0.519|  0.872| 0.958| 1.028|
-|COVIDhub-baseline        |          3| 48.539| 66.299|  0.787|  0.951| 1.000| 1.000|
-|sarima_s7-noTransform    |          3| 51.314| 69.074|  0.605|  0.859| 1.057| 1.042|
-|COVIDhub-4_week_ensemble |          4| 44.394| 65.428|  0.626|  0.930| 0.761| 0.805|
-|THieF_6wk-4root          |          4| 47.532| 68.482|  0.518|  0.884| 0.815| 0.843|
-|THieF_ensemble-train3    |          4| 51.037| 73.470|  0.554|  0.886| 0.875| 0.904|
-|THieF_ensemble-mean      |          4| 51.111| 73.392|  0.565|  0.885| 0.876| 0.903|
-|THieF_6wk-noTransform    |          4| 53.803| 77.462|  0.546|  0.861| 0.922| 0.954|
-|THieF_12wk-noTransform   |          4| 54.518| 80.610|  0.501|  0.866| 0.934| 0.992|
-|COVIDhub-baseline        |          4| 58.355| 81.235|  0.773|  0.947| 1.000| 1.000|
-|sarima_s7-noTransform    |          4| 63.886| 86.444|  0.605|  0.849| 1.095| 1.064|
-\end{Soutput}
-\end{Schunk}
+\begin{table}[h]
+\begin{center}
+\label{tab:table_horizon_us}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Fri Mar 17 18:28:26 2023
+\begin{tabular}{rlrrrrrrr}
+  \hline
+ & model & horizon\_wk & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & COVIDhub-4\_week\_ensemble & 1.00 & 659.80 & 966.80 & 0.68 & 0.94 & 0.69 & 0.77 \\ 
+  2 & THieF\_ensemble-train3 & 1.00 & 909.60 & 1348.80 & 0.37 & 0.86 & 0.95 & 1.07 \\ 
+  3 & THieF\_ensemble-mean & 1.00 & 930.90 & 1372.90 & 0.38 & 0.86 & 0.98 & 1.09 \\ 
+  4 & COVIDhub-baseline & 1.00 & 952.20 & 1258.80 & 0.73 & 0.92 & 1.00 & 1.00 \\ 
+  5 & THieF\_6wk-4root & 1.00 & 1007.40 & 1419.10 & 0.45 & 0.79 & 1.06 & 1.13 \\ 
+  6 & THieF\_6wk-noTransform & 1.00 & 1028.70 & 1467.40 & 0.46 & 0.88 & 1.08 & 1.17 \\ 
+  7 & sarima\_s7-noTransform & 1.00 & 1143.40 & 1533.90 & 0.32 & 0.81 & 1.20 & 1.22 \\ 
+  8 & THieF\_12wk-noTransform & 1.00 & 1272.40 & 1793.60 & 0.40 & 0.88 & 1.34 & 1.42 \\ 
+  9 & COVIDhub-4\_week\_ensemble & 2.00 & 1156.20 & 1694.70 & 0.66 & 0.92 & 0.72 & 0.80 \\ 
+  10 & THieF\_6wk-4root & 2.00 & 1413.20 & 2029.00 & 0.42 & 0.85 & 0.88 & 0.96 \\ 
+  11 & THieF\_ensemble-train3 & 2.00 & 1417.10 & 2046.90 & 0.39 & 0.84 & 0.88 & 0.97 \\ 
+  12 & THieF\_ensemble-mean & 2.00 & 1436.90 & 2070.80 & 0.40 & 0.85 & 0.90 & 0.98 \\ 
+  13 & THieF\_6wk-noTransform & 2.00 & 1528.50 & 2177.00 & 0.47 & 0.86 & 0.95 & 1.03 \\ 
+  14 & COVIDhub-baseline & 2.00 & 1604.90 & 2113.30 & 0.74 & 0.85 & 1.00 & 1.00 \\ 
+  15 & THieF\_12wk-noTransform & 2.00 & 1858.50 & 2558.30 & 0.38 & 0.85 & 1.16 & 1.21 \\ 
+  16 & sarima\_s7-noTransform & 2.00 & 1923.10 & 2536.30 & 0.41 & 0.82 & 1.20 & 1.20 \\ 
+  17 & COVIDhub-4\_week\_ensemble & 3.00 & 1670.60 & 2528.80 & 0.60 & 0.90 & 0.75 & 0.84 \\ 
+  18 & THieF\_6wk-4root & 3.00 & 1867.40 & 2715.30 & 0.37 & 0.84 & 0.84 & 0.91 \\ 
+  19 & THieF\_ensemble-train3 & 3.00 & 1979.60 & 2845.10 & 0.35 & 0.81 & 0.89 & 0.95 \\ 
+  20 & THieF\_6wk-noTransform & 3.00 & 1989.00 & 2883.60 & 0.46 & 0.85 & 0.90 & 0.96 \\ 
+  21 & THieF\_ensemble-mean & 3.00 & 1989.00 & 2860.10 & 0.39 & 0.83 & 0.90 & 0.95 \\ 
+  22 & COVIDhub-baseline & 3.00 & 2217.00 & 2993.70 & 0.71 & 0.83 & 1.00 & 1.00 \\ 
+  23 & THieF\_12wk-noTransform & 3.00 & 2369.90 & 3313.80 & 0.37 & 0.86 & 1.07 & 1.11 \\ 
+  24 & sarima\_s7-noTransform & 3.00 & 2738.40 & 3581.40 & 0.46 & 0.80 & 1.24 & 1.20 \\ 
+  25 & COVIDhub-4\_week\_ensemble & 4.00 & 2173.40 & 3232.70 & 0.56 & 0.89 & 0.79 & 0.85 \\ 
+  26 & THieF\_6wk-4root & 4.00 & 2330.00 & 3341.70 & 0.36 & 0.80 & 0.84 & 0.88 \\ 
+  27 & THieF\_6wk-noTransform & 4.00 & 2414.90 & 3567.40 & 0.43 & 0.85 & 0.88 & 0.94 \\ 
+  28 & THieF\_ensemble-train3 & 4.00 & 2501.10 & 3615.30 & 0.32 & 0.80 & 0.91 & 0.96 \\ 
+  29 & THieF\_ensemble-mean & 4.00 & 2502.20 & 3613.60 & 0.38 & 0.80 & 0.91 & 0.95 \\ 
+  30 & COVIDhub-baseline & 4.00 & 2761.40 & 3782.10 & 0.67 & 0.80 & 1.00 & 1.00 \\ 
+  31 & THieF\_12wk-noTransform & 4.00 & 2852.50 & 4049.10 & 0.31 & 0.86 & 1.03 & 1.07 \\ 
+  32 & sarima\_s7-noTransform & 4.00 & 3549.40 & 4630.40 & 0.45 & 0.76 & 1.28 & 1.22 \\ 
+   \hline
+\end{tabular}\caption{Summary of model performance stratified by horizon week for the US national level, aggregated across forecast week. The results from this table were used to create Figure 4 that summarized average WIS by horizon week for the US national level and the states level. The table is ordered by ascending horizon week and WIS, with THieF-4wk-4root having the lowest WIS except for the 4 week ahead horizon. The baseline consistently does not have the best WIS.}
+\end{center}
+\end{table}
 
-\begin{Schunk}
-\begin{Soutput}
-|model                    | horizon_wk|wave    |    wis|    mae| cov_50| cov_95|  rwis|  rmae|
-|:------------------------|----------:|:-------|------:|------:|------:|------:|-----:|-----:|
-|COVIDhub-4_week_ensemble |          1|ba4_ba5 |  277.8|  378.7|  0.890|  1.000| 0.616| 0.778|
-|THieF_6wk-4root          |          1|ba4_ba5 |  350.4|  542.9|  0.605|  0.994| 0.777| 1.115|
-|THieF_ensemble-train3    |          1|ba4_ba5 |  399.1|  685.3|  0.459|  1.000| 0.885| 1.408|
-|THieF_ensemble-mean      |          1|ba4_ba5 |  433.6|  740.3|  0.488|  1.000| 0.962| 1.521|
-|COVIDhub-baseline        |          1|ba4_ba5 |  450.8|  486.9|  0.924|  1.000| 1.000| 1.000|
-|THieF_6wk-noTransform    |          1|ba4_ba5 |  516.5|  822.5|  0.599|  1.000| 1.146| 1.689|
-|sarima_s7-noTransform    |          1|ba4_ba5 |  517.8|  828.6|  0.413|  0.988| 1.149| 1.702|
-|THieF_12wk-noTransform   |          1|ba4_ba5 |  790.7| 1319.2|  0.349|  1.000| 1.754| 2.709|
-|COVIDhub-4_week_ensemble |          2|ba4_ba5 |  411.4|  572.5|  0.855|  1.000| 0.629| 0.773|
-|THieF_6wk-4root          |          2|ba4_ba5 |  518.8|  813.0|  0.612|  1.000| 0.793| 1.097|
-|THieF_ensemble-train3    |          2|ba4_ba5 |  578.6|  966.6|  0.491|  1.000| 0.884| 1.304|
-|THieF_ensemble-mean      |          2|ba4_ba5 |  621.8| 1030.3|  0.503|  1.000| 0.950| 1.390|
-|COVIDhub-baseline        |          2|ba4_ba5 |  654.2|  741.0|  0.982|  1.000| 1.000| 1.000|
-|THieF_6wk-noTransform    |          2|ba4_ba5 |  727.8| 1145.9|  0.594|  1.000| 1.112| 1.546|
-|sarima_s7-noTransform    |          2|ba4_ba5 |  729.7| 1169.6|  0.527|  1.000| 1.115| 1.578|
-|THieF_12wk-noTransform   |          2|ba4_ba5 | 1012.6| 1677.5|  0.376|  1.000| 1.548| 2.264|
-|COVIDhub-4_week_ensemble |          3|ba4_ba5 |  563.3|  824.7|  0.772|  1.000| 0.683| 0.794|
-|THieF_6wk-4root          |          3|ba4_ba5 |  683.9| 1069.1|  0.589|  1.000| 0.829| 1.029|
-|THieF_ensemble-train3    |          3|ba4_ba5 |  784.0| 1311.5|  0.449|  1.000| 0.950| 1.262|
-|COVIDhub-baseline        |          3|ba4_ba5 |  825.0| 1038.9|  1.000|  1.000| 1.000| 1.000|
-|THieF_ensemble-mean      |          3|ba4_ba5 |  825.0| 1371.3|  0.500|  1.000| 1.000| 1.320|
-|THieF_6wk-noTransform    |          3|ba4_ba5 |  911.0| 1464.4|  0.589|  1.000| 1.104| 1.410|
-|sarima_s7-noTransform    |          3|ba4_ba5 |  953.5| 1514.2|  0.570|  1.000| 1.156| 1.457|
-|THieF_12wk-noTransform   |          3|ba4_ba5 | 1248.7| 2097.1|  0.380|  1.000| 1.514| 2.019|
-|COVIDhub-4_week_ensemble |          4|ba4_ba5 |  698.9| 1034.3|  0.768|  1.000| 0.719| 0.783|
-|THieF_6wk-4root          |          4|ba4_ba5 |  801.9| 1210.3|  0.642|  1.000| 0.825| 0.917|
-|THieF_ensemble-train3    |          4|ba4_ba5 |  969.8| 1585.1|  0.477|  1.000| 0.998| 1.200|
-|COVIDhub-baseline        |          4|ba4_ba5 |  972.0| 1320.5|  1.000|  1.000| 1.000| 1.000|
-|THieF_ensemble-mean      |          4|ba4_ba5 | 1010.8| 1651.7|  0.530|  1.000| 1.040| 1.251|
-|THieF_6wk-noTransform    |          4|ba4_ba5 | 1034.0| 1631.7|  0.609|  1.000| 1.064| 1.236|
-|sarima_s7-noTransform    |          4|ba4_ba5 | 1169.6| 1821.8|  0.603|  1.000| 1.203| 1.380|
-|THieF_12wk-noTransform   |          4|ba4_ba5 | 1501.8| 2581.8|  0.338|  1.000| 1.545| 1.955|
-|THieF_ensemble-mean      |          1|delta   |  239.1|  305.4|  0.857|  1.000| 0.161| 0.147|
-|THieF_ensemble-train3    |          1|delta   |  247.9|  326.8|  0.857|  1.000| 0.167| 0.157|
-|sarima_s7-noTransform    |          1|delta   |  270.9|  454.3|  0.286|  1.000| 0.182| 0.218|
-|THieF_6wk-4root          |          1|delta   |  327.6|  536.4|  0.714|  1.000| 0.220| 0.257|
-|THieF_6wk-noTransform    |          1|delta   |  332.5|  563.7|  0.429|  1.000| 0.223| 0.271|
-|THieF_12wk-noTransform   |          1|delta   |  381.8|  523.0|  1.000|  1.000| 0.257| 0.251|
-|THieF_6wk-noTransform    |          2|delta   |  286.5|  260.1|  1.000|  1.000| 0.111| 0.074|
-|sarima_s7-noTransform    |          2|delta   |  290.7|  240.0|  1.000|  1.000| 0.113| 0.068|
-|THieF_ensemble-mean      |          2|delta   |  313.6|  215.3|  1.000|  1.000| 0.122| 0.061|
-|THieF_ensemble-train3    |          2|delta   |  316.2|  207.6|  1.000|  1.000| 0.123| 0.059|
-|THieF_6wk-4root          |          2|delta   |  324.4|  280.4|  1.000|  1.000| 0.126| 0.080|
-|THieF_12wk-noTransform   |          2|delta   |  487.9|  404.7|  1.000|  1.000| 0.189| 0.115|
-|THieF_6wk-noTransform    |          3|delta   |  396.0|  511.1|  0.857|  1.000| 0.111| 0.104|
-|sarima_s7-noTransform    |          3|delta   |  486.3|  701.8|  1.000|  1.000| 0.136| 0.143|
-|THieF_ensemble-mean      |          3|delta   |  509.6|  800.2|  1.000|  1.000| 0.142| 0.163|
-|THieF_ensemble-train3    |          3|delta   |  509.6|  797.2|  1.000|  1.000| 0.142| 0.162|
-|THieF_6wk-4root          |          3|delta   |  547.9|  979.9|  0.857|  1.000| 0.153| 0.199|
-|THieF_12wk-noTransform   |          3|delta   |  585.8|  276.3|  1.000|  1.000| 0.163| 0.056|
-|THieF_6wk-noTransform    |          4|delta   |  530.6|  831.2|  0.714|  1.000| 0.120| 0.136|
-|THieF_ensemble-mean      |          4|delta   |  691.0| 1128.0|  0.857|  1.000| 0.156| 0.185|
-|THieF_ensemble-train3    |          4|delta   |  691.8| 1135.1|  0.857|  1.000| 0.156| 0.186|
-|THieF_12wk-noTransform   |          4|delta   |  710.8|  555.6|  1.000|  1.000| 0.160| 0.091|
-|sarima_s7-noTransform    |          4|delta   |  745.2| 1232.6|  0.714|  1.000| 0.168| 0.202|
-|THieF_6wk-4root          |          4|delta   |  801.6| 1496.1|  0.429|  1.000| 0.181| 0.246|
-|COVIDhub-4_week_ensemble |          1|omicron | 1067.9| 1595.1|  0.460|  0.870| 0.718| 0.766|
-|COVIDhub-baseline        |          1|omicron | 1487.9| 2083.4|  0.528|  0.826| 1.000| 1.000|
-|THieF_ensemble-train3    |          1|omicron | 1509.9| 2136.2|  0.240|  0.695| 3.350| 4.387|
-|THieF_ensemble-mean      |          1|omicron | 1517.9| 2127.8|  0.240|  0.695| 3.367| 4.370|
-|THieF_6wk-noTransform    |          1|omicron | 1632.5| 2228.7|  0.318|  0.734| 3.621| 4.578|
-|THieF_6wk-4root          |          1|omicron | 1772.1| 2437.8|  0.260|  0.545| 3.931| 5.007|
-|THieF_12wk-noTransform   |          1|omicron | 1850.9| 2381.2|  0.435|  0.747| 4.106| 4.891|
-|sarima_s7-noTransform    |          1|omicron | 1881.9| 2370.8|  0.221|  0.604| 4.175| 4.869|
-|COVIDhub-4_week_ensemble |          2|omicron | 1919.4| 2844.9|  0.466|  0.839| 0.744| 0.808|
-|THieF_ensemble-mean      |          2|omicron | 2361.2| 3270.0|  0.273|  0.675| 3.609| 4.413|
-|THieF_ensemble-train3    |          2|omicron | 2365.4| 3287.9|  0.260|  0.669| 3.616| 4.437|
-|THieF_6wk-4root          |          2|omicron | 2421.1| 3411.4|  0.188|  0.675| 3.701| 4.604|
-|THieF_6wk-noTransform    |          2|omicron | 2442.9| 3368.8|  0.312|  0.714| 3.734| 4.546|
-|COVIDhub-baseline        |          2|omicron | 2579.1| 3519.7|  0.497|  0.702| 1.000| 1.000|
-|THieF_12wk-noTransform   |          2|omicron | 2827.3| 3600.0|  0.357|  0.688| 4.322| 4.858|
-|sarima_s7-noTransform    |          2|omicron | 3275.9| 4104.9|  0.253|  0.630| 5.007| 5.540|
-|COVIDhub-4_week_ensemble |          3|omicron | 2757.2| 4201.2|  0.435|  0.801| 0.770| 0.855|
-|THieF_6wk-4root          |          3|omicron | 3141.5| 4483.1|  0.117|  0.669| 3.808| 4.315|
-|THieF_6wk-noTransform    |          3|omicron | 3167.4| 4447.5|  0.305|  0.695| 3.839| 4.281|
-|THieF_ensemble-mean      |          3|omicron | 3250.5| 4481.1|  0.247|  0.656| 3.940| 4.313|
-|THieF_ensemble-train3    |          3|omicron | 3273.1| 4511.8|  0.221|  0.617| 3.967| 4.343|
-|COVIDhub-baseline        |          3|omicron | 3583.0| 4912.1|  0.429|  0.671| 1.000| 1.000|
-|THieF_12wk-noTransform   |          3|omicron | 3601.4| 4700.2|  0.338|  0.721| 4.365| 4.524|
-|sarima_s7-noTransform    |          3|omicron | 4672.1| 5833.2|  0.318|  0.578| 5.663| 5.615|
-|COVIDhub-4_week_ensemble |          4|omicron | 3556.3| 5294.6|  0.373|  0.789| 0.801| 0.869|
-|THieF_6wk-noTransform    |          4|omicron | 3854.4| 5589.8|  0.247|  0.701| 3.965| 4.233|
-|THieF_6wk-4root          |          4|omicron | 3897.8| 5515.5|  0.084|  0.584| 4.010| 4.177|
-|THieF_ensemble-mean      |          4|omicron | 4046.9| 5650.1|  0.201|  0.604| 4.163| 4.279|
-|THieF_ensemble-train3    |          4|omicron | 4084.8| 5718.6|  0.143|  0.584| 4.202| 4.331|
-|THieF_12wk-noTransform   |          4|omicron | 4274.3| 5646.6|  0.247|  0.708| 4.397| 4.276|
-|COVIDhub-baseline        |          4|omicron | 4439.6| 6090.8|  0.360|  0.615| 1.000| 1.000|
-|sarima_s7-noTransform    |          4|omicron | 6010.4| 7538.6|  0.292|  0.506| 6.183| 5.709|
-\end{Soutput}
-\begin{Soutput}
-|model                    | horizon_wk|wave    |     wis|     mae| cov_50| cov_95|  rwis|  rmae|
-|:------------------------|----------:|:-------|-------:|-------:|------:|------:|-----:|-----:|
-|COVIDhub-4_week_ensemble |          1|ba4_ba5 |   8.911|  13.434|  0.719|  0.991| 0.615| 0.810|
-|THieF_6wk-4root          |          1|ba4_ba5 |   9.947|  14.828|  0.618|  0.968| 0.687| 0.894|
-|THieF_ensemble-train3    |          1|ba4_ba5 |  10.477|  15.622|  0.674|  0.988| 0.723| 0.941|
-|THieF_ensemble-mean      |          1|ba4_ba5 |  11.101|  16.471|  0.687|  0.990| 0.766| 0.993|
-|sarima_s7-noTransform    |          1|ba4_ba5 |  12.808|  19.000|  0.676|  0.977| 0.884| 1.145|
-|THieF_6wk-noTransform    |          1|ba4_ba5 |  13.925|  20.539|  0.696|  0.992| 0.961| 1.238|
-|COVIDhub-baseline        |          1|ba4_ba5 |  14.488|  16.595|  0.921|  1.000| 1.000| 1.000|
-|THieF_12wk-noTransform   |          1|ba4_ba5 |  18.372|  28.320|  0.607|  0.989| 1.268| 1.707|
-|COVIDhub-4_week_ensemble |          2|ba4_ba5 |  11.854|  17.637|  0.758|  0.996| 0.602| 0.814|
-|THieF_6wk-4root          |          2|ba4_ba5 |  13.279|  19.072|  0.687|  0.988| 0.675| 0.880|
-|THieF_ensemble-train3    |          2|ba4_ba5 |  14.153|  20.344|  0.737|  0.994| 0.719| 0.939|
-|THieF_ensemble-mean      |          2|ba4_ba5 |  14.862|  21.204|  0.752|  0.995| 0.755| 0.979|
-|sarima_s7-noTransform    |          2|ba4_ba5 |  17.464|  25.074|  0.751|  0.988| 0.887| 1.157|
-|THieF_6wk-noTransform    |          2|ba4_ba5 |  17.922|  25.688|  0.767|  0.996| 0.910| 1.186|
-|COVIDhub-baseline        |          2|ba4_ba5 |  19.686|  21.668|  0.968|  1.000| 1.000| 1.000|
-|THieF_12wk-noTransform   |          2|ba4_ba5 |  21.523|  32.823|  0.681|  0.996| 1.093| 1.515|
-|COVIDhub-4_week_ensemble |          3|ba4_ba5 |  15.218|  22.860|  0.763|  0.995| 0.636| 0.832|
-|THieF_6wk-4root          |          3|ba4_ba5 |  16.821|  23.305|  0.724|  0.993| 0.703| 0.848|
-|THieF_ensemble-train3    |          3|ba4_ba5 |  17.948|  25.285|  0.764|  0.996| 0.750| 0.920|
-|THieF_ensemble-mean      |          3|ba4_ba5 |  18.676|  26.221|  0.777|  0.997| 0.780| 0.954|
-|THieF_6wk-noTransform    |          3|ba4_ba5 |  21.594|  31.205|  0.779|  0.998| 0.902| 1.135|
-|sarima_s7-noTransform    |          3|ba4_ba5 |  22.064|  31.343|  0.781|  0.992| 0.922| 1.140|
-|COVIDhub-baseline        |          3|ba4_ba5 |  23.932|  27.492|  0.975|  1.000| 1.000| 1.000|
-|THieF_12wk-noTransform   |          3|ba4_ba5 |  25.377|  39.278|  0.697|  0.997| 1.060| 1.429|
-|COVIDhub-4_week_ensemble |          4|ba4_ba5 |  18.259|  27.514|  0.757|  0.995| 0.665| 0.839|
-|THieF_6wk-4root          |          4|ba4_ba5 |  19.920|  26.570|  0.751|  0.997| 0.725| 0.810|
-|THieF_ensemble-train3    |          4|ba4_ba5 |  21.500|  29.630|  0.776|  0.998| 0.783| 0.903|
-|THieF_ensemble-mean      |          4|ba4_ba5 |  22.126|  30.413|  0.788|  0.999| 0.806| 0.927|
-|THieF_6wk-noTransform    |          4|ba4_ba5 |  24.166|  34.327|  0.800|  0.999| 0.880| 1.046|
-|sarima_s7-noTransform    |          4|ba4_ba5 |  25.953|  36.718|  0.803|  0.995| 0.945| 1.119|
-|COVIDhub-baseline        |          4|ba4_ba5 |  27.465|  32.803|  0.975|  1.000| 1.000| 1.000|
-|THieF_12wk-noTransform   |          4|ba4_ba5 |  29.061|  45.413|  0.687|  0.999| 1.058| 1.384|
-|sarima_s7-noTransform    |          1|delta   |  10.381|  14.692|  0.701|  0.975| 0.305| 0.305|
-|THieF_ensemble-mean      |          1|delta   |  11.595|  18.759|  0.640|  0.995| 0.341| 0.389|
-|THieF_ensemble-train3    |          1|delta   |  11.872|  19.295|  0.604|  0.995| 0.349| 0.400|
-|THieF_6wk-4root          |          1|delta   |  14.157|  22.679|  0.511|  0.953| 0.416| 0.471|
-|THieF_12wk-noTransform   |          1|delta   |  14.886|  23.515|  0.525|  0.948| 0.438| 0.488|
-|THieF_6wk-noTransform    |          1|delta   |  15.571|  25.831|  0.511|  0.970| 0.458| 0.536|
-|sarima_s7-noTransform    |          2|delta   |  14.637|  20.798|  0.695|  0.981| 0.268| 0.267|
-|THieF_ensemble-mean      |          2|delta   |  16.327|  26.271|  0.654|  0.986| 0.299| 0.337|
-|THieF_ensemble-train3    |          2|delta   |  16.517|  26.761|  0.640|  0.984| 0.302| 0.343|
-|THieF_6wk-4root          |          2|delta   |  17.992|  29.882|  0.544|  0.978| 0.329| 0.383|
-|THieF_12wk-noTransform   |          2|delta   |  19.349|  30.097|  0.596|  0.951| 0.354| 0.386|
-|THieF_6wk-noTransform    |          2|delta   |  19.582|  32.199|  0.621|  0.973| 0.358| 0.413|
-|sarima_s7-noTransform    |          3|delta   |  23.200|  35.709|  0.596|  0.973| 0.319| 0.342|
-|THieF_ensemble-mean      |          3|delta   |  25.615|  41.494|  0.580|  0.975| 0.352| 0.398|
-|THieF_ensemble-train3    |          3|delta   |  25.767|  41.935|  0.569|  0.978| 0.354| 0.402|
-|THieF_6wk-4root          |          3|delta   |  27.031|  44.490|  0.519|  0.986| 0.372| 0.426|
-|THieF_12wk-noTransform   |          3|delta   |  27.962|  44.220|  0.508|  0.918| 0.385| 0.424|
-|THieF_6wk-noTransform    |          3|delta   |  28.402|  46.470|  0.533|  0.945| 0.391| 0.445|
-|sarima_s7-noTransform    |          4|delta   |  30.502|  49.254|  0.541|  0.945| 0.349| 0.389|
-|THieF_ensemble-mean      |          4|delta   |  31.711|  51.117|  0.538|  0.967| 0.363| 0.404|
-|THieF_ensemble-train3    |          4|delta   |  31.797|  51.456|  0.530|  0.970| 0.364| 0.406|
-|THieF_6wk-4root          |          4|delta   |  32.277|  52.556|  0.519|  0.995| 0.370| 0.415|
-|THieF_6wk-noTransform    |          4|delta   |  34.183|  55.441|  0.475|  0.929| 0.391| 0.438|
-|THieF_12wk-noTransform   |          4|delta   |  34.383|  54.476|  0.489|  0.904| 0.394| 0.430|
-|COVIDhub-4_week_ensemble |          1|omicron |  25.018|  37.574|  0.569|  0.921| 0.736| 0.780|
-|THieF_ensemble-train3    |          1|omicron |  31.706|  46.621|  0.403|  0.856| 2.188| 2.809|
-|THieF_ensemble-mean      |          1|omicron |  31.971|  46.748|  0.414|  0.853| 2.207| 2.817|
-|COVIDhub-baseline        |          1|omicron |  33.998|  48.183|  0.664|  0.939| 1.000| 1.000|
-|sarima_s7-noTransform    |          1|omicron |  35.196|  47.136|  0.451|  0.784| 2.429| 2.840|
-|THieF_6wk-4root          |          1|omicron |  36.899|  53.706|  0.348|  0.804| 2.547| 3.236|
-|THieF_6wk-noTransform    |          1|omicron |  38.161|  54.611|  0.335|  0.780| 2.634| 3.291|
-|THieF_12wk-noTransform   |          1|omicron |  41.888|  58.550|  0.362|  0.768| 2.891| 3.528|
-|COVIDhub-4_week_ensemble |          2|omicron |  39.326|  58.668|  0.556|  0.906| 0.720| 0.752|
-|THieF_6wk-4root          |          2|omicron |  48.671|  71.220|  0.330|  0.815| 2.472| 3.287|
-|THieF_ensemble-train3    |          2|omicron |  48.996|  71.161|  0.377|  0.823| 2.489| 3.284|
-|THieF_ensemble-mean      |          2|omicron |  49.036|  70.919|  0.389|  0.822| 2.491| 3.273|
-|THieF_6wk-noTransform    |          2|omicron |  53.988|  77.423|  0.334|  0.762| 2.742| 3.573|
-|COVIDhub-baseline        |          2|omicron |  54.637|  77.978|  0.635|  0.919| 1.000| 1.000|
-|THieF_12wk-noTransform   |          2|omicron |  55.135|  78.439|  0.362|  0.759| 2.801| 3.620|
-|sarima_s7-noTransform    |          2|omicron |  59.624|  78.628|  0.439|  0.745| 3.029| 3.629|
-|COVIDhub-4_week_ensemble |          3|omicron |  54.848|  81.624|  0.529|  0.891| 0.755| 0.782|
-|THieF_6wk-4root          |          3|omicron |  62.249|  90.820|  0.317|  0.798| 2.601| 3.303|
-|THieF_ensemble-mean      |          3|omicron |  66.369|  95.646|  0.372|  0.788| 2.773| 3.479|
-|THieF_ensemble-train3    |          3|omicron |  66.579|  96.197|  0.360|  0.790| 2.782| 3.499|
-|THieF_12wk-noTransform   |          3|omicron |  69.014|  98.879|  0.336|  0.741| 2.884| 3.597|
-|THieF_6wk-noTransform    |          3|omicron |  69.993| 100.152|  0.325|  0.740| 2.925| 3.643|
-|COVIDhub-baseline        |          3|omicron |  72.688| 104.382|  0.603|  0.903| 1.000| 1.000|
-|sarima_s7-noTransform    |          3|omicron |  82.602| 109.301|  0.425|  0.718| 3.452| 3.976|
-|COVIDhub-4_week_ensemble |          4|omicron |  68.905| 100.987|  0.504|  0.869| 0.789| 0.797|
-|THieF_6wk-4root          |          4|omicron |  75.300| 110.301|  0.289|  0.767| 2.742| 3.362|
-|THieF_12wk-noTransform   |          4|omicron |  80.395| 116.309|  0.319|  0.733| 2.927| 3.546|
-|THieF_ensemble-mean      |          4|omicron |  80.412| 116.545|  0.349|  0.770| 2.928| 3.553|
-|THieF_ensemble-train3    |          4|omicron |  80.873| 117.458|  0.337|  0.771| 2.945| 3.581|
-|THieF_6wk-noTransform    |          4|omicron |  83.755| 120.758|  0.301|  0.723| 3.050| 3.681|
-|COVIDhub-baseline        |          4|omicron |  87.327| 126.658|  0.584|  0.897| 1.000| 1.000|
-|sarima_s7-noTransform    |          4|omicron | 102.597| 136.890|  0.414|  0.702| 3.736| 4.173|
-\end{Soutput}
-\end{Schunk}
+\begin{table}[h]
+\begin{center}
+\label{tab:table_horizon_states}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Fri Mar 17 18:28:26 2023
+\begin{tabular}{rlrrrrrrr}
+  \hline
+ & model & horizon\_wk & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & COVIDhub-4\_week\_ensemble & 1.00 & 16.70 & 25.11 & 0.65 & 0.96 & 0.70 & 0.79 \\ 
+  2 & THieF\_ensemble-train3 & 1.00 & 20.32 & 30.04 & 0.55 & 0.93 & 0.85 & 0.94 \\ 
+  3 & THieF\_ensemble-mean & 1.00 & 20.76 & 30.52 & 0.56 & 0.93 & 0.87 & 0.96 \\ 
+  4 & THieF\_6wk-4root & 1.00 & 22.50 & 32.97 & 0.49 & 0.89 & 0.94 & 1.03 \\ 
+  5 & sarima\_s7-noTransform & 1.00 & 23.11 & 31.92 & 0.57 & 0.89 & 0.97 & 1.00 \\ 
+  6 & COVIDhub-baseline & 1.00 & 23.92 & 31.87 & 0.80 & 0.97 & 1.00 & 1.00 \\ 
+  7 & THieF\_6wk-noTransform & 1.00 & 25.17 & 36.41 & 0.52 & 0.89 & 1.05 & 1.14 \\ 
+  8 & THieF\_12wk-noTransform & 1.00 & 29.17 & 42.20 & 0.49 & 0.89 & 1.22 & 1.32 \\ 
+  9 & COVIDhub-4\_week\_ensemble & 2.00 & 25.42 & 37.90 & 0.66 & 0.95 & 0.69 & 0.77 \\ 
+  10 & THieF\_6wk-4root & 2.00 & 30.10 & 43.94 & 0.52 & 0.91 & 0.81 & 0.89 \\ 
+  11 & THieF\_ensemble-train3 & 2.00 & 30.66 & 44.49 & 0.56 & 0.91 & 0.83 & 0.90 \\ 
+  12 & THieF\_ensemble-mean & 2.00 & 31.04 & 44.80 & 0.58 & 0.91 & 0.84 & 0.90 \\ 
+  13 & THieF\_6wk-noTransform & 2.00 & 34.99 & 50.27 & 0.56 & 0.88 & 0.95 & 1.02 \\ 
+  14 & COVIDhub-baseline & 2.00 & 36.95 & 49.48 & 0.80 & 0.96 & 1.00 & 1.00 \\ 
+  15 & sarima\_s7-noTransform & 2.00 & 37.32 & 50.28 & 0.60 & 0.87 & 1.01 & 1.02 \\ 
+  16 & THieF\_12wk-noTransform & 2.00 & 37.35 & 54.31 & 0.53 & 0.88 & 1.01 & 1.10 \\ 
+  17 & COVIDhub-4\_week\_ensemble & 3.00 & 35.22 & 52.52 & 0.64 & 0.94 & 0.73 & 0.79 \\ 
+  18 & THieF\_6wk-4root & 3.00 & 38.98 & 56.36 & 0.52 & 0.90 & 0.80 & 0.85 \\ 
+  19 & THieF\_ensemble-train3 & 3.00 & 41.60 & 59.88 & 0.56 & 0.90 & 0.86 & 0.90 \\ 
+  20 & THieF\_ensemble-mean & 3.00 & 41.85 & 60.07 & 0.58 & 0.90 & 0.86 & 0.91 \\ 
+  21 & THieF\_6wk-noTransform & 3.00 & 45.11 & 64.83 & 0.56 & 0.87 & 0.93 & 0.98 \\ 
+  22 & THieF\_12wk-noTransform & 3.00 & 46.50 & 68.16 & 0.52 & 0.87 & 0.96 & 1.03 \\ 
+  23 & COVIDhub-baseline & 3.00 & 48.54 & 66.30 & 0.79 & 0.95 & 1.00 & 1.00 \\ 
+  24 & sarima\_s7-noTransform & 3.00 & 51.31 & 69.07 & 0.60 & 0.86 & 1.06 & 1.04 \\ 
+  25 & COVIDhub-4\_week\_ensemble & 4.00 & 44.39 & 65.43 & 0.63 & 0.93 & 0.76 & 0.80 \\ 
+  26 & THieF\_6wk-4root & 4.00 & 47.53 & 68.48 & 0.52 & 0.88 & 0.81 & 0.84 \\ 
+  27 & THieF\_ensemble-train3 & 4.00 & 51.04 & 73.47 & 0.55 & 0.89 & 0.88 & 0.90 \\ 
+  28 & THieF\_ensemble-mean & 4.00 & 51.11 & 73.39 & 0.56 & 0.88 & 0.88 & 0.90 \\ 
+  29 & THieF\_6wk-noTransform & 4.00 & 53.80 & 77.46 & 0.55 & 0.86 & 0.92 & 0.95 \\ 
+  30 & THieF\_12wk-noTransform & 4.00 & 54.52 & 80.61 & 0.50 & 0.87 & 0.93 & 0.99 \\ 
+  31 & COVIDhub-baseline & 4.00 & 58.35 & 81.23 & 0.77 & 0.95 & 1.00 & 1.00 \\ 
+  32 & sarima\_s7-noTransform & 4.00 & 63.89 & 86.44 & 0.60 & 0.85 & 1.09 & 1.06 \\ 
+   \hline
+\end{tabular}\caption{Summary of model performance stratified by horizon week for the states level, aggregated across forecast week. The results from this table were used to create Figure 4 that summarized average WIS by horizon week for the US national level and the states level. The table is ordered by ascending horizon week and WIS, with THieF-4wk-4root having the lowest WIS except for the 3 week (although it is second lowest) and 4 week ahead horizon. The baseline again consistently does not have the best WIS, performing progressively worse compared to the other models for each additional week ahead horizon.}
+\end{center}
+\end{table}
+
+
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_wave_us}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Fri Mar 17 18:28:26 2023
+\begin{longtable}{rlrlrrrrrr}
+  \hline
+ & model & horizon\_wk & wave & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & COVIDhub-4\_week\_ensemble & 1.00 & ba4\_ba5 & 277.80 & 378.70 & 0.89 & 1.00 & 0.62 & 0.78 \\ 
+  2 & THieF\_6wk-4root & 1.00 & ba4\_ba5 & 350.40 & 542.90 & 0.60 & 0.99 & 0.78 & 1.11 \\ 
+  3 & THieF\_ensemble-train3 & 1.00 & ba4\_ba5 & 399.10 & 685.30 & 0.46 & 1.00 & 0.88 & 1.41 \\ 
+  4 & THieF\_ensemble-mean & 1.00 & ba4\_ba5 & 433.60 & 740.30 & 0.49 & 1.00 & 0.96 & 1.52 \\ 
+  5 & COVIDhub-baseline & 1.00 & ba4\_ba5 & 450.80 & 486.90 & 0.92 & 1.00 & 1.00 & 1.00 \\ 
+  6 & THieF\_6wk-noTransform & 1.00 & ba4\_ba5 & 516.50 & 822.50 & 0.60 & 1.00 & 1.15 & 1.69 \\ 
+  7 & sarima\_s7-noTransform & 1.00 & ba4\_ba5 & 517.80 & 828.60 & 0.41 & 0.99 & 1.15 & 1.70 \\ 
+  8 & THieF\_12wk-noTransform & 1.00 & ba4\_ba5 & 790.70 & 1319.20 & 0.35 & 1.00 & 1.75 & 2.71 \\ 
+  9 & COVIDhub-4\_week\_ensemble & 2.00 & ba4\_ba5 & 411.40 & 572.50 & 0.85 & 1.00 & 0.63 & 0.77 \\ 
+  10 & THieF\_6wk-4root & 2.00 & ba4\_ba5 & 518.80 & 813.00 & 0.61 & 1.00 & 0.79 & 1.10 \\ 
+  11 & THieF\_ensemble-train3 & 2.00 & ba4\_ba5 & 578.60 & 966.60 & 0.49 & 1.00 & 0.88 & 1.30 \\ 
+  12 & THieF\_ensemble-mean & 2.00 & ba4\_ba5 & 621.80 & 1030.30 & 0.50 & 1.00 & 0.95 & 1.39 \\ 
+  13 & COVIDhub-baseline & 2.00 & ba4\_ba5 & 654.20 & 741.00 & 0.98 & 1.00 & 1.00 & 1.00 \\ 
+  14 & THieF\_6wk-noTransform & 2.00 & ba4\_ba5 & 727.80 & 1145.90 & 0.59 & 1.00 & 1.11 & 1.55 \\ 
+  15 & sarima\_s7-noTransform & 2.00 & ba4\_ba5 & 729.70 & 1169.60 & 0.53 & 1.00 & 1.11 & 1.58 \\ 
+  16 & THieF\_12wk-noTransform & 2.00 & ba4\_ba5 & 1012.60 & 1677.50 & 0.38 & 1.00 & 1.55 & 2.26 \\ 
+  17 & COVIDhub-4\_week\_ensemble & 3.00 & ba4\_ba5 & 563.30 & 824.70 & 0.77 & 1.00 & 0.68 & 0.79 \\ 
+  18 & THieF\_6wk-4root & 3.00 & ba4\_ba5 & 683.90 & 1069.10 & 0.59 & 1.00 & 0.83 & 1.03 \\ 
+  19 & THieF\_ensemble-train3 & 3.00 & ba4\_ba5 & 784.00 & 1311.50 & 0.45 & 1.00 & 0.95 & 1.26 \\ 
+  20 & COVIDhub-baseline & 3.00 & ba4\_ba5 & 825.00 & 1038.90 & 1.00 & 1.00 & 1.00 & 1.00 \\ 
+  21 & THieF\_ensemble-mean & 3.00 & ba4\_ba5 & 825.00 & 1371.30 & 0.50 & 1.00 & 1.00 & 1.32 \\ 
+  22 & THieF\_6wk-noTransform & 3.00 & ba4\_ba5 & 911.00 & 1464.40 & 0.59 & 1.00 & 1.10 & 1.41 \\ 
+  23 & sarima\_s7-noTransform & 3.00 & ba4\_ba5 & 953.50 & 1514.20 & 0.57 & 1.00 & 1.16 & 1.46 \\ 
+  24 & THieF\_12wk-noTransform & 3.00 & ba4\_ba5 & 1248.70 & 2097.10 & 0.38 & 1.00 & 1.51 & 2.02 \\ 
+  25 & COVIDhub-4\_week\_ensemble & 4.00 & ba4\_ba5 & 698.90 & 1034.30 & 0.77 & 1.00 & 0.72 & 0.78 \\ 
+  26 & THieF\_6wk-4root & 4.00 & ba4\_ba5 & 801.90 & 1210.30 & 0.64 & 1.00 & 0.82 & 0.92 \\ 
+  27 & THieF\_ensemble-train3 & 4.00 & ba4\_ba5 & 969.80 & 1585.10 & 0.48 & 1.00 & 1.00 & 1.20 \\ 
+  28 & COVIDhub-baseline & 4.00 & ba4\_ba5 & 972.00 & 1320.50 & 1.00 & 1.00 & 1.00 & 1.00 \\ 
+  29 & THieF\_ensemble-mean & 4.00 & ba4\_ba5 & 1010.80 & 1651.70 & 0.53 & 1.00 & 1.04 & 1.25 \\ 
+  30 & THieF\_6wk-noTransform & 4.00 & ba4\_ba5 & 1034.00 & 1631.70 & 0.61 & 1.00 & 1.06 & 1.24 \\ 
+  31 & sarima\_s7-noTransform & 4.00 & ba4\_ba5 & 1169.60 & 1821.80 & 0.60 & 1.00 & 1.20 & 1.38 \\ 
+  32 & THieF\_12wk-noTransform & 4.00 & ba4\_ba5 & 1501.80 & 2581.80 & 0.34 & 1.00 & 1.54 & 1.96 \\ 
+  33 & THieF\_ensemble-mean & 1.00 & delta & 239.10 & 305.40 & 0.86 & 1.00 & 0.16 & 0.15 \\ 
+  34 & THieF\_ensemble-train3 & 1.00 & delta & 247.90 & 326.80 & 0.86 & 1.00 & 0.17 & 0.16 \\ 
+  35 & sarima\_s7-noTransform & 1.00 & delta & 270.90 & 454.30 & 0.29 & 1.00 & 0.18 & 0.22 \\ 
+  36 & THieF\_6wk-4root & 1.00 & delta & 327.60 & 536.40 & 0.71 & 1.00 & 0.22 & 0.26 \\ 
+  37 & THieF\_6wk-noTransform & 1.00 & delta & 332.50 & 563.70 & 0.43 & 1.00 & 0.22 & 0.27 \\ 
+  38 & THieF\_12wk-noTransform & 1.00 & delta & 381.80 & 523.00 & 1.00 & 1.00 & 0.26 & 0.25 \\ 
+  39 & THieF\_6wk-noTransform & 2.00 & delta & 286.50 & 260.10 & 1.00 & 1.00 & 0.11 & 0.07 \\ 
+  40 & sarima\_s7-noTransform & 2.00 & delta & 290.70 & 240.00 & 1.00 & 1.00 & 0.11 & 0.07 \\ 
+  41 & THieF\_ensemble-mean & 2.00 & delta & 313.60 & 215.30 & 1.00 & 1.00 & 0.12 & 0.06 \\ 
+  42 & THieF\_ensemble-train3 & 2.00 & delta & 316.20 & 207.60 & 1.00 & 1.00 & 0.12 & 0.06 \\ 
+  43 & THieF\_6wk-4root & 2.00 & delta & 324.40 & 280.40 & 1.00 & 1.00 & 0.13 & 0.08 \\ 
+  44 & THieF\_12wk-noTransform & 2.00 & delta & 487.90 & 404.70 & 1.00 & 1.00 & 0.19 & 0.12 \\ 
+  45 & THieF\_6wk-noTransform & 3.00 & delta & 396.00 & 511.10 & 0.86 & 1.00 & 0.11 & 0.10 \\ 
+  46 & sarima\_s7-noTransform & 3.00 & delta & 486.30 & 701.80 & 1.00 & 1.00 & 0.14 & 0.14 \\ 
+  47 & THieF\_ensemble-mean & 3.00 & delta & 509.60 & 800.20 & 1.00 & 1.00 & 0.14 & 0.16 \\ 
+  48 & THieF\_ensemble-train3 & 3.00 & delta & 509.60 & 797.20 & 1.00 & 1.00 & 0.14 & 0.16 \\ 
+  49 & THieF\_6wk-4root & 3.00 & delta & 547.90 & 979.90 & 0.86 & 1.00 & 0.15 & 0.20 \\ 
+  50 & THieF\_12wk-noTransform & 3.00 & delta & 585.80 & 276.30 & 1.00 & 1.00 & 0.16 & 0.06 \\ 
+  51 & THieF\_6wk-noTransform & 4.00 & delta & 530.60 & 831.20 & 0.71 & 1.00 & 0.12 & 0.14 \\ 
+  52 & THieF\_ensemble-mean & 4.00 & delta & 691.00 & 1128.00 & 0.86 & 1.00 & 0.16 & 0.18 \\ 
+  53 & THieF\_ensemble-train3 & 4.00 & delta & 691.80 & 1135.10 & 0.86 & 1.00 & 0.16 & 0.19 \\ 
+  54 & THieF\_12wk-noTransform & 4.00 & delta & 710.80 & 555.60 & 1.00 & 1.00 & 0.16 & 0.09 \\ 
+  55 & sarima\_s7-noTransform & 4.00 & delta & 745.20 & 1232.60 & 0.71 & 1.00 & 0.17 & 0.20 \\ 
+  56 & THieF\_6wk-4root & 4.00 & delta & 801.60 & 1496.10 & 0.43 & 1.00 & 0.18 & 0.25 \\ 
+  57 & COVIDhub-4\_week\_ensemble & 1.00 & omicron & 1067.90 & 1595.10 & 0.46 & 0.87 & 0.72 & 0.77 \\ 
+  58 & COVIDhub-baseline & 1.00 & omicron & 1487.90 & 2083.40 & 0.53 & 0.83 & 1.00 & 1.00 \\ 
+  59 & THieF\_ensemble-train3 & 1.00 & omicron & 1509.90 & 2136.20 & 0.24 & 0.69 & 3.35 & 4.39 \\ 
+  60 & THieF\_ensemble-mean & 1.00 & omicron & 1517.90 & 2127.80 & 0.24 & 0.69 & 3.37 & 4.37 \\ 
+  61 & THieF\_6wk-noTransform & 1.00 & omicron & 1632.50 & 2228.70 & 0.32 & 0.73 & 3.62 & 4.58 \\ 
+  62 & THieF\_6wk-4root & 1.00 & omicron & 1772.10 & 2437.80 & 0.26 & 0.54 & 3.93 & 5.01 \\ 
+  63 & THieF\_12wk-noTransform & 1.00 & omicron & 1850.90 & 2381.20 & 0.43 & 0.75 & 4.11 & 4.89 \\ 
+  64 & sarima\_s7-noTransform & 1.00 & omicron & 1881.90 & 2370.80 & 0.22 & 0.60 & 4.17 & 4.87 \\ 
+  65 & COVIDhub-4\_week\_ensemble & 2.00 & omicron & 1919.40 & 2844.90 & 0.47 & 0.84 & 0.74 & 0.81 \\ 
+  66 & THieF\_ensemble-mean & 2.00 & omicron & 2361.20 & 3270.00 & 0.27 & 0.68 & 3.61 & 4.41 \\ 
+  67 & THieF\_ensemble-train3 & 2.00 & omicron & 2365.40 & 3287.90 & 0.26 & 0.67 & 3.62 & 4.44 \\ 
+  68 & THieF\_6wk-4root & 2.00 & omicron & 2421.10 & 3411.40 & 0.19 & 0.68 & 3.70 & 4.60 \\ 
+  69 & THieF\_6wk-noTransform & 2.00 & omicron & 2442.90 & 3368.80 & 0.31 & 0.71 & 3.73 & 4.55 \\ 
+  70 & COVIDhub-baseline & 2.00 & omicron & 2579.10 & 3519.70 & 0.50 & 0.70 & 1.00 & 1.00 \\ 
+  71 & THieF\_12wk-noTransform & 2.00 & omicron & 2827.30 & 3600.00 & 0.36 & 0.69 & 4.32 & 4.86 \\ 
+  72 & sarima\_s7-noTransform & 2.00 & omicron & 3275.90 & 4104.90 & 0.25 & 0.63 & 5.01 & 5.54 \\ 
+  73 & COVIDhub-4\_week\_ensemble & 3.00 & omicron & 2757.20 & 4201.20 & 0.43 & 0.80 & 0.77 & 0.85 \\ 
+  74 & THieF\_6wk-4root & 3.00 & omicron & 3141.50 & 4483.10 & 0.12 & 0.67 & 3.81 & 4.32 \\ 
+  75 & THieF\_6wk-noTransform & 3.00 & omicron & 3167.40 & 4447.50 & 0.30 & 0.69 & 3.84 & 4.28 \\ 
+  76 & THieF\_ensemble-mean & 3.00 & omicron & 3250.50 & 4481.10 & 0.25 & 0.66 & 3.94 & 4.31 \\ 
+  77 & THieF\_ensemble-train3 & 3.00 & omicron & 3273.10 & 4511.80 & 0.22 & 0.62 & 3.97 & 4.34 \\ 
+  78 & COVIDhub-baseline & 3.00 & omicron & 3583.00 & 4912.10 & 0.43 & 0.67 & 1.00 & 1.00 \\ 
+  79 & THieF\_12wk-noTransform & 3.00 & omicron & 3601.40 & 4700.20 & 0.34 & 0.72 & 4.37 & 4.52 \\ 
+  80 & sarima\_s7-noTransform & 3.00 & omicron & 4672.10 & 5833.20 & 0.32 & 0.58 & 5.66 & 5.62 \\ 
+  81 & COVIDhub-4\_week\_ensemble & 4.00 & omicron & 3556.30 & 5294.60 & 0.37 & 0.79 & 0.80 & 0.87 \\ 
+  82 & THieF\_6wk-noTransform & 4.00 & omicron & 3854.40 & 5589.80 & 0.25 & 0.70 & 3.96 & 4.23 \\ 
+  83 & THieF\_6wk-4root & 4.00 & omicron & 3897.80 & 5515.50 & 0.08 & 0.58 & 4.01 & 4.18 \\ 
+  84 & THieF\_ensemble-mean & 4.00 & omicron & 4046.90 & 5650.10 & 0.20 & 0.60 & 4.16 & 4.28 \\ 
+  85 & THieF\_ensemble-train3 & 4.00 & omicron & 4084.80 & 5718.60 & 0.14 & 0.58 & 4.20 & 4.33 \\ 
+  86 & THieF\_12wk-noTransform & 4.00 & omicron & 4274.30 & 5646.60 & 0.25 & 0.71 & 4.40 & 4.28 \\ 
+  87 & COVIDhub-baseline & 4.00 & omicron & 4439.60 & 6090.80 & 0.36 & 0.61 & 1.00 & 1.00 \\ 
+  88 & sarima\_s7-noTransform & 4.00 & omicron & 6010.40 & 7538.60 & 0.29 & 0.51 & 6.18 & 5.71 \\ 
+   \hline
+\hline
+\end{longtable}\caption{Summary of model performance stratified by horizon week and pandemic waves for the US national level, aggregated across forecast week. The results from this table were used to create Figure 5 that summarized average WIS by horizon week and pandemic wave for the US national level and the states level. The table is ordered by ascending pandemic wave, horizon week, and WIS, with THieF-4wk-4root having the lowest WIS for all horizons of the alpha wave and shorter horizons of the Winter 21 wave. The THieF-12wk-noTrans and THieF-12wk-4root models have the lowest and second lowest WIS for 3 week ahead and 4 week ahead horizons during the Winter 21 wave. The baseline consistently does not have the best WIS.}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_wave_states}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Fri Mar 17 18:28:26 2023
+\begin{longtable}{rlrlrrrrrr}
+  \hline
+ & model & horizon\_wk & wave & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & COVIDhub-4\_week\_ensemble & 1.00 & ba4\_ba5 & 8.91 & 13.43 & 0.72 & 0.99 & 0.61 & 0.81 \\ 
+  2 & THieF\_6wk-4root & 1.00 & ba4\_ba5 & 9.95 & 14.83 & 0.62 & 0.97 & 0.69 & 0.89 \\ 
+  3 & THieF\_ensemble-train3 & 1.00 & ba4\_ba5 & 10.48 & 15.62 & 0.67 & 0.99 & 0.72 & 0.94 \\ 
+  4 & THieF\_ensemble-mean & 1.00 & ba4\_ba5 & 11.10 & 16.47 & 0.69 & 0.99 & 0.77 & 0.99 \\ 
+  5 & sarima\_s7-noTransform & 1.00 & ba4\_ba5 & 12.81 & 19.00 & 0.68 & 0.98 & 0.88 & 1.14 \\ 
+  6 & THieF\_6wk-noTransform & 1.00 & ba4\_ba5 & 13.93 & 20.54 & 0.70 & 0.99 & 0.96 & 1.24 \\ 
+  7 & COVIDhub-baseline & 1.00 & ba4\_ba5 & 14.49 & 16.59 & 0.92 & 1.00 & 1.00 & 1.00 \\ 
+  8 & THieF\_12wk-noTransform & 1.00 & ba4\_ba5 & 18.37 & 28.32 & 0.61 & 0.99 & 1.27 & 1.71 \\ 
+  9 & COVIDhub-4\_week\_ensemble & 2.00 & ba4\_ba5 & 11.85 & 17.64 & 0.76 & 1.00 & 0.60 & 0.81 \\ 
+  10 & THieF\_6wk-4root & 2.00 & ba4\_ba5 & 13.28 & 19.07 & 0.69 & 0.99 & 0.68 & 0.88 \\ 
+  11 & THieF\_ensemble-train3 & 2.00 & ba4\_ba5 & 14.15 & 20.34 & 0.74 & 0.99 & 0.72 & 0.94 \\ 
+  12 & THieF\_ensemble-mean & 2.00 & ba4\_ba5 & 14.86 & 21.20 & 0.75 & 0.99 & 0.76 & 0.98 \\ 
+  13 & sarima\_s7-noTransform & 2.00 & ba4\_ba5 & 17.46 & 25.07 & 0.75 & 0.99 & 0.89 & 1.16 \\ 
+  14 & THieF\_6wk-noTransform & 2.00 & ba4\_ba5 & 17.92 & 25.69 & 0.77 & 1.00 & 0.91 & 1.19 \\ 
+  15 & COVIDhub-baseline & 2.00 & ba4\_ba5 & 19.69 & 21.67 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
+  16 & THieF\_12wk-noTransform & 2.00 & ba4\_ba5 & 21.52 & 32.82 & 0.68 & 1.00 & 1.09 & 1.51 \\ 
+  17 & COVIDhub-4\_week\_ensemble & 3.00 & ba4\_ba5 & 15.22 & 22.86 & 0.76 & 0.99 & 0.64 & 0.83 \\ 
+  18 & THieF\_6wk-4root & 3.00 & ba4\_ba5 & 16.82 & 23.30 & 0.72 & 0.99 & 0.70 & 0.85 \\ 
+  19 & THieF\_ensemble-train3 & 3.00 & ba4\_ba5 & 17.95 & 25.29 & 0.76 & 1.00 & 0.75 & 0.92 \\ 
+  20 & THieF\_ensemble-mean & 3.00 & ba4\_ba5 & 18.68 & 26.22 & 0.78 & 1.00 & 0.78 & 0.95 \\ 
+  21 & THieF\_6wk-noTransform & 3.00 & ba4\_ba5 & 21.59 & 31.20 & 0.78 & 1.00 & 0.90 & 1.14 \\ 
+  22 & sarima\_s7-noTransform & 3.00 & ba4\_ba5 & 22.06 & 31.34 & 0.78 & 0.99 & 0.92 & 1.14 \\ 
+  23 & COVIDhub-baseline & 3.00 & ba4\_ba5 & 23.93 & 27.49 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
+  24 & THieF\_12wk-noTransform & 3.00 & ba4\_ba5 & 25.38 & 39.28 & 0.70 & 1.00 & 1.06 & 1.43 \\ 
+  25 & COVIDhub-4\_week\_ensemble & 4.00 & ba4\_ba5 & 18.26 & 27.51 & 0.76 & 0.99 & 0.66 & 0.84 \\ 
+  26 & THieF\_6wk-4root & 4.00 & ba4\_ba5 & 19.92 & 26.57 & 0.75 & 1.00 & 0.72 & 0.81 \\ 
+  27 & THieF\_ensemble-train3 & 4.00 & ba4\_ba5 & 21.50 & 29.63 & 0.78 & 1.00 & 0.78 & 0.90 \\ 
+  28 & THieF\_ensemble-mean & 4.00 & ba4\_ba5 & 22.13 & 30.41 & 0.79 & 1.00 & 0.81 & 0.93 \\ 
+  29 & THieF\_6wk-noTransform & 4.00 & ba4\_ba5 & 24.17 & 34.33 & 0.80 & 1.00 & 0.88 & 1.05 \\ 
+  30 & sarima\_s7-noTransform & 4.00 & ba4\_ba5 & 25.95 & 36.72 & 0.80 & 0.99 & 0.94 & 1.12 \\ 
+  31 & COVIDhub-baseline & 4.00 & ba4\_ba5 & 27.46 & 32.80 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
+  32 & THieF\_12wk-noTransform & 4.00 & ba4\_ba5 & 29.06 & 45.41 & 0.69 & 1.00 & 1.06 & 1.38 \\ 
+  33 & sarima\_s7-noTransform & 1.00 & delta & 10.38 & 14.69 & 0.70 & 0.97 & 0.30 & 0.30 \\ 
+  34 & THieF\_ensemble-mean & 1.00 & delta & 11.60 & 18.76 & 0.64 & 0.99 & 0.34 & 0.39 \\ 
+  35 & THieF\_ensemble-train3 & 1.00 & delta & 11.87 & 19.30 & 0.60 & 0.99 & 0.35 & 0.40 \\ 
+  36 & THieF\_6wk-4root & 1.00 & delta & 14.16 & 22.68 & 0.51 & 0.95 & 0.42 & 0.47 \\ 
+  37 & THieF\_12wk-noTransform & 1.00 & delta & 14.89 & 23.52 & 0.52 & 0.95 & 0.44 & 0.49 \\ 
+  38 & THieF\_6wk-noTransform & 1.00 & delta & 15.57 & 25.83 & 0.51 & 0.97 & 0.46 & 0.54 \\ 
+  39 & sarima\_s7-noTransform & 2.00 & delta & 14.64 & 20.80 & 0.69 & 0.98 & 0.27 & 0.27 \\ 
+  40 & THieF\_ensemble-mean & 2.00 & delta & 16.33 & 26.27 & 0.65 & 0.99 & 0.30 & 0.34 \\ 
+  41 & THieF\_ensemble-train3 & 2.00 & delta & 16.52 & 26.76 & 0.64 & 0.98 & 0.30 & 0.34 \\ 
+  42 & THieF\_6wk-4root & 2.00 & delta & 17.99 & 29.88 & 0.54 & 0.98 & 0.33 & 0.38 \\ 
+  43 & THieF\_12wk-noTransform & 2.00 & delta & 19.35 & 30.10 & 0.60 & 0.95 & 0.35 & 0.39 \\ 
+  44 & THieF\_6wk-noTransform & 2.00 & delta & 19.58 & 32.20 & 0.62 & 0.97 & 0.36 & 0.41 \\ 
+  45 & sarima\_s7-noTransform & 3.00 & delta & 23.20 & 35.71 & 0.60 & 0.97 & 0.32 & 0.34 \\ 
+  46 & THieF\_ensemble-mean & 3.00 & delta & 25.61 & 41.49 & 0.58 & 0.97 & 0.35 & 0.40 \\ 
+  47 & THieF\_ensemble-train3 & 3.00 & delta & 25.77 & 41.94 & 0.57 & 0.98 & 0.35 & 0.40 \\ 
+  48 & THieF\_6wk-4root & 3.00 & delta & 27.03 & 44.49 & 0.52 & 0.99 & 0.37 & 0.43 \\ 
+  49 & THieF\_12wk-noTransform & 3.00 & delta & 27.96 & 44.22 & 0.51 & 0.92 & 0.38 & 0.42 \\ 
+  50 & THieF\_6wk-noTransform & 3.00 & delta & 28.40 & 46.47 & 0.53 & 0.94 & 0.39 & 0.44 \\ 
+  51 & sarima\_s7-noTransform & 4.00 & delta & 30.50 & 49.25 & 0.54 & 0.94 & 0.35 & 0.39 \\ 
+  52 & THieF\_ensemble-mean & 4.00 & delta & 31.71 & 51.12 & 0.54 & 0.97 & 0.36 & 0.40 \\ 
+  53 & THieF\_ensemble-train3 & 4.00 & delta & 31.80 & 51.46 & 0.53 & 0.97 & 0.36 & 0.41 \\ 
+  54 & THieF\_6wk-4root & 4.00 & delta & 32.28 & 52.56 & 0.52 & 0.99 & 0.37 & 0.41 \\ 
+  55 & THieF\_6wk-noTransform & 4.00 & delta & 34.18 & 55.44 & 0.47 & 0.93 & 0.39 & 0.44 \\ 
+  56 & THieF\_12wk-noTransform & 4.00 & delta & 34.38 & 54.48 & 0.49 & 0.90 & 0.39 & 0.43 \\ 
+  57 & COVIDhub-4\_week\_ensemble & 1.00 & omicron & 25.02 & 37.57 & 0.57 & 0.92 & 0.74 & 0.78 \\ 
+  58 & THieF\_ensemble-train3 & 1.00 & omicron & 31.71 & 46.62 & 0.40 & 0.86 & 2.19 & 2.81 \\ 
+  59 & THieF\_ensemble-mean & 1.00 & omicron & 31.97 & 46.75 & 0.41 & 0.85 & 2.21 & 2.82 \\ 
+  60 & COVIDhub-baseline & 1.00 & omicron & 34.00 & 48.18 & 0.66 & 0.94 & 1.00 & 1.00 \\ 
+  61 & sarima\_s7-noTransform & 1.00 & omicron & 35.20 & 47.14 & 0.45 & 0.78 & 2.43 & 2.84 \\ 
+  62 & THieF\_6wk-4root & 1.00 & omicron & 36.90 & 53.71 & 0.35 & 0.80 & 2.55 & 3.24 \\ 
+  63 & THieF\_6wk-noTransform & 1.00 & omicron & 38.16 & 54.61 & 0.34 & 0.78 & 2.63 & 3.29 \\ 
+  64 & THieF\_12wk-noTransform & 1.00 & omicron & 41.89 & 58.55 & 0.36 & 0.77 & 2.89 & 3.53 \\ 
+  65 & COVIDhub-4\_week\_ensemble & 2.00 & omicron & 39.33 & 58.67 & 0.56 & 0.91 & 0.72 & 0.75 \\ 
+  66 & THieF\_6wk-4root & 2.00 & omicron & 48.67 & 71.22 & 0.33 & 0.81 & 2.47 & 3.29 \\ 
+  67 & THieF\_ensemble-train3 & 2.00 & omicron & 49.00 & 71.16 & 0.38 & 0.82 & 2.49 & 3.28 \\ 
+  68 & THieF\_ensemble-mean & 2.00 & omicron & 49.04 & 70.92 & 0.39 & 0.82 & 2.49 & 3.27 \\ 
+  69 & THieF\_6wk-noTransform & 2.00 & omicron & 53.99 & 77.42 & 0.33 & 0.76 & 2.74 & 3.57 \\ 
+  70 & COVIDhub-baseline & 2.00 & omicron & 54.64 & 77.98 & 0.64 & 0.92 & 1.00 & 1.00 \\ 
+  71 & THieF\_12wk-noTransform & 2.00 & omicron & 55.13 & 78.44 & 0.36 & 0.76 & 2.80 & 3.62 \\ 
+  72 & sarima\_s7-noTransform & 2.00 & omicron & 59.62 & 78.63 & 0.44 & 0.74 & 3.03 & 3.63 \\ 
+  73 & COVIDhub-4\_week\_ensemble & 3.00 & omicron & 54.85 & 81.62 & 0.53 & 0.89 & 0.76 & 0.78 \\ 
+  74 & THieF\_6wk-4root & 3.00 & omicron & 62.25 & 90.82 & 0.32 & 0.80 & 2.60 & 3.30 \\ 
+  75 & THieF\_ensemble-mean & 3.00 & omicron & 66.37 & 95.65 & 0.37 & 0.79 & 2.77 & 3.48 \\ 
+  76 & THieF\_ensemble-train3 & 3.00 & omicron & 66.58 & 96.20 & 0.36 & 0.79 & 2.78 & 3.50 \\ 
+  77 & THieF\_12wk-noTransform & 3.00 & omicron & 69.01 & 98.88 & 0.34 & 0.74 & 2.88 & 3.60 \\ 
+  78 & THieF\_6wk-noTransform & 3.00 & omicron & 69.99 & 100.15 & 0.32 & 0.74 & 2.92 & 3.64 \\ 
+  79 & COVIDhub-baseline & 3.00 & omicron & 72.69 & 104.38 & 0.60 & 0.90 & 1.00 & 1.00 \\ 
+  80 & sarima\_s7-noTransform & 3.00 & omicron & 82.60 & 109.30 & 0.42 & 0.72 & 3.45 & 3.98 \\ 
+  81 & COVIDhub-4\_week\_ensemble & 4.00 & omicron & 68.91 & 100.99 & 0.50 & 0.87 & 0.79 & 0.80 \\ 
+  82 & THieF\_6wk-4root & 4.00 & omicron & 75.30 & 110.30 & 0.29 & 0.77 & 2.74 & 3.36 \\ 
+  83 & THieF\_12wk-noTransform & 4.00 & omicron & 80.39 & 116.31 & 0.32 & 0.73 & 2.93 & 3.55 \\ 
+  84 & THieF\_ensemble-mean & 4.00 & omicron & 80.41 & 116.55 & 0.35 & 0.77 & 2.93 & 3.55 \\ 
+  85 & THieF\_ensemble-train3 & 4.00 & omicron & 80.87 & 117.46 & 0.34 & 0.77 & 2.94 & 3.58 \\ 
+  86 & THieF\_6wk-noTransform & 4.00 & omicron & 83.75 & 120.76 & 0.30 & 0.72 & 3.05 & 3.68 \\ 
+  87 & COVIDhub-baseline & 4.00 & omicron & 87.33 & 126.66 & 0.58 & 0.90 & 1.00 & 1.00 \\ 
+  88 & sarima\_s7-noTransform & 4.00 & omicron & 102.60 & 136.89 & 0.41 & 0.70 & 3.74 & 4.17 \\ 
+   \hline
+\hline
+\end{longtable}\caption{Summary of model performance stratified by horizon week and pandemic waves for the states level, aggregated across forecast week. The results from this table were used to create Figure 5 that summarized average WIS by horizon week and pandemic wave for the US national level and the states level. The table is ordered by ascending pandemic wave, horizon week, and WIS, with THieF-4wk-4root again having the lowest WIS for all horizons of the alpha wave and shorter horizons of the Winter 21 wave. The THieF-12wk-noTrans has the lowest WIS for 3 week ahead and 4 week ahead horizons during the Winter 21 wave. The baseline only has the best WIS for the 1 week ahead horizon during the Winter 21 wave.}
+\end{center}
+\end{table}
+
 
 
 %%
