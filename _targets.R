@@ -42,12 +42,12 @@ list(
   tar_target(thief_old, sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))),
   tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))),
   tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 6), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")),
-  tar_target(training_models, c(all_thief, sarima_models, thief_ensembles)),
+  tar_target(validation_models, c(all_thief, sarima_models, thief_ensembles)),
   tar_target(testing_models, c("sarima_s7-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-noTransform", "THieF_ensemble-mean", "THieF_ensemble-train3")),
 
-  tar_target(training_model_names, c("COVIDhub-baseline", training_models)),
+  tar_target(validation_model_names, c("COVIDhub-baseline", validation_models)),
   tar_target(
-    training_model_colors, 
+    validation_model_colors, 
     c(
       "black", 
       rep(c("red", "orange", "yellow", "green", "blue", "purple", "magenta", "#b9865f", "#644e3d"), each=2), 
@@ -62,11 +62,14 @@ list(
   
   # ADD FILEPATHS TO DATA
 #  tar_target(all_data, list.files("data", full.names=TRUE), format="file"), # if using Arrow package
-#  tar_target(test_path, "data/baseline_forecasts.rds", format="file"),
-  tar_target(scores_sarima_validation_path, "data/extended_scv_sarima.RData", format="file"),
-  tar_target(scores_thief_new_validation_path, "data/extended_scv_thief_new.RData", format="file"),
-  tar_target(scores_thief_old_validation_path, "data/extended_scv_thief_old.RData", format="file"),
-  tar_target(scores_thief_ensemble_validation_path, "data/extended_scv_thief_ensemble.RData", format="file"),
+  tar_target(scores_baseline_validation_path, "data/validation_scv_baseline.rds", format="file"),
+  tar_target(scores_thief_ensemble_validation_path, "data/validation_scv_thief_ensemble.rds", format="file"),
+  tar_target(scores_thief_new_validation_path, "data/validation_scv_thief_new.rds", format="file"),
+  tar_target(scores_thief_old_validation_path, "data/validation_scv_thief_old.rds", format="file"),
+  tar_target(scores_sarima_validation_path, "data/validation_scv_sarima.rds", format="file"),
+
+  tar_target(sunday_validation_truth_path, "data/validation_truth_sunday.rds", format="file"),
+  tar_target(monday_validation_truth_path, "data/validation_truth_monday.rds", format="file"),
 
   tar_target(forecasts_baseline_testing_path, "data/testing_fcv_baseline.rds", format="file"),
   tar_target(forecasts_ensemble_testing_path, "data/testing_fcv_ensemble.rds", format="file"),
@@ -80,7 +83,15 @@ list(
   
   # READ IN DATA
 #  tar_target(list_data, map_dfr(all_data, read_csv, col_types=cols())),
-#  tar_target(baseline_forecasts, read_rds(test_path)),
+  tar_target(scores_baseline_validation, read_rds(scores_baseline_validation_path)),
+  tar_target(scores_thief_ensemble_validation, read_rds(scores_thief_ensemble_validation_path)),
+  tar_target(scores_thief_new_validation, read_rds(scores_thief_new_validation_path)),
+  tar_target(scores_thief_old_validation, read_rds(scores_thief_old_validation_path)),
+  tar_target(scores_sarima_validation, read_rds(scores_sarima_validation_path)),
+  
+  tar_target(sunday_validation_truth_list, read_rds(sunday_validation_truth_path)),
+  tar_target(monday_validation_truth_list, read_rds(monday_validation_truth_path)),
+  
   tar_target(forecasts_baseline_testing, read_rds(forecasts_baseline_testing_path)),
   tar_target(forecasts_ensemble_testing, read_rds(forecasts_ensemble_testing_path)),
   tar_target(forecasts_models_small_testing, read_rds(forecasts_models_small_testing_path)),
@@ -95,9 +106,9 @@ list(
     actual_testing_dates, 
     distinct(scores_models_testing, forecast_date) %>% pull(1)
   ),
-# tar_target(
-#   training_dates_to_plot, 
-#   c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_training_dates[1+4*(0:11)])
+#  tar_target(
+#    validation_dates_to_plot, 
+#    c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_validation_dates[1+4*(0:11)])
 # ),
  tar_target(
    testing_dates_to_plot, 
@@ -107,6 +118,23 @@ list(
   tar_target(
     testing_forecasts_to_plot, #fc_plot (bind small fc and baseline together)
     rbind(forecasts_models_small_testing, forecasts_baseline_testing, forecasts_ensemble_testing)
+  ),
+  
+  tar_target(
+    validation_scores, #scores(bind not baseline scores together, create horizon_wk)
+    scores_baseline_validation %>%
+    rbind(scores_thief_ensemble_validation, scores_thief_new_validation, scores_thief_old_validation, scores_sarima_validation) %>%
+      mutate(
+        mon_fc_date = 
+          floor_date(
+            forecast_date - days(1), 
+            unit = "weeks", 
+            week_start = getOption("lubricate.week.start", 1)
+          ) + weeks(1),
+        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7)
+      ) %>%
+      #select(-mon_fc_date) %>%
+      filter(horizon_wk %in% 1:4)
   ),
   tar_target(
     testing_scores, #scores(bind not baseline scores together, create horizon_wk)
@@ -212,6 +240,27 @@ tar_target(
       date_limits = c(as.Date("2020-10-01"), testing_forecast_range[2]))
   ),
 
+  tar_target(
+    overall_validation_us,
+    summarize_overall_metrics(validation_scores, baseline_name="COVIDhub-baseline", us_only=TRUE)
+  ),
+  tar_target(
+    overall_validation_states,
+    summarize_overall_metrics(validation_scores, baseline_name="COVIDhub-baseline", us_only=FALSE)
+  ),
+  tar_target(
+    last17_validation_us,
+    validation_scores %>%
+      filter(target_end_date >= validation_forecast_range[2] - weeks(17)) %>%
+      summarize_overall_metrics(baseline_name="COVIDhub-baseline", us_only=TRUE)
+  ),
+  tar_target(
+    last17_validation_states,
+    validation_scores %>%
+      filter(target_end_date >= validation_forecast_range[2] - weeks(17)) %>%
+      summarize_overall_metrics(baseline_name="COVIDhub-baseline", us_only=FALSE)
+  ),
+  
   tar_target(
     overall_metrics_us,
     summarize_overall_metrics(testing_scores, baseline_name="COVIDhub-baseline", us_only=TRUE)
