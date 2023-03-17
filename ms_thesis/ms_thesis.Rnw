@@ -325,8 +325,8 @@ We focused on the period between Monday, July 27, 2020 and Sunday, October 2, 20
 
 The first day of the period of analysis (July 27, 2020) was selected as the first day of reliable truth data for all locations of interests. Forecasting for the validation phase began on Monday, December 7, 2020, as this is the first Monday after the HealthData.gov confirmed hospitalizations data set was declared the official ground truth data. The division between the validation and testing phases was chosen to encapsulate three COVID-19 variant-based waves in the validation phase (Winter 2020-21, Alpha, and Delta) and two waves in the testing phase (Omicron and BA.4/BA.5). The separation between pandemic waves is made based on U.S. national level incident hospitalizations, pictured below in [Figure X].
 
-\begin{figure}[h]
-\label{fig:figure_evaluate_period_plot_"}
+\begin{figure}
+\label{fig:figure_evaluate_period_plot"}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<evaluation_period_plot, echo=FALSE, fig=TRUE>>=
 tar_read(evaluation_period_plot, store="../_targets")
@@ -369,7 +369,7 @@ Despite being made on a daily scale, hospitalization forecasts have been evaluat
 
 \section{Testing phase}
 
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_forecasts_plot1}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<forecast_models_plot, echo=FALSE, fig=TRUE>>=
@@ -413,7 +413,7 @@ knitr::kable(tar_read(overall_metrics_states, store="../_targets"))
 
 
 \subsection{Model performance by horizon week}
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_horizon_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<horizon_plot, echo=FALSE, fig=TRUE>>=
@@ -423,7 +423,7 @@ tar_read(combined_wis_plot, store="../_targets")
 \end{figure}
 
 \subsection{Model performance by pandemic wave}
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_wave_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<wave_plot, echo=FALSE, fig=TRUE>>=
@@ -434,7 +434,7 @@ tar_read(combined_wis_wave_plot, store="../_targets")
 
 
 \subsection{Model performance by location}
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_location_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<location_plot, echo=FALSE, fig=TRUE>>=
@@ -444,7 +444,7 @@ tar_read(wis_location_plot, store="../_targets")
 \end{figure}
 
 \subsection{Model performance by forecast week}
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_date_plot_us}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<us_date_plot, echo=FALSE, fig=TRUE>>=
@@ -453,7 +453,7 @@ tar_read(combined_wis_cov95_plot_us, store="../_targets")
 \caption{Average h-week ahead WIS and 95\% PI coverage for each model for the US national level. Model performance differs from week to week: the WIS is the lowest during weeks with stable and low incident hospitalization values. The THieF-4wk models show the best performance with lower or comparable WIS to the baseline during the majority of the training period with especially good performance for 1-week ahead horizons. Meanwhile, the THieF-12wk showed lower or comparable WIS to the baseline during high incidence and changed points, which have been historically found difficult to forecast accurately. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. All THieF models show very variable coverage rates, especially for a 1 week ahead horizon, only the models without a data transformation showing stable coverage starting around February 2021.}
 \end{figure}
 
-\begin{figure}[h]
+\begin{figure}
 \label{fig:figure_date_plot_states}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<states_date_plot, echo=FALSE, fig=TRUE>>=
