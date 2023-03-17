@@ -321,6 +321,19 @@ print(quant_int_table, booktabs=FALSE, floating=FALSE)
 \end{table}
 
 \section{Date range of analysis}
+We focused on the period between Monday, July 27, 2020 and Sunday, October 2, 2022. This date range spans 798 days, or 114 weeks, which is just over 26 months. The entire period of analysis is split into two main phases: a validation phase of 462 days (66 weeks) and a testing phase of 236 days (48 weeks). The split between these two phases is such that the validation phase ends on Sunday, October 31, 2021 and the testing phase begins on Monday, November 1, 2021.
+
+The first day of the period of analysis (July 27, 2020) was selected as the first day of reliable truth data for all locations of interests. Forecasting for the validation phase began on Monday, December 7, 2020, as this is the first Monday after the HealthData.gov confirmed hospitalizations data set was declared the official ground truth data. The division between the validation and testing phases was chosen to encapsulate three COVID-19 variant-based waves in the validation phase (Winter 2020-21, Alpha, and Delta) and two waves in the testing phase (Omicron and BA.4/BA.5). The separation between pandemic waves is made based on U.S. national level incident hospitalizations, pictured below in [Figure X].
+
+\begin{figure}[h]
+\label{fig:figure_evaluate_period_plot_"}
+% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
+<<evaluation_period_plot, echo=FALSE, fig=TRUE>>=
+tar_read(evaluation_period_plot, store="../_targets")
+@
+\caption{Overview of the period of analysis included in the paper, superimposed over COVID-19 incident hospitalizations for the entire United States. Vertical dashed lines indicate divisions between phases. The training phase begins on Monday, July 27, 2020 and ends on Monday, July 5, 2021. This phase covers 343 days, or 49 weeks. Forecasts for the training phase are made starting on Monday, December 7, 2020. The testing phase, although not included in this paper, begins Tuesday, July 6, 2021 and ends Monday, November 1, 2021. The division is based on including two waves (the Winter 2020-21 and the Alpha variant) of the pandemic in the training phase and one (Delta variant) in the testing phase. July 27, 2020 marks the beginning of when the forecast locations of interest had reliable truth data.}
+\end{figure}   
+
 
 \section{Benchmark comparison models}
 Two models from the Forecast Hub---the COVIDhub-baseline and COVIDhub-4\_week\_ensemble---are selected to serve as comparisons for the models in this analysis during the testing phase evaluation. Many of the metrics used in this evaluation are not especially meaningful on their own, requiring a relative comparison among models forecasting the same targets (1 to 28 day ahead incident hospitalizations for COVID-19).
