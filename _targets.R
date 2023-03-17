@@ -128,6 +128,52 @@ list(
     load_truth("HealthData", "inc hosp", as_of=as.Date("2022-10-01"), temporal_resolution="weekly", data_location = "covidData")
   ),
   
+tar_target(
+  evaluation_period_plot,
+  full_hosp_truth %>%
+    filter(
+      location == "US", 
+      target_end_date %in% c(as.Date("2020-07-27"):as.Date("2022-10-02"))
+    ) %>%
+  ggplot(aes(x = target_end_date, y = value)) + 
+    geom_line() + 
+    geom_vline(xintercept = as.Date("2020-07-27"), linetype="solid") +
+    geom_vline(xintercept = as.Date("2020-10-22"), linetype="dashed") +
+    geom_vline(xintercept = as.Date("2020-12-07"), linetype="solid") +
+    geom_vline(xintercept = as.Date("2021-03-15"), linetype="dashed") +
+    geom_vline(xintercept = as.Date("2021-07-05"), linetype="dashed") +
+    geom_vline(xintercept = as.Date("2021-11-01"), linetype="solid") +
+    geom_vline(xintercept = as.Date("2022-04-06"), linetype="dashed") +
+    geom_vline(xintercept = as.Date("2022-10-02"), linetype="dashed") +
+    annotate(geom = "text", x = as.Date("2020-07-17"), y = 2500, 
+             label = "Validation Start", size = 4, angle = 90) + 
+    annotate(geom = "text", x = as.Date("2020-11-27"), y = 2500, # 2020-12-19
+             label = "Forecasts Start", size = 4, angle = 90) +
+    annotate(geom = "text", x = as.Date("2021-10-20"), y = 2500, 
+             label = "Testing Start", size = 4, angle = 90) + 
+    annotate(geom = "text", x = as.Date("2022-09-22"), y = 2500, 
+             label = "Testing Start", size = 4, angle = 90) + 
+    annotate(geom = "text", x = as.Date("2021-01-03"), y = 25000, 
+             label = "Winter 2020-21", size = 4, angle = 0) + 
+    annotate(geom = "text", x = as.Date("2021-05-11"), y = 25000, 
+             label = "Alpha", size = 4, angle = 0) + 
+    annotate(geom = "text", x = as.Date("2021-09-03"), y = 25000, 
+             label = "Delta", size = 4, angle = 0) + 
+    annotate(geom = "text", x = as.Date("2022-01-19"), y = 25000, 
+             label = "Omicron", size = 4, angle = 0) + 
+    annotate(geom = "text", x = as.Date("2022-07-05"), y = 25000, 
+             label = "BA.4/BA.5", size = 4, angle = 0) + 
+    scale_x_date(name=NULL, date_breaks = "4 month", minor_breaks = "2 month",
+                 date_labels = "%b '%y") + 
+    ylim(c(0, NA)) +
+    theme(axis.ticks.length.x = unit(0.25, "cm"),  
+          axis.text.x = element_text(vjust = 1, hjust = 0.5),
+          legend.position = "none") + 
+    theme_bw() +
+    labs(title = "COVID-19 US National Hospitalizations",
+         x = "Date", y = "Incident Hospitalizations (Daily)")
+),
+
   tar_target(ordered_testing_locations, 
     full_hosp_truth %>%
       filter(target_end_date %in% testing_forecast_range[1]:testing_forecast_range[2]) %>%

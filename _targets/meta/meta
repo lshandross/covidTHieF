@@ -18,6 +18,7 @@ cov95_plot_date_4week_states|stem|bd4879203677162a|5ae7d37b8bc5aeca|caea99c978f1
 cov95_plot_date_4week_us|stem|90e3b52923e68b4c|9fd896a4cc8545bb|a3127c39355645bf|-59419567||t19428.694967849s|3300fcd6f49469e1|145261|rds|local|vector|||1.33||
 covid_sarima|function|a237c9ed4f7921a3|||||||||||||||
 covid_thief|function|6b058ab072a6c014|||||||||||||||
+evaluation_period_plot|stem|400b27b7a25c5e78|7105cbac24d23385|bdbfd8fa51812524|1047729521||t19433.8006543597s|5708e98688ae4ad3|648552|rds|local|vector|||0.07||
 extended_truth_data|function|008f2da0b5ff3a67|||||||||||||||
 fips|stem|03834d123ed4579c|a1b34421acc599a5|5ac7b7d11ef54cea|-926945001||t19422.7229231417s|79ead61f7c8922c9|161|rds|local|vector|||2.22||
 forecast_date_metrics_states|stem|815741fe6105b442|7e50866c3930150b|017affce0377a68e|771184230||t19428.6938404734s|0edd37246364f8ec|33766|rds|local|vector|||0.64||
