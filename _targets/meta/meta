@@ -39,8 +39,8 @@ horizon_metrics_us|stem|7c991c79b14789da|e05c8490f1dd89e7|7c505cd9755dceac|-1364
 hub_locations|stem|99eb888b2d66381e|fd1f0461a0a1b75a|b7119b48552d1da3|-176456964||t19422.7197505777s|316cc09d68060f29|67|rds|local|vector|||0.01||
 hub_locations_df|stem|99eb888b2d66381e|fd1f0461a0a1b75a|b7119b48552d1da3|-970167327||t19422.7205439762s|316cc09d68060f29|67|rds|local|vector|||2.81||
 inc_hosp_targets|stem|72645c2f7805c339|1c9d4050991e8c49|297c1b50a3b4a4d5|157965389||t19422.7268490554s|f59c97cd75ee97ec|166|rds|local|vector|||0||
-last17_validation_states|stem|13bd179c95b980d8|0e6f3321d1329848|a0d7f11255b4de05|-387685713||t19433.9533319436s|f49a8b4bbc7531f8|1226|rds|local|vector|||0.68||
-last17_validation_us|stem|f7fdb630b537cde7|a0e191409ae2b2fb|a0d7f11255b4de05|-369681879||t19433.9533213327s|48a090d4f76cff35|1168|rds|local|vector|||0.6||
+last17_validation_states|stem|d9a7d27932443071|ac45cb2d084912b1|248c07d70a4b79f2|-387685713||t19434.5814854043s|198c5363a15b974d|1184|rds|local|vector|||1.67||
+last17_validation_us|stem|d8f7c0f2cbac4939|aec330b092c774b7|248c07d70a4b79f2|-369681879||t19434.5814656972s|50300cf2b2216e2f|1124|rds|local|vector|||1.19|1m22mThere was 1 warning in mutate.1m22m36mi39m In argument acrosswhereis.numeric, round, digits  3.Caused by warning1m22m33m39m The ... argument of across is deprecated as of dplyr 1.1.0.Supply arguments directly to .fns through an anonymous function instead.   Previously  acrossab, mean, na.rm  TRUE   Now  acrossab, \x meanx, na.rm  TRUE|
 load_formatted_forecasts|function|3cdf660c5c9b4857|||||||||||||||
 models|stem|f64156894f7ba8c9|76122fa08cacd288|0ec07da05182230f|-252836656||t19422.768277964s|b431599f80fdb77d|202|rds|local|vector|||0||
 monday_testing_truth_list|stem|c5d7a996d148ef16|52412aa985226464|98065f903515f0e4|-1513513775||t19417.8992190368s|8c5305073c2fca51|4030955|rds|local|vector|||3.33||

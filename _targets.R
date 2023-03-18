@@ -251,13 +251,13 @@ tar_target(
   tar_target(
     last17_validation_us,
     validation_scores %>%
-      filter(target_end_date >= validation_forecast_range[2] - weeks(17)) %>%
+      filter(forecast_date >= validation_forecast_range[2] - weeks(17)) %>%
       summarize_overall_metrics(baseline_name="COVIDhub-baseline", us_only=TRUE)
   ),
   tar_target(
     last17_validation_states,
     validation_scores %>%
-      filter(target_end_date >= validation_forecast_range[2] - weeks(17)) %>%
+      filter(forecast_date >= validation_forecast_range[2] - weeks(17)) %>%
       summarize_overall_metrics(baseline_name="COVIDhub-baseline", us_only=FALSE)
   ),
   
