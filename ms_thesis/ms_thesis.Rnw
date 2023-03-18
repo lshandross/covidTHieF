@@ -352,8 +352,8 @@ Historically, hierarchical forecasting has been utilized in business, economics,
 
 Forecast combination that integrates forecasts from different, independent modeling frameworks to create ensembles often results in better infectious disease forecasts compared to those from individual models \cite{ensemble_accuracy}. Likewise, classical statistical models have demonstrated good performance for short-term forecasts in outbreak settings \cite{lauer}. THieF's built-in forecast combination (which shares some key similarities with that of ensemble methods) and underlying ARIMA base-forecaster suggest that this methodology will show accuracy improvements when forecasting COVID-19 incident hospitalizations.
 
-Surveillance data tends to be quite noisy due to reporting artifacts, especially when considering small time scales %\cite{}. 
-COVID-19 incident hospitalizations suffer a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since patients are not admitted on weekends. We may better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we are careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels are included in model schemes to investigate the existence of hidden patterns at higher time scales and if such a pattern could improve model accuracy. 
+Surveillance data tends to be quite noisy due to reporting artifacts, especially when considering small time scales %\cite{}.
+COVID-19 incident hospitalizations suffer a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since patients are not admitted on weekends. We may better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we are careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels are included in model schemes to investigate the existence of hidden patterns at higher time scales and if such a pattern could improve model accuracy.
 
 The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure. These steps (outlined in more detail in the following subsections) consist of data aggregation, base forecast creation, and reconciliation of the base forecasts \cite{thief}.
 
@@ -361,16 +361,24 @@ The THieF methodology consists of three steps to produce forecasts from time-ser
 - Add more mathematical detail here
 - Aggregation: We start with data at a daily scale. Then, based on the aggregation levels of interests for a particular model (e.g. weekly, every two weeks, every four weeks, etc), we induce this sort of artificial aggregation so that we have vectors of data add each of these time scales. These vectors are what constitutes the temporal hierarchy. Next, forecasts are made using each of these datasets separately. The reason that we are interested in different time scales is that there may be important patterns that are lost add higher time scales amid the noise of lower ones. More often than not, different patterns will be picked up at different aggregation levels, which means we get forecasts for the same future time periods that may not agree. This is where reconciliation comes into play, in which we combine all of the forecasts that we made.
 
+Each aggregation level can be thought of as a univariate time series from which forecasts can be made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model (although only up to 28-day ahead forecasts are evaluated).
+
 \subsection{Base Forecasts}
 
 \subsection{Reconciled Forecasts}
 
 \section{Model specifications}
 \subsection{THieF models}
+The thief models are constructed using the thief methodology outlined in the previous section with different combinations of aggregation levels and data transformations.
+
 \subsection{THieF ensemble models}
 \subsection{ARIMA and SARIMA models}
 \section{Metrics and Evaluation}
-Despite being made on a daily scale, hospitalization forecasts have been evaluated on a weekly scale by the Forecast Hub, and we follow this convention. However, modeling teams have made forecasts on different days (e.g. Saturday vs Sunday vs Monday), leading to a mismatch between what day an $h$-day ahead forecast is predicting for. Hence, for the models we construct, we actually use 3- to 30-day ahead horizons to ensure all forecasts are predicting for the same dates. It should be noted, however, this may result in a slight disadvantage for models whose 3- to 30-day ahead forecasts are being compared to 1- to 28-day ahead forecasts.
+Evaluation of our models is conducted by aggregating the output forecasts in five ways: by forecast state, by location, by pandemic wave, and overall. Despite being made on a daily scale, hospitalization forecasts have been evaluated on a weekly scale by the Forecast Hub, and we follow this convention. For each metric, a single value is obtained by averaging the values across a single week (Tuesday through Monday) \cite{eval_reports}. However, modeling teams have made forecasts on different days (e.g. Saturday vs Sunday vs Monday), leading to a mismatch between what day an $h$-day ahead forecast is predicting for. Hence, for the models we construct, we actually use 3- to 30-day ahead horizons to ensure all forecasts are predicting for the same dates. It should be noted, however, this may result in a slight disadvantage for models whose 3- to 30-day ahead forecasts are being compared to 1- to 28-day ahead forecasts.
+
+We use the same metrics as the Forecast Hub to evaluate model accuracy for both the validation and testing phases. Average mean absolute error (MAE) is used to score point forecasts, while average weighted interval score (WIS), average 50\% prediction interval (PI), and average 95\% PI coverage are used to score probabilistic forecasts. (We refer to these metrics simply as MAE, WIS, and PI coverage going forward for simplicity.)
+
+Relative versions of MAE and WIS are also used to adjust for truth data magnitude to allow for comparison between forecast values of different scales. These relative metrics are calculated as $MAE_{\textrm{model m}} / MAE_{\textrm{baseline}}$ and $WIS_{\textrm{model m}} /WIS_{\textrm{baseline}}$, respectively.
 
 \subsection{Validation phase}
 - Serves as time during which to train the candidate models, calibrate the forecasts, and to select the best models to pass on to the testing phase
