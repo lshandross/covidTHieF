@@ -126,6 +126,7 @@ library(GGally) # For pairplots, disable if it causes ggplot errors
 library(xtable) # For pretty tables
 library(ggthemes) # plot themes?
 library(xkcd) # How about xkcd themes?
+library(DiagrammeR)
 
 func_list <- list.files(path = "../R", pattern=".R", full.names=TRUE)
 lapply(func_list, source)
@@ -355,16 +356,24 @@ Forecast combination that integrates forecasts from different, independent model
 Surveillance data tends to be quite noisy due to reporting artifacts, especially when considering small time scales %\cite{}.
 COVID-19 incident hospitalizations suffer a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since patients are not admitted on weekends. We may better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we are careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels are included in model schemes to investigate the existence of hidden patterns at higher time scales and if such a pattern could improve model accuracy.
 
-The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure. These steps (outlined in more detail in the following subsections) consist of data aggregation, base forecast creation, and reconciliation of the base forecasts \cite{thief}.
+The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure \cite{thief}. We begin with truth data aggregation to create the temporal hierarchy. The daily confirmed hospitalizations dataset is a time-series consisting of $T = 798$ observations that can be represented as \{$y_t; t = 1, \cdots, 798$\}. These data are then aggregated to different time scales based on the aggregation levels of interest for a particular model (e.g. weekly, every two weeks, every four weeks, etc.\footnote{see THieF models for a full list of time scales considered}). While each aggregation level can be thought of as a separate, univariate time series with different frequencies, together they constitute the temporal hierarchy for one model. Next, we make base forecasts at every level of the hierarchy using an ARIMA model for each level. These forecasts will likely not be coherent, meaning that they predict different trends for the next $h = 28$ days. This disagreement between the forecasts is desirable at this stage, as it may indicate that important patterns have been detected at different time scales. However, through the step of reconciliation (making the forecasts coherent), the information from all of the aggregation levels are combined into forecasts that are expected to be more accurate than any single level. Following this stage, the forecasts from every timescale will agree about the amount of daily incident hospitalizations for the next 1 to 28 days.
 
 \subsection{Data Aggregation and Hierarchy}
-- Add more mathematical detail here
-- Aggregation: We start with data at a daily scale. Then, based on the aggregation levels of interests for a particular model (e.g. weekly, every two weeks, every four weeks, etc), we induce this sort of artificial aggregation so that we have vectors of data add each of these time scales. These vectors are what constitutes the temporal hierarchy. Next, forecasts are made using each of these datasets separately. The reason that we are interested in different time scales is that there may be important patterns that are lost add higher time scales amid the noise of lower ones. More often than not, different patterns will be picked up at different aggregation levels, which means we get forecasts for the same future time periods that may not agree. This is where reconciliation comes into play, in which we combine all of the forecasts that we made.
+Suppose we are interested in constructing a THieF model that combines forecasts from 1-week, 2-week, and 4-week intervals because we believe these time scales each contain important information. Aggregate series for each of these times scales can be constructed from the original daily time series. In fact, any combination of time scales can be chosen for the hierarchy as long as they are factors\footnote{Non-factor levels tend to be more difficult to compute and do not necessarily abide by the following equations.} of the topmost aggregation level (see THieF models for some examples)
+
+$m$ is the number of observations of the smallest timescale (or highest sampling frequency) that aggregate to create a single data point for the highest level. In our example case, $m = 28$ since there are 28 days in 4 weeks.
+$k \in$ \{$k_p,\cdot,k_2,k_1$\} can take on multiple values and indicates the particular aggregation level, where $k_p = m$, $k_1 = 1$, and $p$ is the total number of aggregation levels. In our example case, $k \in$ \{$28, 14, 7$\}, where $p = 3$
+Athanasopuolos et. al provide a mathematical equation to obtain the data points $y_j^{[k]}$ in each aggregated series, written as \[y_j^{[k]} = \Sigma_{t = t^* + (j-1)k}^{t^*+jk-1} y_t\] for $j = 1, \cdots, \lfloor T/k \rfloor$, $M_k = m/k$ for the aggregated series. We define $t^*= T - \lfloor T/m\rfloor m + 1$ to ensure non-overlapping aggregation
+  using our example, we can calculate $t^*= 798 - \lfloor 798/28 \rfloor 28 + 1 = 15$, then we obtain the first data point for the 1-week time series with the equation $y_1^{[7]} = \Sigma_{t = 15 + (0)7}^{15+7-1} y_t = y_{15} + \cdots + y_ {21}$, which is as we expect given that the first $t^*$ observations are removed
+However, the index $j$ used above is clearly aggregation-level specific, with no way to translate between levels of the hierarchy. Hence, the authors propose an alternative index $i$ where $i$ is the observation index of the most aggregate series $y_i^{[m]}$ so $j = i$ at that level. A more general form for all levels is $y_j^{[k]} = y_{M_k(i-1)+z}^{[k]}$ for $z = 1, \cdots, M_k$. This new index $i$ is used for the remaining equations and in the figure below.
+  Using our example, we can show that the new notation is consistent with the old notation: $y_5^{[7]} = y_{M_7(1)+1}^{[7]} = y_{4+1}^{[7]}$
+For each period of the top-level aggregation (2 weeks in our example), we create a column vector of data points
+
 
 Each aggregation level can be thought of as a univariate time series from which forecasts can be made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model (although only up to 28-day ahead forecasts are evaluated).
 
 \subsection{Base Forecasts}
-
+any given date's 1- to 28-day ahead base forecasts represented as \{$\hat{y}_h; h = 1, \cdots, 28$\}
 \subsection{Reconciled Forecasts}
 
 \section{Model specifications}
