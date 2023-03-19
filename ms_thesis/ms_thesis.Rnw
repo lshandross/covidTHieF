@@ -378,6 +378,7 @@ Evaluation of our models is conducted by aggregating the output forecasts in fiv
 
 We use the same metrics as the Forecast Hub to evaluate model accuracy for both the validation and testing phases. Average mean absolute error (MAE) is used to score point forecasts, while average weighted interval score (WIS), average 50\% prediction interval (PI), and average 95\% PI coverage are used to score probabilistic forecasts. (We refer to these metrics simply as MAE, WIS, and PI coverage going forward for simplicity.)
 
+
 Relative versions of MAE and WIS are also used to adjust for truth data magnitude to allow for comparison between forecast values of different scales. These relative metrics are calculated as $MAE_{\textrm{model m}} / MAE_{\textrm{baseline}}$ and $WIS_{\textrm{model m}} /WIS_{\textrm{baseline}}$, respectively.
 
 \subsection{Validation phase}
@@ -489,8 +490,9 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 
 
 \chapter{Discussion}
-
-
+- Limitation of overall metrics being dominated by longer horizons and states with high true hospitalization counts
+- Future implementation of log scores (maybe to address the above??)
+- Using applications of thief specifically tailored for probabilistic forecasting, not just point forecasting
 
 %% End of body
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
