@@ -12,30 +12,30 @@
 \contentsline {section}{\numberline {2.2}Forecasts}{3}{section.2.2}%
 \contentsline {subsection}{\numberline {2.2.1}Forecast horizons}{4}{subsection.2.2.1}%
 \contentsline {subsection}{\numberline {2.2.2}Forecast locations}{4}{subsection.2.2.2}%
-\contentsline {subsection}{\numberline {2.2.3}Forecast quantiles}{4}{subsection.2.2.3}%
+\contentsline {subsection}{\numberline {2.2.3}Forecast quantiles}{5}{subsection.2.2.3}%
 \contentsline {section}{\numberline {2.3}Date range of analysis}{5}{section.2.3}%
 \contentsline {section}{\numberline {2.4}Benchmark comparison models}{6}{section.2.4}%
 \contentsline {section}{\numberline {2.5}Temporal hierarchical forecasting (THieF)}{8}{section.2.5}%
-\contentsline {subsection}{\numberline {2.5.1}Data Aggregation and Hierarchy}{9}{subsection.2.5.1}%
-\contentsline {subsection}{\numberline {2.5.2}Base Forecasts}{10}{subsection.2.5.2}%
-\contentsline {subsection}{\numberline {2.5.3}Reconciled Forecasts}{10}{subsection.2.5.3}%
-\contentsline {section}{\numberline {2.6}Model specifications}{10}{section.2.6}%
-\contentsline {subsection}{\numberline {2.6.1}THieF models}{10}{subsection.2.6.1}%
-\contentsline {subsection}{\numberline {2.6.2}THieF ensemble models}{10}{subsection.2.6.2}%
-\contentsline {subsection}{\numberline {2.6.3}ARIMA and SARIMA models}{10}{subsection.2.6.3}%
-\contentsline {section}{\numberline {2.7}Metrics and Evaluation}{10}{section.2.7}%
-\contentsline {subsection}{\numberline {2.7.1}Validation phase}{11}{subsection.2.7.1}%
-\contentsline {subsection}{\numberline {2.7.2}Testing phase}{12}{subsection.2.7.2}%
-\contentsline {Chapter}{\numberline {3.}\MakeUppercase []{Results}}{13}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Validation phase}{13}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Testing phase}{13}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Summary of comparison models}{13}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Overall model performance}{13}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Model performance by horizon week}{18}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Model performance by pandemic wave}{18}{subsection.3.2.4}%
-\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{18}{subsection.3.2.5}%
-\contentsline {subsection}{\numberline {3.2.6}Model performance by forecast week}{18}{subsection.3.2.6}%
-\contentsline {Chapter}{\numberline {4.}\MakeUppercase []{Discussion}}{21}{chapter.4}%
+\contentsline {subsection}{\numberline {2.5.1}Data Aggregation and Hierarchy}{10}{subsection.2.5.1}%
+\contentsline {subsection}{\numberline {2.5.2}Base Forecasts}{11}{subsection.2.5.2}%
+\contentsline {subsection}{\numberline {2.5.3}Reconciled Forecasts}{12}{subsection.2.5.3}%
+\contentsline {section}{\numberline {2.6}Model specifications}{12}{section.2.6}%
+\contentsline {subsection}{\numberline {2.6.1}THieF models}{12}{subsection.2.6.1}%
+\contentsline {subsection}{\numberline {2.6.2}THieF ensemble models}{13}{subsection.2.6.2}%
+\contentsline {subsection}{\numberline {2.6.3}ARIMA and SARIMA models}{14}{subsection.2.6.3}%
+\contentsline {section}{\numberline {2.7}Metrics and Evaluation}{14}{section.2.7}%
+\contentsline {subsection}{\numberline {2.7.1}Validation phase}{15}{subsection.2.7.1}%
+\contentsline {subsection}{\numberline {2.7.2}Testing phase}{15}{subsection.2.7.2}%
+\contentsline {Chapter}{\numberline {3.}\MakeUppercase []{Results}}{16}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Validation phase}{16}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Testing phase}{16}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Summary of comparison models}{16}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Overall model performance}{16}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Model performance by horizon week}{21}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Model performance by pandemic wave}{21}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{21}{subsection.3.2.5}%
+\contentsline {subsection}{\numberline {3.2.6}Model performance by forecast week}{21}{subsection.3.2.6}%
+\contentsline {Chapter}{\numberline {4.}\MakeUppercase []{Discussion}}{24}{chapter.4}%
 \setcounter {tocdepth}{0}
-\contentsline {Appendix}{\MakeUppercase []{Appendix: Supplemental materials}}{22}{appendix*.5}%
-\contentsline {BackMatter}{\MakeUppercase []{Bibliography}}{27}{appendix*.6}%
+\contentsline {Appendix}{\MakeUppercase []{Appendix: Supplemental materials}}{25}{appendix*.5}%
+\contentsline {BackMatter}{\MakeUppercase []{Bibliography}}{30}{appendix*.6}%

@@ -277,7 +277,7 @@ Surveillance data, like the HealthData.gov confirmed hospitalizations, sometimes
 We query these confirmed hospitalizations from the `covidData` package through the `covidHubUtils` package, both developed by Reich Lab at the University of Massachusetts Amherst to deal with COVID-19 surveillance data. Versions of this data are stored such that users may access the truth data as of a specified date. For example, it is possible to retrieve of version of the confirmed hospitalization data set as of July 27, 2020. To ensure fair comparisons between the models developed for this analysis and some real-time models, our models are trained on the confirmed hospitalizations that would have been available as of the "forecast date" of the retrospective forecast.
 
 \section{Forecasts}
-A forecast for a target-location combination (e.g. "1-day ahead incident hospitalizations in Massachusetts") is defined by one or both of a point forecast and a probabilistic forecast, represented by a set of 23 quantiles \cite{cramer}. (More information is given about forecast targets, horizons, locations, and quantiles in the following subsections.) According to conventions set by the Forecasts Hub, all forecast values are truncated to be non-zero, as there is no real-world meaning for negative incident hospitalizations \cite{ensembles_info}.
+A forecast for a target-location combination (e.g. "1-day ahead incident hospitalizations in Massachusetts") is defined by one or both of a point forecast and a probabilistic forecast, represented by a set of 23 quantiles \cite{cramer}. (More information is given about forecast targets, horizons, locations, and quantiles in the following subsections.) According to conventions set by the Forecasts Hub, all forecast values are truncated to be non-zero, as there is no real-world meaning for negative incident hospitalizations \cite{ensembles_info}. Further, while this is a retrospective analysis, forecasts are made on Sunday weekly (as they would be if made in real-time) using the data available as of that day. We chose to make forecasts on Sunday because confirmed hospitalization values for subsequent days did not update until Tuesday or later until some time in March 2021, which presented several issues. First, if we began validation forecasting after March 2021, we would lose three months of the period of analysis. Second, the main comparison models made forecasts on Monday, meaning that any models that forecast the week before would be add a disadvantage while any models that forecast on Tuesday or later would be evaluated with the following week's forecasts. Third, THieF does not allow for missing data points.
 
 \subsection{Forecast horizons}
 Short-term forecasts for COVID-19 have been defined to encapsulate horizons of 1- to 4-weeks ahead, or, equivalently, 1- to 28-days ahead \cite{cramer}. Forecasts for incident hospitalizations are made on a daily time scale, so we choose to restrict\footnote{Some models make up to 84-day ahead forecasts due to the THieF methodology construction.} the forecast horizons we evaluate to 1- to 28-days ahead.\footnote{Note, there is a slight exception to this restriction. See Metrics and Evaluation for more information.}
@@ -292,7 +292,7 @@ The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.02
 \begin{center}
 \label{tab:table_quant_int}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 18 17:40:03 2023
+% Mon Mar 20 18:56:48 2023
 \begin{tabular}{rllllllllllll}
   \hline
  &  \\ 
@@ -337,28 +337,51 @@ Forecast combination that integrates forecasts from different, independent model
 Surveillance data tends to be quite noisy due to reporting artifacts, especially when considering small time scales %\cite{}.
 COVID-19 incident hospitalizations suffer a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since patients are not admitted on weekends. We may better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we are careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels are included in model schemes to investigate the existence of hidden patterns at higher time scales and if such a pattern could improve model accuracy.
 
-The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure. These steps (outlined in more detail in the following subsections) consist of data aggregation, base forecast creation, and reconciliation of the base forecasts \cite{thief}.
+The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure \cite{thief}. We begin with truth data aggregation to create the temporal hierarchy. The daily confirmed hospitalizations dataset is a time-series consisting of $T = 798$ observations that can be represented as \{$y_t; t = 1, \cdots, 798$\}. These data are then aggregated to different time scales based on the aggregation levels of interest for a particular model (e.g. weekly, every two weeks, every four weeks, etc.\footnote{see THieF models for a full list of time scales considered}). While each aggregation level can be thought of as a separate, univariate time series with different frequencies, together they constitute the temporal hierarchy for one model. Next, we make base forecasts at every level of the hierarchy using an ARIMA model for each level. These forecasts will likely not be coherent, meaning that they predict different trends for the next $h = 28$ days. This disagreement between the forecasts is desirable at this stage, as it may indicate that important patterns have been detected at different time scales. However, through the step of reconciliation (making the forecasts coherent), the information from all of the aggregation levels are combined into forecasts that are expected to be more accurate than any single level. Following this stage, the forecasts from every timescale will agree about the amount of daily incident hospitalizations for the next 1 to 28 days.
 
 \subsection{Data Aggregation and Hierarchy}
-- Add more mathematical detail here
-- Aggregation: We start with data at a daily scale. Then, based on the aggregation levels of interests for a particular model (e.g. weekly, every two weeks, every four weeks, etc), we induce this sort of artificial aggregation so that we have vectors of data add each of these time scales. These vectors are what constitutes the temporal hierarchy. Next, forecasts are made using each of these datasets separately. The reason that we are interested in different time scales is that there may be important patterns that are lost add higher time scales amid the noise of lower ones. More often than not, different patterns will be picked up at different aggregation levels, which means we get forecasts for the same future time periods that may not agree. This is where reconciliation comes into play, in which we combine all of the forecasts that we made.
+Suppose we are interested in constructing a THieF model that combines forecasts from 1-week, 2-week, and 4-week intervals because we believe these time scales each contain important information. Aggregate series for each of these times scales can be constructed from the original daily time series. In fact, any combination of time scales can be chosen for the hierarchy as long as they are factors\footnote{Non-factor levels tend to be more difficult to compute and do not necessarily abide by the following equations.} of the topmost aggregation level (see THieF models for some examples)
+
+$m$ is the number of observations of the smallest timescale (or highest sampling frequency) that aggregate to create a single data point for the highest level. In our example case, $m = 28$ since there are 28 days in 4 weeks.
+$k \in$ \{$k_p,\cdot,k_2,k_1$\} can take on multiple values and indicates the particular aggregation level, where $k_p = m$, $k_1 = 1$, and $p$ is the total number of aggregation levels. In our example case, $k \in$ \{$28, 14, 7$\}, where $p = 3$
+Athanasopuolos et. al provide a mathematical equation to obtain the data points $y_j^{[k]}$ in each aggregated series, written as \[y_j^{[k]} = \Sigma_{t = t^* + (j-1)k}^{t^*+jk-1} y_t\] for $j = 1, \cdots, \lfloor T/k \rfloor$, $M_k = m/k$ for the aggregated series. We define $t^*= T - \lfloor T/m\rfloor m + 1$ to ensure non-overlapping aggregation
+  using our example, we can calculate $t^*= 798 - \lfloor 798/28 \rfloor 28 + 1 = 15$, then we obtain the first data point for the 1-week time series with the equation $y_1^{[7]} = \Sigma_{t = 15 + (0)7}^{15+7-1} y_t = y_{15} + \cdots + y_ {21}$, which is as we expect given that the first $t^*$ observations are removed
+However, the index $j$ used above is clearly aggregation-level specific, with no way to translate between levels of the hierarchy. Hence, the authors propose an alternative index $i$ where $i$ is the observation index of the most aggregate series $y_i^{[m]}$ so $j = i$ at that level. A more general form for all levels is $y_j^{[k]} = y_{M_k(i-1)+z}^{[k]}$ for $z = 1, \cdots, M_k$. This new index $i$ is used for the remaining equations and in the figure below.
+  Using our example, we can show that the new notation is consistent with the old notation: $y_5^{[7]} = y_{M_7(1)+1}^{[7]} = y_{4+1}^{[7]}$
+For each period of the top-level aggregation (2 weeks in our example), we create a column vector of data points
+
 
 Each aggregation level can be thought of as a univariate time series from which forecasts can be made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model (although only up to 28-day ahead forecasts are evaluated).
 
 \subsection{Base Forecasts}
-
+any given date's 1- to 28-day ahead base forecasts represented as \{$\hat{y}_h; h = 1, \cdots, 28$\}
 \subsection{Reconciled Forecasts}
 
 \section{Model specifications}
+We create three distinct classes of models for comparison during the validation phase: the original THieF models, the THieF ensembles, and the SARIMA models. In total, these three groups consist of twenty-six (26) candidate models.
+
 \subsection{THieF models}
-The thief models are constructed using the thief methodology outlined in the previous section with different combinations of aggregation levels and data transformations.
+The THieF models are constructed using the THieF methodology outlined in the previous section with different combinations of aggregation levels and data transformations. Seven hierarchical structures and two data transformations result in fourteen (14) original THieF models. Each model is defined (and named) based on the highest level of its temporal hierarchy and the data transformation performed on the forecasts. For example, the simplest of the THieF models is THieF\_1wk-noTransform while the most complicated is THieF\_12wk-4root.
+
+The aggregation levels of any model's temporal hierarchy are daily, plus $f_m$-week periods where $f_m$ is the set of all factors for the highest time scale $m$. Hence, the THieF\_12wk-4root model (as well as the THieF\_12wk-noTransform model) has a temporal hierarchy made up of daily, weekly, 2-weekly, 3-weekly, 4-weekly, 6-weekly, and 12-weekly aggregation levels since $f_12=$ \{1, 2, 3, 4, 6, 12\}. Meanwhile, the THieF\_1wk-noTransform model's temporal hierarchy is only made up of daily and weekly aggregation levels ($f_1=$ \{1\}). We chose 1-week, 2-week, 3-week, 4-week, 6-week, 8-week, and 12-week top-level aggregations so as to have a range of time scales to inform the reconciled forecasts.
+
+We explore the seven hierarchy schemes with both no data transformation and a fourth-root data transformation. The latter transform is implemented by first taking the fourth root of the confirmed hospitalizations time series, using the truth data to make forecasts with the THieF methodology, then performing an inverse fourth-power transformation to the resulting forecasts. We selected the fourth-root transformation based on prior research that had shown that had shown accuracy improvements for COVID-19 forecasting due to its variance-stabilizing effect %\cite{}.
 
 \subsection{THieF ensemble models}
+The THieF ensemble models\footnote{The equations used to define the ensembles are adapted from Ray, et. al \cite{ensemble_methods}} are seven mean ensembles of the fourteen original THieF models. We formulated six as trained ensembles, in which past performance of the component THieF models is used to assign the components weights, and one as an untrained ensemble, in which all component forecasters are assigned equal weight \cite{ensemble_methods}. Both types of ensembles make quantile forecasts\footnote{Recall that we use the 0.500 quantile forecast as the point forecast.} at level $k$ by combining those of the component forecasts for a particular forecasts date, location, horizon, and quantile combination. (For example, a particular model $m$ might make a 0.500 quantile forecast on December 7, 2020 that predicts the number of 1-day ahead incident hospitalizations in Massachusetts will be 185.) An ensemble quantile forecast can be expressed mathematically as \[q_{l,s,h,k}^{ens} = f(q_{l,s,h,k}^1, \cdots, q_{l,s,h,k}^M),\] where $l$ is the location, $s$ is the forecast date, $h$ is the horizon, and the superscript $m = 1, \cdots, M$ denotes the model \cite{ensemble_methods}.
+
+A trained, weighted mean ensemble calculates its forecast quantiles as \[q_{l,s,h,k}^{ens} = \Sigma_{m=1}^M w_s^m q_{l,s,h,k}^m\], in which the weights are calculated using a sigmoidal transformation of the component models' relative WIS over a rolling window of twelve (12) weeks leading up to the ensemble's forecast date $s$: \[w_s^m=\frac{exp(-\theta_s \cdot rWIS_s^m)}{\Sigma_{m'=1} exp(-\theta_s) \cdot rWIS_s^{m'}}\], where we specify the non-negative parameter $\theta_s$.
+
+The weights of this defined combination are always non-negative and sum to one \cite{ensemble_methods}.
+
+
+
 \subsection{ARIMA and SARIMA models}
 \section{Metrics and Evaluation}
 Evaluation of our models is conducted by aggregating the output forecasts in five ways: by forecast state, by location, by pandemic wave, and overall. Despite being made on a daily scale, hospitalization forecasts have been evaluated on a weekly scale by the Forecast Hub, and we follow this convention. For each metric, a single value is obtained by averaging the values across a single week (Tuesday through Monday) \cite{eval_reports}. However, modeling teams have made forecasts on different days (e.g. Saturday vs Sunday vs Monday), leading to a mismatch between what day an $h$-day ahead forecast is predicting for. Hence, for the models we construct, we actually use 3- to 30-day ahead horizons to ensure all forecasts are predicting for the same dates. It should be noted, however, this may result in a slight disadvantage for models whose 3- to 30-day ahead forecasts are being compared to 1- to 28-day ahead forecasts.
 
 We use the same metrics as the Forecast Hub to evaluate model accuracy for both the validation and testing phases. Average mean absolute error (MAE) is used to score point forecasts, while average weighted interval score (WIS), average 50\% prediction interval (PI), and average 95\% PI coverage are used to score probabilistic forecasts. (We refer to these metrics simply as MAE, WIS, and PI coverage going forward for simplicity.)
+
 
 Relative versions of MAE and WIS are also used to adjust for truth data magnitude to allow for comparison between forecast values of different scales. These relative metrics are calculated as $MAE_{\textrm{model m}} / MAE_{\textrm{baseline}}$ and $WIS_{\textrm{model m}} /WIS_{\textrm{baseline}}$, respectively.
 
@@ -391,7 +414,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_overall_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 18 17:40:23 2023
+% Mon Mar 20 18:57:08 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -413,7 +436,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_overall_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 18 17:40:23 2023
+% Mon Mar 20 18:57:08 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -475,8 +498,23 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 
 
 \chapter{Discussion}
+- thief ensembles are best
+  - seems like there's no real meaningful difference between mean ensemble and weighted <U+03B8>=3
+  - both essentially always beat the baseline for WIS and MAE with all stratified evaluations
+  - but don't quite beat the hub-ensemble
+- thief\_6wk-4root is next best, then thief\_6wk-noTransform
+  - 4root is consistently better and more often beats the baseline for non-coverage metrics
+  - noTransform is always as good or better as baseline for non-coverage metrics
+- sarima and thief\_12wk-noTransform are the worst
+  - tend to be worse than the baseline but except in their specialties:
+    - sarima performs very well in static, low-count periods/locations
+    - 12wk performs very well in rapidly changing, high-count periods/locations
+  - but even if they occasionally beat other models (especially thief ensembles), they tend to be only as good or worse
+    - so it seems like ensembling is the way to go to get the best of both worlds
 
-
+- Limitation of overall metrics being dominated by longer horizons and states with high true hospitalization counts
+- Future implementation of log scores (maybe to address the above??)
+- Using applications of thief specifically tailored for probabilistic forecasting, not just point forecasting
 
 %% End of body
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -492,7 +530,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_horizon_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 18 17:40:32 2023
+% Mon Mar 20 18:57:16 2023
 \begin{tabular}{rlrrrrrrr}
   \hline
  & model & horizon\_wk & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -538,7 +576,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_horizon_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 18 17:40:32 2023
+% Mon Mar 20 18:57:16 2023
 \begin{tabular}{rlrrrrrrr}
   \hline
  & model & horizon\_wk & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -586,7 +624,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_wave_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 18 17:40:32 2023
+% Mon Mar 20 18:57:16 2023
 \begin{longtable}{rlrlrrrrrr}
   \hline
  & model & horizon\_wk & wave & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -689,7 +727,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_wave_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 18 17:40:32 2023
+% Mon Mar 20 18:57:16 2023
 \begin{longtable}{rlrlrrrrrr}
   \hline
  & model & horizon\_wk & wave & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
