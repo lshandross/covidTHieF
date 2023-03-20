@@ -378,10 +378,23 @@ any given date's 1- to 28-day ahead base forecasts represented as \{$\hat{y}_h; 
 \subsection{Reconciled Forecasts}
 
 \section{Model specifications}
+We create three distinct classes of models for comparison during the validation phase: the original THieF models, the THieF ensembles, and the SARIMA models. In total, these three groups consist of twenty-six (26) candidate models.
+
 \subsection{THieF models}
-The thief models are constructed using the thief methodology outlined in the previous section with different combinations of aggregation levels and data transformations.
+The THieF models are constructed using the THieF methodology outlined in the previous section with different combinations of aggregation levels and data transformations. Seven hierarchical structures and two data transformations result in fourteen (14) original THieF models. Each model is defined (and named) based on the highest level of its temporal hierarchy and the data transformation performed on the forecasts. For example, the simplest of the THieF models is THieF\_1wk-noTransform while the most complicated is THieF\_12wk-4root.
+
+The aggregation levels of any model's temporal hierarchy are daily, plus $f_m$-week periods where $f_m$ is the set of all factors for the highest time scale $m$. Hence, the THieF\_12wk-4root model (as well as the THieF\_12wk-noTransform model) has a temporal hierarchy made up of daily, weekly, 2-weekly, 3-weekly, 4-weekly, 6-weekly, and 12-weekly aggregation levels since $f_{12}=$ \{1, 2, 3, 4, 6, 12\}. Meanwhile, the THieF\_1wk-noTransform model's temporal hierarchy is only made up of daily and weekly aggregation levels ($f_1=$ \{1\}). We chose 1-week, 2-week, 3-week, 4-week, 6-week, 8-week, and 12-week top-level aggregations so as to have a range of time scales to inform the reconciled forecasts.
+
+We explore the seven hierarchy schemes with both no data transformation and a fourth-root data transformation. The latter transform is implemented by first taking the fourth root of the confirmed hospitalizations time series, using the truth data to make forecasts with the THieF methodology, then performing an inverse fourth-power transformation to the resulting forecasts. We selected the fourth-root transformation based on prior research that had shown that had shown accuracy improvements for COVID-19 forecasting due to its variance-stabilizing effect %\cite{}.
 
 \subsection{THieF ensemble models}
+The THieF ensemble models\footnote{The equations used to define the ensembles are adapted from Ray, et. al \cite{ensemble_methods}} are seven mean ensembles of the fourteen original THieF models. We formulated six as trained ensembles, in which past performance of the component THieF models is used to assign the components weights, and one as an untrained ensemble, in which all component forecasters are assigned equal weight \cite{ensemble_methods}. Both types of ensembles make quantile forecasts\footnote{Recall that we use the 0.500 quantile forecast as the point forecast.} at level $k$ by combining those of the component forecasts for a particular forecasts date, location, horizon, and quantile combination. (For example, a particular model $m$ might make a 0.500 quantile forecast on December 7, 2020 that predicts the number of 1-day ahead incident hospitalizations in Massachusetts will be 185.) An ensemble quantile forecast can be expressed mathematically as \[q_{l,s,h,k}^{ens} = f(q_{l,s,h,k}^1, \cdots, q_{l,s,h,k}^M),\] where $l$ is the location, $s$ is the forecast date, $h$ is the horizon, and the superscript $m = 1, \cdots, M$ denotes the model \cite{ensemble_methods}.
+
+A trained, weighted mean ensemble calculates its forecast quantiles as \[q_{l,s,h,k}^{ens} = \Sigma_{m=1}^M w_s^m q_{l,s,h,k}^m\], in which the weights are calculated using a sigmoidal transformation of the component models' relative WIS over a rolling window of twelve (12) weeks leading up to the ensemble's forecast date $s$: \[w_s^m=\frac{exp(-\theta_s \cdot rWIS_s^m)}{\Sigma_{m'=1} exp(-\theta_s) \cdot rWIS_s^{m'}}.\] When the non-negative parameter $\theta_s = 0$, this becomes an equally weighted ensemble. However, as $\theta_s$ increases, the weights become more unequal, with the contributions of better-performing component models eclipsing that of worse-performing models. Note that the weights, however, are always non-negative and sum to one \cite{ensemble_methods}.
+
+The THieF ensembles are named with the $\theta_s$ value used in their construction, except for the unweighted ensemble, which is called THieF\_ensemble-mean.
+
+
 \subsection{ARIMA and SARIMA models}
 \section{Metrics and Evaluation}
 Evaluation of our models is conducted by aggregating the output forecasts in five ways: by forecast state, by location, by pandemic wave, and overall. Despite being made on a daily scale, hospitalization forecasts have been evaluated on a weekly scale by the Forecast Hub, and we follow this convention. For each metric, a single value is obtained by averaging the values across a single week (Tuesday through Monday) \cite{eval_reports}. However, modeling teams have made forecasts on different days (e.g. Saturday vs Sunday vs Monday), leading to a mismatch between what day an $h$-day ahead forecast is predicting for. Hence, for the models we construct, we actually use 3- to 30-day ahead horizons to ensure all forecasts are predicting for the same dates. It should be noted, however, this may result in a slight disadvantage for models whose 3- to 30-day ahead forecasts are being compared to 1- to 28-day ahead forecasts.
@@ -500,14 +513,14 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 
 
 \chapter{Discussion}
-- thief ensembles are best 
-  - seems like there's no real meaningful difference between mean ensemble and weighted θ=3 
+- thief ensembles are best
+  - seems like there's no real meaningful difference between mean ensemble and weighted θ=3
   - both essentially always beat the baseline for WIS and MAE with all stratified evaluations
   - but don't quite beat the hub-ensemble
-- thief_6wk-4root is next best, then thief_6wk-noTransform
+- thief\_6wk-4root is next best, then thief\_6wk-noTransform
   - 4root is consistently better and more often beats the baseline for non-coverage metrics
   - noTransform is always as good or better as baseline for non-coverage metrics
-- sarima and thief_12wk-noTransform are the worst
+- sarima and thief\_12wk-noTransform are the worst
   - tend to be worse than the baseline but except in their specialties:
     - sarima performs very well in static, low-count periods/locations
     - 12wk performs very well in rapidly changing, high-count periods/locations
