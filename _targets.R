@@ -41,7 +41,7 @@ list(
   tar_target(thief_new, sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep=""))),
   tar_target(thief_old, sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))),
   tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))),
-  tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 6), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")),
+  tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 7), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")),
   tar_target(validation_models, c(all_thief, sarima_models, thief_ensembles)),
   tar_target(testing_models, c("sarima_s7-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-noTransform", "THieF_ensemble-mean", "THieF_ensemble-train3")),
 
