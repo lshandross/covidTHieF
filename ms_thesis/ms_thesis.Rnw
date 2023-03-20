@@ -500,6 +500,20 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 
 
 \chapter{Discussion}
+- thief ensembles are best 
+  - seems like there's no real meaningful difference between mean ensemble and weighted θ=3 
+  - both essentially always beat the baseline for WIS and MAE with all stratified evaluations
+  - but don't quite beat the hub-ensemble
+- thief_6wk-4root is next best, then thief_6wk-noTransform
+  - 4root is consistently better and more often beats the baseline for non-coverage metrics
+  - noTransform is always as good or better as baseline for non-coverage metrics
+- sarima and thief_12wk-noTransform are the worst
+  - tend to be worse than the baseline but except in their specialties:
+    - sarima performs very well in static, low-count periods/locations
+    - 12wk performs very well in rapidly changing, high-count periods/locations
+  - but even if they occasionally beat other models (especially thief ensembles), they tend to be only as good or worse
+    - so it seems like ensembling is the way to go to get the best of both worlds
+
 - Limitation of overall metrics being dominated by longer horizons and states with high true hospitalization counts
 - Future implementation of log scores (maybe to address the above??)
 - Using applications of thief specifically tailored for probabilistic forecasting, not just point forecasting
