@@ -302,7 +302,7 @@ A forecast for a target-location combination (e.g. "1-day ahead incident hospita
 Short-term forecasts for COVID-19 have been defined to encapsulate horizons of 1- to 4-weeks ahead, or, equivalently, 1- to 28-days ahead \cite{cramer}. Forecasts for incident hospitalizations are made on a daily time scale, so we choose to restrict\footnote{Some models make up to 84-day ahead forecasts due to the THieF methodology construction.} the forecast horizons we evaluate to 1- to 28-days ahead.\footnote{Note, there is a slight exception to this restriction. See Metrics and Evaluation for more information.}
 
 \subsection{Forecast locations}
-We make forecasts for 53 of 55 locations from the HealthData.gov confirmed hospitalizations dataset during the period of analysis. These 55 locations include the 50 states, four jurisdictions/territories (Washington D.C., Puerto Rico, American Samoa, and Guam), and a U.S. national level. American Samoa and Guam are excluded due to their very low or zero COVID-19 incident hospitalizations over the entire pandemic. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations do not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches \cite{cramer}. Further, even though we include the U.S. national level, the remaining 52 locations are our primary focus, as the magnitude of national forecasts is much greater than out of any single state. 
+We make forecasts for 53 of 55 locations from the HealthData.gov confirmed hospitalizations dataset during the period of analysis. These 55 locations include the 50 states, four jurisdictions/territories (Washington D.C., Puerto Rico, American Samoa, and Guam), and a U.S. national level. American Samoa and Guam are excluded due to their very low or zero COVID-19 incident hospitalizations over the entire pandemic. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations do not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches \cite{cramer}. Further, even though we include the U.S. national level, the remaining 52 locations are our primary focus, as the magnitude of national forecasts is much greater than out of any single state.
 
 \subsection{Forecast quantiles}
 The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We follow this construction, though with a slight modification: prediction intervals are used to define a full distribution of forecasts. The bounds of these intervals can be used to obtain the desired quantiles, as shown in the table below. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where "L" and "U" represent the lower and upper bounds, respectively).
@@ -420,6 +420,29 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 
 \chapter{Results}
 \section{Validation phase}
+\begin{table}[h]
+\begin{center}
+\label{tab:table_validation_us}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_validation_us <- tar_read(overall_validation_us, store="../_targets") %>%
+  xtable()
+print(table_validation_us, booktabs=FALSE, floating=FALSE)
+@
+\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_validation_states}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_validation_states <- tar_read(overall_validation_states, store="../_targets") %>%
+  xtable()
+print(table_validation_states, booktabs=FALSE, floating=FALSE)
+@
+\caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{center}
+\end{table}
 
 \section{Testing phase}
 
@@ -545,6 +568,31 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 %% ...
 %% \chapter{THE SECOND APPENDIX TITLE}
 %% ...
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_last17_us}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
+  xtable()
+print(table_last17_us, booktabs=FALSE, floating=FALSE)
+@
+\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_last17_states}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
+  xtable()
+print(table_last17_states, booktabs=FALSE, floating=FALSE)
+@
+\caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{center}
+\end{table}
+
 
 \begin{table}[h]
 \begin{center}
