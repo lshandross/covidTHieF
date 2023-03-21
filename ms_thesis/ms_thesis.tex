@@ -283,7 +283,7 @@ A forecast for a target-location combination (e.g. "1-day ahead incident hospita
 Short-term forecasts for COVID-19 have been defined to encapsulate horizons of 1- to 4-weeks ahead, or, equivalently, 1- to 28-days ahead \cite{cramer}. Forecasts for incident hospitalizations are made on a daily time scale, so we choose to restrict\footnote{Some models make up to 84-day ahead forecasts due to the THieF methodology construction.} the forecast horizons we evaluate to 1- to 28-days ahead.\footnote{Note, there is a slight exception to this restriction. See Metrics and Evaluation for more information.}
 
 \subsection{Forecast locations}
-We make forecasts for 53 of 55 locations from the HealthData.gov confirmed hospitalizations dataset during the period of analysis. These locations include the 50 states, four jurisdictions/territories (Washington D.C., Puerto Rico, American Samoa, and Guam), and a U.S. national level. American Samoa and Guam are excluded due to their very low or zero COVID-19 incident hospitalizations over the entire pandemic. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations do not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches \cite{cramer}.
+We make forecasts for 53 of 55 locations from the HealthData.gov confirmed hospitalizations dataset during the period of analysis. These 55 locations include the 50 states, four jurisdictions/territories (Washington D.C., Puerto Rico, American Samoa, and Guam), and a U.S. national level. American Samoa and Guam are excluded due to their very low or zero COVID-19 incident hospitalizations over the entire pandemic. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations do not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches \cite{cramer}. Further, even though we include the U.S. national level, the remaining 52 locations are our primary focus, as the magnitude of national forecasts is much greater than out of any single state.
 
 \subsection{Forecast quantiles}
 The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We follow this construction, though with a slight modification: prediction intervals are used to define a full distribution of forecasts. The bounds of these intervals can be used to obtain the desired quantiles, as shown in the table below. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where "L" and "U" represent the lower and upper bounds, respectively).
@@ -292,7 +292,7 @@ The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.02
 \begin{center}
 \label{tab:table_quant_int}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Mon Mar 20 18:56:48 2023
+% Tue Mar 21 18:58:31 2023
 \begin{tabular}{rllllllllllll}
   \hline
  &  \\ 
@@ -363,20 +363,24 @@ We create three distinct classes of models for comparison during the validation 
 \subsection{THieF models}
 The THieF models are constructed using the THieF methodology outlined in the previous section with different combinations of aggregation levels and data transformations. Seven hierarchical structures and two data transformations result in fourteen (14) original THieF models. Each model is defined (and named) based on the highest level of its temporal hierarchy and the data transformation performed on the forecasts. For example, the simplest of the THieF models is THieF\_1wk-noTransform while the most complicated is THieF\_12wk-4root.
 
-The aggregation levels of any model's temporal hierarchy are daily, plus $f_m$-week periods where $f_m$ is the set of all factors for the highest time scale $m$. Hence, the THieF\_12wk-4root model (as well as the THieF\_12wk-noTransform model) has a temporal hierarchy made up of daily, weekly, 2-weekly, 3-weekly, 4-weekly, 6-weekly, and 12-weekly aggregation levels since $f_12=$ \{1, 2, 3, 4, 6, 12\}. Meanwhile, the THieF\_1wk-noTransform model's temporal hierarchy is only made up of daily and weekly aggregation levels ($f_1=$ \{1\}). We chose 1-week, 2-week, 3-week, 4-week, 6-week, 8-week, and 12-week top-level aggregations so as to have a range of time scales to inform the reconciled forecasts.
+The aggregation levels of any model's temporal hierarchy are daily, plus $f_m$-week periods where $f_m$ is the set of all factors for the highest time scale $m$. Hence, the THieF\_12wk-4root model (as well as the THieF\_12wk-noTransform model) has a temporal hierarchy made up of daily, weekly, 2-weekly, 3-weekly, 4-weekly, 6-weekly, and 12-weekly aggregation levels since $f_{12}=$ \{1, 2, 3, 4, 6, 12\}. Meanwhile, the THieF\_1wk-noTransform model's temporal hierarchy is only made up of daily and weekly aggregation levels ($f_1=$ \{1\}). We chose 1-week, 2-week, 3-week, 4-week, 6-week, 8-week, and 12-week top-level aggregations so as to have a range of time scales to inform the reconciled forecasts.
 
 We explore the seven hierarchy schemes with both no data transformation and a fourth-root data transformation. The latter transform is implemented by first taking the fourth root of the confirmed hospitalizations time series, using the truth data to make forecasts with the THieF methodology, then performing an inverse fourth-power transformation to the resulting forecasts. We selected the fourth-root transformation based on prior research that had shown that had shown accuracy improvements for COVID-19 forecasting due to its variance-stabilizing effect %\cite{}.
 
 \subsection{THieF ensemble models}
 The THieF ensemble models\footnote{The equations used to define the ensembles are adapted from Ray, et. al \cite{ensemble_methods}} are seven mean ensembles of the fourteen original THieF models. We formulated six as trained ensembles, in which past performance of the component THieF models is used to assign the components weights, and one as an untrained ensemble, in which all component forecasters are assigned equal weight \cite{ensemble_methods}. Both types of ensembles make quantile forecasts\footnote{Recall that we use the 0.500 quantile forecast as the point forecast.} at level $k$ by combining those of the component forecasts for a particular forecasts date, location, horizon, and quantile combination. (For example, a particular model $m$ might make a 0.500 quantile forecast on December 7, 2020 that predicts the number of 1-day ahead incident hospitalizations in Massachusetts will be 185.) An ensemble quantile forecast can be expressed mathematically as \[q_{l,s,h,k}^{ens} = f(q_{l,s,h,k}^1, \cdots, q_{l,s,h,k}^M),\] where $l$ is the location, $s$ is the forecast date, $h$ is the horizon, and the superscript $m = 1, \cdots, M$ denotes the model \cite{ensemble_methods}.
 
-A trained, weighted mean ensemble calculates its forecast quantiles as \[q_{l,s,h,k}^{ens} = \Sigma_{m=1}^M w_s^m q_{l,s,h,k}^m\], in which the weights are calculated using a sigmoidal transformation of the component models' relative WIS over a rolling window of twelve (12) weeks leading up to the ensemble's forecast date $s$: \[w_s^m=\frac{exp(-\theta_s \cdot rWIS_s^m)}{\Sigma_{m'=1} exp(-\theta_s) \cdot rWIS_s^{m'}}\], where we specify the non-negative parameter $\theta_s$.
+A trained, weighted mean ensemble calculates its forecast quantiles as \[q_{l,s,h,k}^{ens} = \Sigma_{m=1}^M w_s^m q_{l,s,h,k}^m\], in which the weights are calculated using a sigmoidal transformation of the component models' relative WIS over a rolling window of twelve (12) weeks leading up to the ensemble's forecast date $s$: \[w_s^m=\frac{exp(-\theta \cdot rWIS_s^m)}{\Sigma_{m'=1}^M exp(-\theta) \cdot rWIS_s^{m'}}.\] When the non-negative parameter $\theta = 0$, this becomes an equally weighted ensemble. However, as $\theta$ increases, the weights become more unequal, with the contributions of better-performing component models eclipsing that of worse-performing models. Note that the weights, however, are always non-negative and sum to one \cite{ensemble_methods}.
 
-The weights of this defined combination are always non-negative and sum to one \cite{ensemble_methods}.
+The THieF ensembles are named with the $\theta$ value used in their construction, except for the untrained ensemble, which is called THieF\_ensemble-mean. We select $\theta$ values \{0, 1, 3, 6.5, 10, 15, 20, 25\} to encompass the range of values taken on by the COVIDhub-trained\_ensemble\footnote{A trained ensemble created by the Forecast Hub that makes short-term forecasts for incident cases, incident and cumulative deaths, and incident hospitalizations. This model makes its forecasts by computing a weighted median of the ten best component forecasts (by WIS) in the 12 weeks leading up to the forecast date. For this model, $\theta$ is allowed to vary by forecast date \cite{ensembles_info, ensemble_methods}.} when predicting incident hospitalization \cite{ensemble_methods}. The one non-integer value (6.5) was selected as the median (and approximate mean) $\theta$ value over the period of analysis for all locations of interest except for the U.S. national level. The corresponding ensemble was named THieF\_ensemble-train6.5.
 
+While the value of $\theta$ generally remains static for each ensemble, all trained ensembles are defined to start with $\theta = 0$ until 12 weeks of forecasts are achieved (12/5/20+12 weeks) that can be used to calculate weights based on prior performance of forecasts.
 
+\subsection{SARIMA models}
+The four SARIMA (seasonal ARIMA) models are classic statistical models created using the `auto.arima()` function from the `forecast` package in `R`. This function makes forecasts based on input time series data, and the user may specify seasonality when creating a SARIMA model. Using the original HealthData.Gov confirmed hospitalizations data set, we create two ARIMA models and two SARIMA models, with either no data transformation or a variance-stabilizing fourth root transformation, as described in THieF Models. The SARIMA models both have a seasonality of 7 days (1 week), named sarima\_s7-4root and sarima\_s7-noTransform, while the ARIMA models have no seasonality, named sarima\_s1-4root and sarima\_s1-4root.
 
-\subsection{ARIMA and SARIMA models}
+The construction of the SARIMA models is intentionally identical to that of the daily and weekly aggregation levels of the original THieF models, though in practice the resulting base forecasts from the THieF models may differ slightly due to the aggregation process to create the temporal hierarchy. We specifically want to use the SARIMA models to help investigate whether it is the THieF methodology's temporal hierarchy and forecast reconciliation that impacts its performance, compared to simply the underlying ARIMA base forecaster. (Recall that research has shown that classic statistical models have shown good performance for outbreak forecasting \cite{lauer}.)
+
 \section{Metrics and Evaluation}
 Evaluation of our models is conducted by aggregating the output forecasts in five ways: by forecast state, by location, by pandemic wave, and overall. Despite being made on a daily scale, hospitalization forecasts have been evaluated on a weekly scale by the Forecast Hub, and we follow this convention. For each metric, a single value is obtained by averaging the values across a single week (Tuesday through Monday) \cite{eval_reports}. However, modeling teams have made forecasts on different days (e.g. Saturday vs Sunday vs Monday), leading to a mismatch between what day an $h$-day ahead forecast is predicting for. Hence, for the models we construct, we actually use 3- to 30-day ahead horizons to ensure all forecasts are predicting for the same dates. It should be noted, however, this may result in a slight disadvantage for models whose 3- to 30-day ahead forecasts are being compared to 1- to 28-day ahead forecasts.
 
@@ -396,6 +400,87 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 
 \chapter{Results}
 \section{Validation phase}
+\begin{table}[h]
+\begin{center}
+\label{tab:table_validation_us}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Tue Mar 21 18:58:31 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & THieF\_6wk-noTransform & 1116.40 & 1756.00 & 0.36 & 0.91 & 0.88 & 0.88 \\ 
+  2 & THieF\_ensemble-train3 & 1139.80 & 1808.60 & 0.34 & 0.91 & 0.89 & 0.91 \\ 
+  3 & THieF\_ensemble-train1 & 1144.90 & 1814.90 & 0.35 & 0.90 & 0.90 & 0.91 \\ 
+  4 & THieF\_ensemble-train6.5 & 1146.60 & 1817.40 & 0.34 & 0.91 & 0.90 & 0.91 \\ 
+  5 & THieF\_6wk-4root & 1152.40 & 1765.80 & 0.33 & 0.76 & 0.90 & 0.88 \\ 
+  6 & THieF\_ensemble-train10 & 1159.20 & 1834.00 & 0.33 & 0.91 & 0.91 & 0.92 \\ 
+  7 & THieF\_ensemble-train15 & 1180.20 & 1866.30 & 0.33 & 0.90 & 0.92 & 0.94 \\ 
+  8 & THieF\_ensemble-train20 & 1199.40 & 1897.50 & 0.32 & 0.90 & 0.94 & 0.95 \\ 
+  9 & THieF\_ensemble-mean & 1212.70 & 1822.30 & 0.35 & 0.90 & 0.95 & 0.91 \\ 
+  10 & THieF\_ensemble-train25 & 1214.30 & 1919.30 & 0.32 & 0.89 & 0.95 & 0.96 \\ 
+  11 & THieF\_1wk-noTransform & 1218.50 & 1856.40 & 0.46 & 0.87 & 0.95 & 0.93 \\ 
+  12 & THieF\_2wk-4root & 1234.70 & 1941.80 & 0.25 & 0.85 & 0.97 & 0.97 \\ 
+  13 & THieF\_1wk-4root & 1252.20 & 1993.10 & 0.30 & 0.85 & 0.98 & 1.00 \\ 
+  14 & COVIDhub-baseline & 1276.50 & 1995.90 & 0.64 & 0.99 & 1.00 & 1.00 \\ 
+  15 & THieF\_8wk-noTransform & 1277.00 & 1968.90 & 0.38 & 0.85 & 1.00 & 0.99 \\ 
+  16 & THieF\_8wk-4root & 1303.60 & 1963.80 & 0.26 & 0.70 & 1.02 & 0.98 \\ 
+  17 & THieF\_2wk-noTransform & 1343.10 & 1985.20 & 0.40 & 0.82 & 1.05 & 0.99 \\ 
+  18 & THieF\_4wk-4root & 1383.40 & 2058.00 & 0.28 & 0.70 & 1.08 & 1.03 \\ 
+  19 & THieF\_3wk-noTransform & 1392.90 & 2008.60 & 0.38 & 0.78 & 1.09 & 1.01 \\ 
+  20 & THieF\_4wk-noTransform & 1397.40 & 2038.40 & 0.35 & 0.77 & 1.09 & 1.02 \\ 
+  21 & THieF\_3wk-4root & 1401.70 & 2164.80 & 0.26 & 0.80 & 1.10 & 1.08 \\ 
+  22 & sarima\_s1-noTransform & 1477.90 & 2162.00 & 0.37 & 0.79 & 1.16 & 1.08 \\ 
+  23 & sarima\_s7-noTransform & 1483.20 & 2200.60 & 0.39 & 0.81 & 1.16 & 1.10 \\ 
+  24 & sarima\_s1-4root & 1530.20 & 2227.10 & 0.26 & 0.75 & 1.20 & 1.12 \\ 
+  25 & THieF\_12wk-noTransform & 1553.50 & 2357.80 & 0.32 & 0.76 & 1.22 & 1.18 \\ 
+  26 & sarima\_s7-4root & 1601.50 & 2467.20 & 0.22 & 0.76 & 1.25 & 1.24 \\ 
+  27 & THieF\_12wk-4root & 2270.60 & 2039.90 & 0.34 & 0.66 & 1.78 & 1.02 \\ 
+   \hline
+\end{tabular}\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_validation_states}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Tue Mar 21 18:58:31 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & THieF\_ensemble-train10 & 30.73 & 47.22 & 0.53 & 0.93 & 0.86 & 0.94 \\ 
+  2 & THieF\_ensemble-train15 & 30.74 & 47.28 & 0.52 & 0.93 & 0.86 & 0.95 \\ 
+  3 & THieF\_ensemble-train6.5 & 30.77 & 47.20 & 0.53 & 0.94 & 0.86 & 0.94 \\ 
+  4 & THieF\_ensemble-train20 & 30.77 & 47.33 & 0.52 & 0.93 & 0.86 & 0.95 \\ 
+  5 & THieF\_ensemble-train25 & 30.81 & 47.37 & 0.51 & 0.93 & 0.86 & 0.95 \\ 
+  6 & THieF\_ensemble-train3 & 30.90 & 47.25 & 0.54 & 0.94 & 0.86 & 0.95 \\ 
+  7 & THieF\_ensemble-train1 & 31.33 & 47.44 & 0.53 & 0.94 & 0.87 & 0.95 \\ 
+  8 & THieF\_6wk-4root & 31.65 & 48.11 & 0.46 & 0.91 & 0.88 & 0.96 \\ 
+  9 & THieF\_6wk-noTransform & 32.26 & 48.67 & 0.54 & 0.92 & 0.90 & 0.97 \\ 
+  10 & THieF\_1wk-4root & 32.68 & 50.06 & 0.48 & 0.91 & 0.91 & 1.00 \\ 
+  11 & THieF\_2wk-4root & 32.94 & 50.26 & 0.47 & 0.91 & 0.92 & 1.01 \\ 
+  12 & THieF\_2wk-noTransform & 33.26 & 48.03 & 0.57 & 0.90 & 0.93 & 0.96 \\ 
+  13 & THieF\_1wk-noTransform & 33.74 & 49.21 & 0.58 & 0.90 & 0.94 & 0.98 \\ 
+  14 & THieF\_8wk-4root & 33.84 & 51.14 & 0.43 & 0.89 & 0.94 & 1.02 \\ 
+  15 & THieF\_4wk-4root & 34.10 & 51.50 & 0.46 & 0.90 & 0.95 & 1.03 \\ 
+  16 & THieF\_ensemble-mean & 34.29 & 47.65 & 0.53 & 0.94 & 0.96 & 0.95 \\ 
+  17 & THieF\_3wk-4root & 34.62 & 52.71 & 0.46 & 0.90 & 0.96 & 1.05 \\ 
+  18 & THieF\_8wk-noTransform & 34.76 & 52.06 & 0.51 & 0.90 & 0.97 & 1.04 \\ 
+  19 & THieF\_3wk-noTransform & 34.96 & 52.08 & 0.54 & 0.90 & 0.97 & 1.04 \\ 
+  20 & THieF\_4wk-noTransform & 35.63 & 52.82 & 0.53 & 0.89 & 0.99 & 1.06 \\ 
+  21 & COVIDhub-baseline & 35.88 & 49.98 & 0.83 & 0.98 & 1.00 & 1.00 \\ 
+  22 & sarima\_s7-noTransform & 36.29 & 51.91 & 0.57 & 0.89 & 1.01 & 1.04 \\ 
+  23 & sarima\_s7-4root & 36.35 & 54.55 & 0.46 & 0.90 & 1.01 & 1.09 \\ 
+  24 & sarima\_s1-4root & 36.91 & 55.43 & 0.46 & 0.89 & 1.03 & 1.11 \\ 
+  25 & THieF\_12wk-noTransform & 39.14 & 59.06 & 0.42 & 0.89 & 1.09 & 1.18 \\ 
+  26 & sarima\_s1-noTransform & 39.41 & 56.38 & 0.54 & 0.88 & 1.10 & 1.13 \\ 
+  27 & THieF\_12wk-4root & 84.32 & 54.49 & 0.41 & 0.86 & 2.35 & 1.09 \\ 
+   \hline
+\end{tabular}\caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{center}
+\end{table}
 
 \section{Testing phase}
 
@@ -414,7 +499,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_overall_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Mon Mar 20 18:57:08 2023
+% Tue Mar 21 18:58:48 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -436,7 +521,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_overall_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Mon Mar 20 18:57:08 2023
+% Tue Mar 21 18:58:48 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -528,9 +613,92 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 
 \begin{table}[h]
 \begin{center}
+\label{tab:table_last17_us}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Tue Mar 21 18:58:56 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & THieF\_12wk-4root & 1109.40 & 1606.60 & 0.60 & 0.86 & 0.71 & 0.62 \\ 
+  2 & THieF\_ensemble-mean & 1147.80 & 1863.50 & 0.37 & 0.91 & 0.74 & 0.71 \\ 
+  3 & THieF\_6wk-4root & 1155.80 & 1761.00 & 0.48 & 0.88 & 0.74 & 0.68 \\ 
+  4 & THieF\_ensemble-train1 & 1170.20 & 1909.10 & 0.37 & 0.92 & 0.75 & 0.73 \\ 
+  5 & THieF\_ensemble-train3 & 1189.00 & 1947.60 & 0.35 & 0.92 & 0.76 & 0.75 \\ 
+  6 & THieF\_6wk-noTransform & 1216.00 & 1905.90 & 0.33 & 0.86 & 0.78 & 0.73 \\ 
+  7 & THieF\_ensemble-train6.5 & 1229.20 & 2013.30 & 0.34 & 0.94 & 0.79 & 0.77 \\ 
+  8 & THieF\_ensemble-train10 & 1274.70 & 2080.70 & 0.34 & 0.94 & 0.82 & 0.80 \\ 
+  9 & THieF\_8wk-noTransform & 1293.30 & 2063.20 & 0.35 & 0.86 & 0.83 & 0.79 \\ 
+  10 & THieF\_ensemble-train15 & 1341.00 & 2185.10 & 0.33 & 0.94 & 0.86 & 0.84 \\ 
+  11 & THieF\_12wk-noTransform & 1386.60 & 1952.40 & 0.55 & 0.77 & 0.89 & 0.75 \\ 
+  12 & THieF\_ensemble-train20 & 1399.10 & 2278.40 & 0.33 & 0.92 & 0.90 & 0.87 \\ 
+  13 & THieF\_8wk-4root & 1409.10 & 2103.70 & 0.34 & 0.79 & 0.91 & 0.81 \\ 
+  14 & THieF\_1wk-noTransform & 1410.30 & 2230.50 & 0.28 & 0.79 & 0.91 & 0.86 \\ 
+  15 & THieF\_2wk-4root & 1444.60 & 2287.50 & 0.28 & 0.86 & 0.93 & 0.88 \\ 
+  16 & THieF\_ensemble-train25 & 1444.90 & 2348.90 & 0.32 & 0.92 & 0.93 & 0.90 \\ 
+  17 & THieF\_4wk-noTransform & 1446.60 & 2130.50 & 0.34 & 0.67 & 0.93 & 0.82 \\ 
+  18 & THieF\_3wk-noTransform & 1465.90 & 2126.00 & 0.34 & 0.66 & 0.94 & 0.82 \\ 
+  19 & THieF\_2wk-noTransform & 1471.60 & 2181.30 & 0.31 & 0.72 & 0.95 & 0.84 \\ 
+  20 & THieF\_3wk-4root & 1490.40 & 2400.00 & 0.36 & 0.90 & 0.96 & 0.92 \\ 
+  21 & COVIDhub-baseline & 1555.90 & 2606.50 & 0.37 & 0.97 & 1.00 & 1.00 \\ 
+  22 & THieF\_1wk-4root & 1564.10 & 2558.40 & 0.29 & 0.87 & 1.00 & 0.98 \\ 
+  23 & THieF\_4wk-4root & 1595.50 & 2428.80 & 0.32 & 0.73 & 1.02 & 0.93 \\ 
+  24 & sarima\_s1-noTransform & 1763.40 & 2622.20 & 0.22 & 0.71 & 1.13 & 1.01 \\ 
+  25 & sarima\_s1-4root & 1764.90 & 2596.30 & 0.24 & 0.79 & 1.13 & 1.00 \\ 
+  26 & sarima\_s7-noTransform & 1958.00 & 2920.00 & 0.15 & 0.63 & 1.26 & 1.12 \\ 
+  27 & sarima\_s7-4root & 2198.90 & 3418.20 & 0.18 & 0.75 & 1.41 & 1.31 \\ 
+   \hline
+\end{tabular}\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_last17_states}
+% latex table generated in R 4.1.3 by xtable 1.8-4 package
+% Tue Mar 21 18:58:56 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
+  \hline
+1 & THieF\_ensemble-train6.5 & 32.40 & 49.69 & 0.52 & 0.92 & 0.76 & 0.77 \\ 
+  2 & THieF\_ensemble-train10 & 32.41 & 49.81 & 0.52 & 0.93 & 0.76 & 0.77 \\ 
+  3 & THieF\_ensemble-train3 & 32.45 & 49.55 & 0.52 & 0.92 & 0.76 & 0.77 \\ 
+  4 & THieF\_ensemble-train15 & 32.50 & 50.03 & 0.51 & 0.93 & 0.76 & 0.78 \\ 
+  5 & THieF\_ensemble-mean & 32.53 & 49.23 & 0.52 & 0.92 & 0.76 & 0.76 \\ 
+  6 & THieF\_ensemble-train1 & 32.54 & 49.49 & 0.52 & 0.92 & 0.76 & 0.77 \\ 
+  7 & THieF\_ensemble-train20 & 32.63 & 50.26 & 0.51 & 0.92 & 0.76 & 0.78 \\ 
+  8 & THieF\_ensemble-train25 & 32.77 & 50.48 & 0.51 & 0.92 & 0.77 & 0.78 \\ 
+  9 & THieF\_6wk-4root & 33.13 & 49.34 & 0.50 & 0.91 & 0.77 & 0.77 \\ 
+  10 & THieF\_2wk-4root & 33.73 & 51.33 & 0.50 & 0.91 & 0.79 & 0.80 \\ 
+  11 & THieF\_2wk-noTransform & 34.19 & 50.15 & 0.50 & 0.88 & 0.80 & 0.78 \\ 
+  12 & THieF\_6wk-noTransform & 34.78 & 51.56 & 0.50 & 0.88 & 0.81 & 0.80 \\ 
+  13 & THieF\_1wk-4root & 34.85 & 53.57 & 0.49 & 0.91 & 0.81 & 0.83 \\ 
+  14 & THieF\_8wk-4root & 34.91 & 51.66 & 0.48 & 0.90 & 0.82 & 0.80 \\ 
+  15 & THieF\_12wk-4root & 34.92 & 50.48 & 0.49 & 0.91 & 0.82 & 0.78 \\ 
+  16 & THieF\_8wk-noTransform & 35.45 & 52.57 & 0.49 & 0.88 & 0.83 & 0.82 \\ 
+  17 & THieF\_3wk-4root & 36.07 & 54.64 & 0.49 & 0.90 & 0.84 & 0.85 \\ 
+  18 & THieF\_4wk-4root & 36.66 & 54.82 & 0.48 & 0.89 & 0.86 & 0.85 \\ 
+  19 & THieF\_3wk-noTransform & 36.98 & 54.12 & 0.48 & 0.87 & 0.86 & 0.84 \\ 
+  20 & THieF\_1wk-noTransform & 37.21 & 54.92 & 0.47 & 0.86 & 0.87 & 0.85 \\ 
+  21 & THieF\_4wk-noTransform & 38.33 & 56.40 & 0.47 & 0.86 & 0.90 & 0.88 \\ 
+  22 & THieF\_12wk-noTransform & 38.49 & 53.65 & 0.49 & 0.85 & 0.90 & 0.83 \\ 
+  23 & sarima\_s1-4root & 41.55 & 62.71 & 0.44 & 0.88 & 0.97 & 0.97 \\ 
+  24 & COVIDhub-baseline & 42.78 & 64.41 & 0.72 & 0.97 & 1.00 & 1.00 \\ 
+  25 & sarima\_s7-4root & 43.72 & 64.94 & 0.45 & 0.88 & 1.02 & 1.01 \\ 
+  26 & sarima\_s7-noTransform & 43.81 & 62.42 & 0.45 & 0.84 & 1.02 & 0.97 \\ 
+  27 & sarima\_s1-noTransform & 46.51 & 67.02 & 0.42 & 0.83 & 1.09 & 1.04 \\ 
+   \hline
+\end{tabular}\caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{center}
+\end{table}
+
+
+\begin{table}[h]
+\begin{center}
 \label{tab:table_horizon_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Mon Mar 20 18:57:16 2023
+% Tue Mar 21 18:58:56 2023
 \begin{tabular}{rlrrrrrrr}
   \hline
  & model & horizon\_wk & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -576,7 +744,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_horizon_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Mon Mar 20 18:57:16 2023
+% Tue Mar 21 18:58:56 2023
 \begin{tabular}{rlrrrrrrr}
   \hline
  & model & horizon\_wk & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -624,7 +792,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_wave_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Mon Mar 20 18:57:16 2023
+% Tue Mar 21 18:58:56 2023
 \begin{longtable}{rlrlrrrrrr}
   \hline
  & model & horizon\_wk & wave & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -727,7 +895,7 @@ Relative versions of MAE and WIS are also used to adjust for truth data magnitud
 \begin{center}
 \label{tab:table_wave_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Mon Mar 20 18:57:16 2023
+% Tue Mar 21 18:58:56 2023
 \begin{longtable}{rlrlrrrrrr}
   \hline
  & model & horizon\_wk & wave & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 

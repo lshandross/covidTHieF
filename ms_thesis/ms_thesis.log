@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.3.6)  20 MAR 2023 18:57
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022) (preloaded format=pdflatex 2023.3.6)  21 MAR 2023 18:59
 entering extended mode
  \write18 enabled.
  %&-line parsing enabled.
@@ -375,17 +375,17 @@ File: ulasy.fd 1998/08/17 v2.2e LaTeX symbol font definitions
 
 [6] (./ms_thesis.lot [7
 
-])
+] [8])
 \tf@lot=\write6
 \openout6 = `ms_thesis.lot'.
 
-[8] (./ms_thesis.lof [9
+[9] [10] (./ms_thesis.lof [11
 
 ])
 \tf@lof=\write7
 \openout7 = `ms_thesis.lof'.
 
-[10] [11]
+[12] [13]
 Chapter 1.
 [1
 
@@ -400,12 +400,12 @@ Overfull \hbox (35.19246pt too wide) in paragraph at lines 296--303
  []
 
 [5]
-<ms_thesis-evaluation_period_plot.pdf, id=462, 433.62pt x 433.62pt>
+<ms_thesis-evaluation_period_plot.pdf, id=518, 433.62pt x 433.62pt>
 File: ms_thesis-evaluation_period_plot.pdf Graphic file (type pdf)
 <use ms_thesis-evaluation_period_plot.pdf>
 Package pdftex.def Info: ms_thesis-evaluation_period_plot.pdf  used on input line 315.
 (pdftex.def)             Requested size: 346.89731pt x 346.91632pt.
-[6] [7 <./ms_thesis-evaluation_period_plot.pdf>] [8] [9] [10]
+[6] [7 <./ms_thesis-evaluation_period_plot.pdf>] [8] [9] [10] [11]
 Overfull \hbox (4.31184pt too wide) in paragraph at lines 357--358
 []\T1/aer/m/n/12 any given date's 1- to 28-day ahead base fore-casts rep-re-sented as {$[]\OT1/cmr/m/n/12 ; \OML/cmm/m/it/12 h \OT1/cmr/m/n/12 = 1\OML/cmm/m/it/12 ; []  ; \OT1/cmr/m/n/12 28$\T1/aer/m/n/12 }
  []
@@ -415,59 +415,73 @@ Underfull \hbox (badness 10000) in paragraph at lines 357--358
 
  []
 
-[11] [12] [13] [14] [15]
+[12] [13] [14] [15] [16] [17]
 Chapter 3.
-<ms_thesis-forecast_models_plot.pdf, id=554, 433.62pt x 433.62pt>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+<ms_thesis-forecast_models_plot.pdf, id=625, 433.62pt x 433.62pt>
 File: ms_thesis-forecast_models_plot.pdf Graphic file (type pdf)
 <use ms_thesis-forecast_models_plot.pdf>
-Package pdftex.def Info: ms_thesis-forecast_models_plot.pdf  used on input line 405.
+Package pdftex.def Info: ms_thesis-forecast_models_plot.pdf  used on input line 490.
 (pdftex.def)             Requested size: 346.89731pt x 346.91632pt.
 
-Overfull \hbox (7.2326pt too wide) in paragraph at lines 418--431
+Overfull \hbox (7.2326pt too wide) in paragraph at lines 503--516
  [] 
  []
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-<ms_thesis-horizon_plot.pdf, id=555, 433.62pt x 433.62pt>
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+<ms_thesis-horizon_plot.pdf, id=626, 433.62pt x 433.62pt>
 File: ms_thesis-horizon_plot.pdf Graphic file (type pdf)
 <use ms_thesis-horizon_plot.pdf>
-Package pdftex.def Info: ms_thesis-horizon_plot.pdf  used on input line 463.
+Package pdftex.def Info: ms_thesis-horizon_plot.pdf  used on input line 548.
 (pdftex.def)             Requested size: 346.89731pt x 346.91632pt.
-<ms_thesis-wave_plot.pdf, id=556, 433.62pt x 433.62pt>
+<ms_thesis-wave_plot.pdf, id=627, 433.62pt x 433.62pt>
 File: ms_thesis-wave_plot.pdf Graphic file (type pdf)
 <use ms_thesis-wave_plot.pdf>
-Package pdftex.def Info: ms_thesis-wave_plot.pdf  used on input line 471.
+Package pdftex.def Info: ms_thesis-wave_plot.pdf  used on input line 556.
 (pdftex.def)             Requested size: 346.89731pt x 346.91632pt.
-<ms_thesis-location_plot.pdf, id=557, 433.62pt x 433.62pt>
+<ms_thesis-location_plot.pdf, id=628, 433.62pt x 433.62pt>
 File: ms_thesis-location_plot.pdf Graphic file (type pdf)
 <use ms_thesis-location_plot.pdf>
-Package pdftex.def Info: ms_thesis-location_plot.pdf  used on input line 480.
+Package pdftex.def Info: ms_thesis-location_plot.pdf  used on input line 565.
 (pdftex.def)             Requested size: 346.89731pt x 346.91632pt.
-<ms_thesis-us_date_plot.pdf, id=558, 433.62pt x 433.62pt>
+<ms_thesis-us_date_plot.pdf, id=629, 433.62pt x 433.62pt>
 File: ms_thesis-us_date_plot.pdf Graphic file (type pdf)
 <use ms_thesis-us_date_plot.pdf>
-Package pdftex.def Info: ms_thesis-us_date_plot.pdf  used on input line 488.
+Package pdftex.def Info: ms_thesis-us_date_plot.pdf  used on input line 573.
 (pdftex.def)             Requested size: 346.89731pt x 346.91632pt.
-[16
-
-] [17 <./ms_thesis-forecast_models_plot.pdf>] [18 <./ms_thesis-horizon_plot.pdf>] [19 <./ms_thesis-wave_plot.pdf>] [20 <./ms_thesis-location_plot.pdf>]
-<ms_thesis-states_date_plot.pdf, id=609, 433.62pt x 433.62pt>
+<ms_thesis-states_date_plot.pdf, id=630, 433.62pt x 433.62pt>
 File: ms_thesis-states_date_plot.pdf Graphic file (type pdf)
 <use ms_thesis-states_date_plot.pdf>
-Package pdftex.def Info: ms_thesis-states_date_plot.pdf  used on input line 495.
+Package pdftex.def Info: ms_thesis-states_date_plot.pdf  used on input line 580.
 (pdftex.def)             Requested size: 346.89731pt x 346.91632pt.
-[21] [22 <./ms_thesis-us_date_plot.pdf>] [23 <./ms_thesis-states_date_plot.pdf>]
+[18
+
+] [19 <./ms_thesis-forecast_models_plot.pdf>] [20 <./ms_thesis-horizon_plot.pdf>] [21 <./ms_thesis-wave_plot.pdf>] [22 <./ms_thesis-location_plot.pdf>] [23 <./ms_thesis-us_date_plot.pdf>] [24 <./ms_thesis-states_date_plot.pdf>] [25] [26] [27]
 Chapter 4.
-[24
+[28
 
 ]
 
 Package hyperref Warning: bookmark level for unknown Appendix defaults to 0.
 
 
-Overfull \hbox (82.37593pt too wide) in paragraph at lines 534--571
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
+Overfull \hbox (82.37593pt too wide) in paragraph at lines 702--739
  [] 
  []
 
@@ -475,7 +489,7 @@ Overfull \hbox (82.37593pt too wide) in paragraph at lines 534--571
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (58.90425pt too wide) in paragraph at lines 580--617
+Overfull \hbox (58.90425pt too wide) in paragraph at lines 748--785
  [] 
  []
 
@@ -483,60 +497,60 @@ Overfull \hbox (58.90425pt too wide) in paragraph at lines 580--617
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (135.67953pt too wide) in alignment at lines 628--722
+Overfull \hbox (135.67953pt too wide) in alignment at lines 796--890
  [] [] [] [] [] [] [] [] [] [] 
  []
 
 
-LaTeX Warning: Float too large for page by 819.44858pt on input line 724.
+LaTeX Warning: Float too large for page by 819.44858pt on input line 892.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
 
-Overfull \hbox (123.9437pt too wide) in alignment at lines 731--825
+Overfull \hbox (123.9437pt too wide) in alignment at lines 899--993
  [] [] [] [] [] [] [] [] [] [] 
  []
 
 
-LaTeX Warning: Float too large for page by 819.44858pt on input line 827.
+LaTeX Warning: Float too large for page by 819.44858pt on input line 995.
 
 
 LaTeX Warning: `h' float specifier changed to `ht'.
 
-(./ms_thesis.bbl [25
+(./ms_thesis.bbl [29
 
-] [26] [27] [28] [29]
+] [30] [31] [32] [33] [34] [35]
 
 Package hyperref Warning: bookmark level for unknown BackMatter defaults to 0.
 
 LaTeX Font Info:    Trying to load font information for T1+aett on input line 12.
 (c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/tex/latex/ae/t1aett.fd
 File: t1aett.fd 1997/11/16 Font definitions for T1/aett.
-) [30
+) [36
 
 ]
 Underfull \hbox (badness 10000) in paragraph at lines 91--97
 \T1/aett/m/n/12 gov / Hospital / COVID-[]19-[]Reported-[]Patient-[]Impact-[]and-[]Hospital-[]Capa /
  []
 
-) [31] (./ms_thesis.aux)
+) [37] (./ms_thesis.aux)
 Package rerunfilecheck Info: File `ms_thesis.out' has not changed.
-(rerunfilecheck)             Checksum: 4EF136455062D7ECE94C32296C8DB8DB;6428.
+(rerunfilecheck)             Checksum: C83858AB4DDFCEB716145DA91AE63BFD;6372.
  ) 
 Here is how much of TeX's memory you used:
- 11396 strings out of 477984
- 185050 string characters out of 5837742
- 2000382 words of memory out of 5000000
- 31245 multiletter control sequences out of 15000+600000
+ 11413 strings out of 477984
+ 185264 string characters out of 5837742
+ 2025382 words of memory out of 5000000
+ 31249 multiletter control sequences out of 15000+600000
  540540 words of font info for 95 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
  75i,8n,77p,1660b,560s stack positions out of 10000i,1000n,20000p,200000b,200000s
-<c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmb10.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on ms_thesis.pdf (42 pages, 912195 bytes).
+<c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmb10.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi12.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr12.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmti12.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/cm/cmtt12.pfb><c:/Users/lshan/AppData/Roaming/TinyTeX/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
+Output written on ms_thesis.pdf (50 pages, 939120 bytes).
 PDF statistics:
- 783 PDF objects out of 1000 (max. 8388607)
- 686 compressed objects within 7 object streams
- 122 named destinations out of 1000 (max. 500000)
+ 879 PDF objects out of 1000 (max. 8388607)
+ 771 compressed objects within 8 object streams
+ 135 named destinations out of 1000 (max. 500000)
  360 words of extra memory for PDF output out of 10000 (max. 10000000)
 
