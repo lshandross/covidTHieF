@@ -275,16 +275,16 @@ We generate candidate models formulated using the THieF methodology, which diffe
 %% Time for the body of the dissertation
 \mainmatter   %% <-- This line is mandatory
 
-\chapter{Introduction}
+\chapter{Introduction} \label{Introduction}
 
-\section{Infectious disease forecasting}
-\section{COVID-19 forecasting}
-\subsection{US COVID-19 Forecast Hub}
-\section{Temporal hierarchical forecasting}
-\section{Goals}
+\section{Infectious disease forecasting} \label{infectious_disease_forecasting}
+\section{COVID-19 forecasting} \label{covid19_forecasting}
+\subsection{US COVID-19 Forecast Hub} \label{forecast_hub}
+\section{Temporal hierarchical forecasting} \label{thief_intro}
+\section{Goals} \label{goals}
 
-\chapter{Methods}
-\section{Surveillance data}
+\chapter{Methods} \label{methods}
+\section{Surveillance data} \label{surveillance_data}
 This analysis uses confirmed hospital admissions from HealthData.gov from the COVID-19 Reported Patient Impact and Hospital Capacity by State Time Series. This dataset reports state-aggregated daily incident hospitalizations starting on January 1, 2020 for U.S. states and territories. The data come from three primary sources: HHSTeleTracking, state/territorial health departments which report to HHS Protect, and National Health Care Safety Network (prior to July 15, 2020) \cite{hhs_data}.
 
 On December 1, 2020, the U.S. COVID-19 Forecast Hub designated this dataset as the official ground truth data for COVID-19 incident hospitalizations. (No other sources were designated official ground truth data prior to this date.) \cite{hub_data_repo} This meant that the HealthData.gov data was used to evaluate the performance of real-time incident hospitalization forecasts submitted to the Forecast Hub. Hence, teams were encouraged to use this hospitalization data set to train their models \cite{cramer}. In the analysis, we also use this dataset as both input training data for our models and truth data against which to perform accuracy evaluations.
@@ -295,17 +295,17 @@ Surveillance data, like the HealthData.gov confirmed hospitalizations, sometimes
 
 We query these confirmed hospitalizations from the `covidData` package through the `covidHubUtils` package, both developed by Reich Lab at the University of Massachusetts Amherst to deal with COVID-19 surveillance data. Versions of this data are stored such that users may access the truth data as of a specified date. For example, it is possible to retrieve of version of the confirmed hospitalization data set as of July 27, 2020. To ensure fair comparisons between the models developed for this analysis and some real-time models, our models are trained on the confirmed hospitalizations that would have been available as of the "forecast date" of the retrospective forecast.
 
-\section{Forecasts}
-A forecast for a target-location combination (e.g. "1-day ahead incident hospitalizations in Massachusetts") is defined by one or both of a point forecast and a probabilistic forecast, represented by a set of 23 quantiles \cite{cramer}. (More information is given about forecast targets, horizons, locations, and quantiles in the following subsections.) According to conventions set by the Forecasts Hub, all forecast values are truncated to be non-zero, as there is no real-world meaning for negative incident hospitalizations \cite{ensembles_info}. Further, while this is a retrospective analysis, forecasts are made on Sunday weekly (as they would be if made in real-time) using the data available as of that day. We chose to make forecasts on Sunday because confirmed hospitalization values for subsequent days did not update until Tuesday or later until some time in March 2021, which presented several issues. First, if we began validation forecasting after March 2021, we would lose three months of the period of analysis. Second, the main comparison models made forecasts on Monday, meaning that any models that forecast the week before would be add a disadvantage while any models that forecast on Tuesday or later would be evaluated with the following week's forecasts. Third, THieF does not allow for missing data points.
+\section{Forecasts} \label{forecasts}
+A forecast for a target-location combination (e.g. "1-day ahead incident hospitalizations in Massachusetts") is defined by one or both of a point forecast and a probabilistic forecast, represented by a set of 23 quantiles \cite{cramer}. (More information is given about forecast targets, horizons, locations, and quantiles in Sections \label{forecast_horizons, forecast_horizons, forecast_quantiles}.) According to conventions set by the Forecasts Hub, all forecast values are truncated to be non-zero, as there is no real-world meaning for negative incident hospitalizations \cite{ensembles_info}. Further, while this is a retrospective analysis, forecasts are made on Sunday weekly (as they would be if made in real-time) using the data available as of that day. We chose to make forecasts on Sunday because confirmed hospitalization values for subsequent days did not update until Tuesday or later until some time in March 2021, which presented several issues. First, if we began validation forecasting after March 2021, we would lose three months of the period of analysis. Second, the main comparison models made forecasts on Monday, meaning that any models that forecast the week before would be add a disadvantage while any models that forecast on Tuesday or later would be evaluated with the following week's forecasts. Third, THieF does not allow for missing data points.
 
-\subsection{Forecast horizons}
-Short-term forecasts for COVID-19 have been defined to encapsulate horizons of 1- to 4-weeks ahead, or, equivalently, 1- to 28-days ahead \cite{cramer}. Forecasts for incident hospitalizations are made on a daily time scale, so we choose to restrict\footnote{Some models make up to 84-day ahead forecasts due to the THieF methodology construction.} the forecast horizons we evaluate to 1- to 28-days ahead.\footnote{Note, there is a slight exception to this restriction. See Metrics and Evaluation for more information.} Horizons are related to target end dates in that a target end date of a particular forecast may be calculated by adding its horizon to the forecast date.
+\subsection{Forecast horizons} \label{forecast_horizons}
+Short-term forecasts for COVID-19 have been defined to encapsulate horizons of 1- to 4-weeks ahead, or, equivalently, 1- to 28-days ahead \cite{cramer}. Forecasts for incident hospitalizations are made on a daily time scale, so we choose to restrict\footnote{Some models make up to 84-day ahead forecasts due to the THieF methodology construction.} the forecast horizons we evaluate to 1- to 28-days ahead.\footnote{Note, there is a slight exception to this restriction. See Section \ref{metrics_and_evaluation} for more information.} Horizons are related to target end dates in that a target end date of a particular forecast may be calculated by adding its horizon to the forecast date.
 
-\subsection{Forecast locations}
+\subsection{Forecast locations} \label{forecast_locations}
 We make forecasts for 53 of 55 locations from the HealthData.gov confirmed hospitalizations dataset during the period of analysis. These 55 locations include the 50 states, four jurisdictions/territories (Washington D.C., Puerto Rico, American Samoa, and Guam), and a U.S. national level. American Samoa and Guam are excluded due to their very low or zero COVID-19 incident hospitalizations over the entire pandemic. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations do not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches \cite{cramer}. Further, even though we include the U.S. national level, the remaining 52 locations are our primary focus, as the magnitude of national forecasts is much greater than out of any single state.
 
-\subsection{Forecast quantiles}
-The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We follow this construction, though with a slight modification: prediction intervals are used to define a full distribution of forecasts. The bounds of these intervals can be used to obtain the desired quantiles, as shown in the table below. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where "L" and "U" represent the lower and upper bounds, respectively).
+\subsection{Forecast quantiles} \label{forecast_quantiles}
+The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We follow this construction, though with a slight modification: prediction intervals are used to define a full distribution of forecasts. The bounds of these intervals can be used to obtain the desired quantiles, as shown in Table \ref{tab:table_quant_int} below. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where "L" and "U" represent the lower and upper bounds, respectively).
 
 \begin{table}[h]
 \begin{center}
@@ -322,10 +322,10 @@ print(quant_int_table, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
-\section{Date range of analysis}
+\section{Date range of analysis} \label{date_range}
 We focused on the period between Monday, July 27, 2020 and Sunday, October 2, 2022. This date range spans 798 days, or 114 weeks, which is just over 26 months. The entire period of analysis is split into two main phases: a validation phase of 462 days (66 weeks) and a testing phase of 236 days (48 weeks). The split between these two phases is such that the validation phase ends on Sunday, October 31, 2021 and the testing phase begins on Monday, November 1, 2021.
 
-The first day of the period of analysis (July 27, 2020) was selected as the first day of reliable truth data for all locations of interests. Forecasting for the validation phase began on Monday, December 7, 2020, as this is the first Monday after the HealthData.gov confirmed hospitalizations data set was declared the official ground truth data. The division between the validation and testing phases was chosen to encapsulate three COVID-19 variant-based waves in the validation phase (Winter 2020-21, Alpha, and Delta) and two waves in the testing phase (Omicron and BA.4/BA.5). The separation between pandemic waves is made based on U.S. national level incident hospitalizations, pictured below in [Figure X].
+The first day of the period of analysis (July 27, 2020) was selected as the first day of reliable truth data for all locations of interests. Forecasting for the validation phase began on Monday, December 7, 2020, as this is the first Monday after the HealthData.gov confirmed hospitalizations data set was declared the official ground truth data. The division between the validation and testing phases was chosen to encapsulate three COVID-19 variant-based waves in the validation phase (Winter 2020-21, Alpha, and Delta) and two waves in the testing phase (Omicron and BA.4/BA.5). The separation between pandemic waves is made based on U.S. national level incident hospitalizations, pictured below in Figure \ref{fig:figure_evaluate_period_plot}.
 
 \begin{figure}
 \label{fig:figure_evaluate_period_plot"}
@@ -337,7 +337,7 @@ tar_read(evaluation_period_plot, store="../_targets")
 \end{figure}
 
 
-\section{Benchmark comparison models}
+\section{Benchmark comparison models} \label{comparison_models}
 Two models from the Forecast Hub---the COVIDhub-baseline and COVIDhub-4\_week\_ensemble---are selected to serve as comparisons for the models in this analysis during the testing phase evaluation. Many of the metrics used in this evaluation are not especially meaningful on their own, the value often dependent on the magnitude of the observed data, requiring a relative comparison among models forecasting the same targets (1- to 28-day ahead incident hospitalizations for COVID-19) \cite{cramer}.
 
 The COVIDhub-baseline is a naive baseline model created and run by the US COVID-19 Forecast Hub, designed as a simple benchmark for comparison. The baseline makes forecasts using the previous day's incident hospitalization value as the point forecast (and 0.5 quantile for the probabilistic forecast) and using past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts \cite{cramer}. Beating the baseline is typically seen as one marker of a useful model.
@@ -349,7 +349,7 @@ Throughout period of analysis, the COVIDhub-4\_week\_ensemble consisted of a shi
 The forecasts for the two comparison models are obtained from the Zoltar forecast archive, a research data repository developed by Reich Lab, through the `covidHubUtils` package \cite{zoltar}.
 
 
-\section{Temporal hierarchical forecasting (THieF)}
+\section{Temporal hierarchical forecasting (THieF)} \label{thief}
 Historically, hierarchical forecasting has been utilized in business, economics, operations management, and similar fields. This type of forecasting brings advantages like producing coherent forecasts\footnote{Hierarchical forecasts are coherent if the forecasts at lower levels sum up to those at higher levels. Coherence is not an intrinsic property of all hierarchical forecasts. A lack of coherence causes a dilemma in which it is hard to know which level of forecasts to trust, but a single level must be chosen regardless \cite{hts_talk}.} and increasing prediction accuracy compared to other methods \cite{thief}. Forecast combination has likewise shown favorable outcomes in a myriad of applications. The unique merging of forecast combination with hierarchical forecasting in the THieF methodology has resulted in promising accuracy improvements over more traditional techniques that solely involve hierarchical forecasting \cite{thief}.
 
 Forecast combination that integrates forecasts from different, independent modeling frameworks to create ensembles often results in better infectious disease forecasts compared to those from individual models \cite{ensemble_accuracy}. Likewise, classical statistical models have demonstrated good performance for short-term forecasts in outbreak settings \cite{lauer}. THieF's built-in forecast combination (which shares some key similarities with that of ensemble methods) and underlying ARIMA base-forecaster suggest that this methodology will show accuracy improvements when forecasting COVID-19 incident hospitalizations.
@@ -357,10 +357,10 @@ Forecast combination that integrates forecasts from different, independent model
 Surveillance data tends to be quite noisy due to reporting artifacts, especially when considering small time scales %\cite{}.
 COVID-19 incident hospitalizations suffer a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since patients are not admitted on weekends. We may better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we are careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels are included in model schemes to investigate the existence of hidden patterns at higher time scales and if such a pattern could improve model accuracy.
 
-The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure \cite{thief}. We begin with truth data aggregation to create the temporal hierarchy. The daily confirmed hospitalizations dataset is a time-series consisting of $T = 798$ observations that can be represented as \{$y_t; t = 1, \cdots, 798$\}. These data are then aggregated to different time scales based on the aggregation levels of interest for a particular model (e.g. weekly, every two weeks, every four weeks, etc.\footnote{see THieF models for a full list of time scales considered}). While each aggregation level can be thought of as a separate, univariate time series with different frequencies, together they constitute the temporal hierarchy for one model. Next, we make base forecasts at every level of the hierarchy using an ARIMA model for each level. These forecasts will likely not be coherent, meaning that they predict different trends for the next $h = 28$ days. This disagreement between the forecasts is desirable at this stage, as it may indicate that important patterns have been detected at different time scales. However, through the step of reconciliation (making the forecasts coherent), the information from all of the aggregation levels are combined into forecasts that are expected to be more accurate than any single level. Following this stage, the forecasts from every timescale will agree about the amount of daily incident hospitalizations for the next 1 to 28 days.
+The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure \cite{thief}. We begin with truth data aggregation to create the temporal hierarchy. The daily confirmed hospitalizations dataset is a time-series consisting of $T = 798$ observations that can be represented as \{$y_t; t = 1, \cdots, 798$\}. These data are then aggregated to different time scales based on the aggregation levels of interest for a particular model (e.g. weekly, every two weeks, every four weeks, etc.\footnote{see Section \ref{thief_models} for a full list of time scales considered}). While each aggregation level can be thought of as a separate, univariate time series with different frequencies, together they constitute the temporal hierarchy for one model. Next, we make base forecasts at every level of the hierarchy using an ARIMA model for each level. These forecasts will likely not be coherent, meaning that they predict different trends for the next $h = 28$ days. This disagreement between the forecasts is desirable at this stage, as it may indicate that important patterns have been detected at different time scales. However, through the step of reconciliation (making the forecasts coherent), the information from all of the aggregation levels are combined into forecasts that are expected to be more accurate than any single level. Following this stage, the forecasts from every timescale will agree about the amount of daily incident hospitalizations for the next 1 to 28 days.
 
-\subsection{Data Aggregation and Hierarchy}
-Suppose we are interested in constructing a THieF model that combines forecasts from 1-week, 2-week, and 4-week intervals because we believe these time scales each contain important information. Aggregate series for each of these times scales can be constructed from the original daily time series. In fact, any combination of time scales can be chosen for the hierarchy as long as they are factors\footnote{Non-factor levels tend to be more difficult to compute and do not necessarily abide by the following equations.} of the topmost aggregation level (see THieF models for some examples)
+\subsection{Data Aggregation and Hierarchy} \label{thief_agg_hierarchy}
+Suppose we are interested in constructing a THieF model that combines forecasts from 1-week, 2-week, and 4-week intervals because we believe these time scales each contain important information. Aggregate series for each of these times scales can be constructed from the original daily time series. In fact, any combination of time scales can be chosen for the hierarchy as long as they are factors\footnote{Non-factor levels tend to be more difficult to compute and do not necessarily abide by the following equations.} of the topmost aggregation level (see Section \ref{thief_models} for some examples).
 
 $m$ is the number of observations of the smallest timescale (or highest sampling frequency) that aggregate to create a single data point for the highest level. In our example case, $m = 28$ since there are 28 days in 4 weeks.
 $k \in$ \{$k_p,\cdot,k_2,k_1$\} can take on multiple values and indicates the particular aggregation level, where $k_p = m$, $k_1 = 1$, and $p$ is the total number of aggregation levels. In our example case, $k \in$ \{$28, 14, 7$\}, where $p = 3$
@@ -373,22 +373,22 @@ For each period of the top-level aggregation (2 weeks in our example), we create
 
 Each aggregation level can be thought of as a univariate time series from which forecasts can be made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model (although only up to 28-day ahead forecasts are evaluated).
 
-\subsection{Base Forecasts}
+\subsection{Base Forecasts} \label{thief_base_forecasts}
 any given date's 1- to 28-day ahead base forecasts represented as \{$\hat{y}_h; h = 1, \cdots, 28$\}
-\subsection{Reconciled Forecasts}
+\subsection{Reconciled Forecasts} \label{thief_reconciled_forecasts}
 
-\section{Model specifications}
+\section{Model specifications} \label{model_specifications}
 We create three distinct classes of models for comparison during the validation phase: the original THieF models, the THieF ensembles, and the SARIMA models. In total, these three groups consist of twenty-six (26) candidate models.
 
-\subsection{THieF models}
-The THieF models are constructed using the THieF methodology outlined in the previous section with different combinations of aggregation levels and data transformations. Seven hierarchical structures and two data transformations result in fourteen (14) original THieF models. Each model is defined (and named) based on the highest level of its temporal hierarchy and the data transformation performed on the forecasts. For example, the simplest of the THieF models is THieF\_1wk-noTransform while the most complicated is THieF\_12wk-4root.
+\subsection{THieF models} \label{thief_models}
+The THieF models are constructed using the THieF methodology outlined in Section \ref{thief} with different combinations of aggregation levels and data transformations. Seven hierarchical structures and two data transformations result in fourteen (14) original THieF models. Each model is defined (and named) based on the highest level of its temporal hierarchy and the data transformation performed on the forecasts. For example, the simplest of the THieF models is THieF\_1wk-noTransform while the most complicated is THieF\_12wk-4root.
 
 The aggregation levels of any model's temporal hierarchy are daily, plus $f_m$-week periods where $f_m$ is the set of all factors for the highest time scale $m$. Hence, the THieF\_12wk-4root model (as well as the THieF\_12wk-noTransform model) has a temporal hierarchy made up of daily, weekly, 2-weekly, 3-weekly, 4-weekly, 6-weekly, and 12-weekly aggregation levels since $f_{12}=$ \{1, 2, 3, 4, 6, 12\}. Meanwhile, the THieF\_1wk-noTransform model's temporal hierarchy is only made up of daily and weekly aggregation levels ($f_1=$ \{1\}). We chose 1-week, 2-week, 3-week, 4-week, 6-week, 8-week, and 12-week top-level aggregations so as to have a range of time scales to inform the reconciled forecasts.
 
 We explore the seven hierarchy schemes with both no data transformation and a fourth-root data transformation. The latter transform is implemented by first taking the fourth root of the confirmed hospitalizations time series, using the truth data to make forecasts with the THieF methodology, then performing an inverse fourth-power transformation to the resulting forecasts. We selected the fourth-root transformation based on prior research that had shown that had shown accuracy improvements for COVID-19 forecasting due to its variance-stabilizing effect \cite{4root_transform}.
 
-\subsection{THieF ensemble models}
-The THieF ensemble models\footnote{The equations used to define the ensembles are adapted from Ray, et. al \cite{ensemble_methods}} are seven mean ensembles of the fourteen total original THieF models. This is true even during the testing phase during which not all fourteen original THieF models make forecasts (see Metrics and evaluation: testing phase).
+\subsection{THieF ensemble models} \label{thief_ensembles}
+The THieF ensemble models\footnote{The equations used to define the ensembles are adapted from Ray, et. al \cite{ensemble_methods}} are seven mean ensembles of the fourteen total original THieF models. This is true even during the testing phase during which not all fourteen original THieF models make forecasts (see Section \ref{testing_eval}).
 
 Of the seven THieF ensembles, we formulated six as trained ensembles, in which past performance of the component THieF models is used to assign the components weights, and one as an untrained ensemble, in which all component forecasters are assigned equal weight \cite{ensemble_methods}. Both types of ensembles make quantile forecasts\footnote{Recall that we use the 0.500 quantile forecast as the point forecast.} at level $k$ by combining those of the component forecasts for a particular forecasts date, location, horizon, and quantile combination. (For example, a particular model $m$ might make a 0.500 quantile forecast on December 7, 2020 that predicts the number of 1-day ahead incident hospitalizations in Massachusetts will be 185.) An ensemble quantile forecast can be expressed mathematically as \[q_{l,s,h,k}^{ens} = f(q_{l,s,h,k}^1, \cdots, q_{l,s,h,k}^M),\] where $l$ is the location, $s$ is the forecast date, $h$ is the horizon, and the superscript $m = 1, \cdots, M$ denotes the model \cite{ensemble_methods}.
 
@@ -398,12 +398,12 @@ The THieF ensembles are named with the $\theta$ value used in their construction
 
 While the value of $\theta$ generally remains static for each ensemble, all trained ensembles are defined to start with $\theta = 0$ until 12 weeks of prior forecasts are achieved (on March 1, 2021) during the validation phase that can be used to calculate weights based on prior performance of forecasts. During the testing phase, the value of $\theta$ is dependent on at least some validation phase performance until the thirteenth week (beginning on January 24, 2022).
 
-\subsection{SARIMA models}
+\subsection{SARIMA models} \label{sarima_models}
 The four SARIMA (seasonal ARIMA) models are classic statistical models created using the `auto.arima()` function from the `forecast` package in `R`. This function makes forecasts based on input time series data, and the user may specify seasonality when creating a SARIMA model. Using the original HealthData.Gov confirmed hospitalizations data set, we create two ARIMA models and two SARIMA models, with either no data transformation or a variance-stabilizing fourth root transformation, as described in THieF Models. The SARIMA models both have a seasonality of 7 days (1 week), named sarima\_s7-4root and sarima\_s7-noTransform, while the ARIMA models have no seasonality, named sarima\_s1-4root and sarima\_s1-4root.
 
 The construction of the SARIMA models is intentionally identical to that of the daily and weekly aggregation levels of the original THieF models, though in practice the resulting base forecasts from the THieF models may differ slightly due to the aggregation process to create the temporal hierarchy. We specifically want to use the SARIMA models to help investigate whether it is the THieF methodology's temporal hierarchy and forecast reconciliation that impacts its performance, compared to simply the underlying ARIMA base forecaster. (Recall that research has shown that classic statistical models have shown good performance for outbreak forecasting \cite{lauer}.)
 
-\section{Metrics and Evaluation}
+\section{Metrics and Evaluation} \label{metrics_and_evaluation}
 Evaluation of our models is conducted by aggregating the output forecasts in seven ways: by forecast date, by location, by pandemic wave, overall validation/testing phase, and in the last 17 weeks (of the validation phase). Despite being made on a daily scale, hospitalization forecasts have been evaluated on a weekly scale by the Forecast Hub, and we follow this convention. For each metric, a single value is obtained by averaging the values across a single week (Tuesday through Monday) \cite{eval_reports}. However, modeling teams have made forecasts on different days (e.g. Saturday vs Sunday vs Monday), leading to a mismatch between what day an $h$-day ahead forecast is predicting for. Hence, for the models we construct, we actually use 3- to 30-day ahead horizons to ensure all forecasts are predicting for the same dates. It should be noted, however, this may result in a slight disadvantage for models whose 3- to 30-day ahead forecasts are being compared to 1- to 28-day ahead forecasts.
 
 We use the same metrics as the Forecast Hub to evaluate model accuracy for both the validation and testing phases. Average mean absolute error (MAE) is used to score point forecasts, while average weighted interval score (WIS), average 50\% prediction interval (PI), and average 95\% PI coverage are used to score probabilistic forecasts. (We refer to these metrics simply as MAE, WIS, and 50\% and 95\% PI coverage going forward for simplicity.) Averages for these metrics are first calculated for probabilistic forecasts (and point forecasts) for a single location, horizon, and quantile combination, then the mean is taken for each model from forecasts aggregated in one of the seven ways mentioned above. The resulting values from the four metrics are adapted from Cramer, et. al \cite{cramer} and are given as follows:
@@ -420,7 +420,7 @@ Evaluation for each of the seven aggregation categories (except for individual l
 
 We perform no statistical tests to assess the significance of performance differences between models, as certain issues arise when making time series forecasts that prevent usage of such tests. Namely, scores tend to be highly-correlated across multiple dimensions, like horizons, forecast dates, locations, etc. Assumptions of independent, identically distributed data found in standard inference are invalid in time series forecasting. In practice, numerical comparisons of forecast error between prospective models (without excluding any models that were compared) is sufficient for choosing the best model to inform decision-making, and foregoing formal statistical tests is common practice in infectious disease forecasting. Still, it should be noted that we cannot necessarily make a definitive statement about the predominance of one model over another without formal statistical testing \cite{lauer}.
 
-\subsection{Validation phase}
+\subsection{Validation phase} \label{validation_eval}
 The validation phase serves as a period during which to train the candidate models, calibrate the forecasts, and to select the best models to pass on to the testing phase based on performance during the validation phase. We opt to call this period the "validation phase" over the more common "training phase" because truth data from this first phase continues to inform the forecasts made during the testing phase, unlike is defined for a more traditional training-testing split of observed data for model validation.
 
 All validation phase evaluations are restricted to forecasts with target end dates (date for which the prediction of instant hospitalizations is being made) within the validation phase (July 27, 2020 to October 31, 2021), with forecasts beginning on Monday, December 7, 2020. We select one model that meets the criteria for each of the following categories to pass onto the testing phase:
@@ -441,7 +441,7 @@ Based on these criteria, a maximum of nine models will make up the best subset t
 
 We stratify by location category due to a difference in magnitude, as described above. For each location category, one model is passed on for each of the model classes---original THieF, THieF (trained) ensemble, SARIMA---as the single best candidate during the entire validation phase. We also select the single best original THieF model during the last 17 weeks of the validation phase, a category designed to account for any models whose performance improves with larger amounts of data on which to train on (since we allow models to use validation phase data to inform their forecasts). This category is limited to THieF models only, as it is models with large aggregation levels that we suspect may be fit this description, and the SARIMA models include only very short seasonality (if any) while the THieF ensemble models incorporate forecasts all the THieF models. The THieF\_untrained-ensemble is passed on regardless of performance, as we are interested in comparing the performance of this model to that of the best trained THieF ensemble.
 
-\subsection{Testing phase}
+\subsection{Testing phase} \label{testing_eval}
 Using the subset of best candidate models found during the validation phase, we make new testing phase forecasts and evaluate these models against both each other and the two comparison models from the Forecast Hub, COVIDhub-baseline and COVIDhub-4\_week\_ensemble. Like with the validation phase, all testing phase evaluations are restricted to forecasts with target end dates within the testing phase (November 1, 2021 to October 2, 2022).
 
 The testing phase analysis is broken down into five smaller evaluations, based on aggregating the testing phase forecasts for the overall period, by horizon week, by pandemic wave, by location, and by forecast date, each split by geographic scale (except for by location, where such a split would be redundant). The smaller evaluations are intended to help pinpoint any potential accuracy gains (or losses) the original THieF or THieF ensembles have over the COVIDhub-baseline (or COVIDhub-4\_week\_ensemble) and allow us to hypothesize the origin of these accuracy differences.
@@ -450,8 +450,8 @@ The overall period evaluation provides a generalized view of the testing phase a
 
 The by--pandemic wave and by--forecast date evaluations allow investigation into time periods in which the number of incident hospitalizations is of different magnitudes and is changing a different rates. Times of greater values or of rapid changes have larger WIS and MAE and are generally harder to predict \cite{mech_bayes, short_horizons}, and it may be useful to identify which models perform best under different scenarios. These two evaluations are also stratified by horizon week. However, the by-location evaluation, which provides insight into differences in model performance between higher and lower count locations, is not stratified by horizon week.
 
-\chapter{Results}
-\section{Validation phase}
+\chapter{Results} \label{results}
+\section{Validation phase} \label{validation_results}
 
 \begin{table}[h]
 \begin{center}
@@ -479,7 +479,7 @@ print(table_validation_states, booktabs=FALSE, floating=FALSE)
 
 % plot best subset, 3 locations (US, high, low), maybe after tables?
 
-\section{Testing phase}
+\section{Testing phase} \label{testing_results}
 
 \begin{figure}
 \label{fig:figure_forecasts_plot1}
@@ -490,7 +490,7 @@ tar_read(plot_models_1, store="../_targets")
 \caption{}
 \end{figure}
 
-\subsection{Overall model performance}
+\subsection{Overall model performance} \label{testing_overall}
 
 
 \begin{table}[h]
@@ -523,7 +523,7 @@ knitr::kable(tar_read(overall_metrics_states, store="../_targets"))
 @
 
 
-\subsection{Model performance by horizon week}
+\subsection{Model performance by horizon week} \label{testing_horizon}
 \begin{figure}
 \label{fig:figure_horizon_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
@@ -533,7 +533,7 @@ tar_read(combined_wis_plot, store="../_targets")
 \caption{Average WIS by the horizon week for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week compared to being aggregated across horizon weeks. All models show worse performance relative to the baseline at the 1-week ahead horizon, likely a result of being overconfident at this horizon. Once again, the THieF-4wk-4root model performs the best for WIS. Plots for average MAE are not shown due to their similarity to the average WIS plots.}
 \end{figure}
 
-\subsection{Model performance by pandemic wave}
+\subsection{Model performance by pandemic wave} \label{testing_wave}
 \begin{figure}
 \label{fig:figure_wave_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
@@ -544,7 +544,7 @@ tar_read(combined_wis_wave_plot, store="../_targets")
 \end{figure}
 
 
-\subsection{Model performance by location}
+\subsection{Model performance by location} \label{testing_location}
 \begin{figure}
 \label{fig:figure_location_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
@@ -554,7 +554,7 @@ tar_read(wis_location_plot, store="../_targets")
 \caption{Relative WIS by location for each model across all horizons for the entire testing phase. Each square contains the average relative WIS or a model at a particular location, colored based on the relative WIS compare to the baseline. Blue indicates model outperformed the baseline for that location on average, while red indicates the model performed worse than the baseline. Locations are sorted based on cumulative hospitalizations during the testing phase while models are sorted from lowest to highest overall relative WIS, aggregated across states (Table 2). The top three models by relative WIS overall during the testing phase outperformed the baseline in every location.}
 \end{figure}
 
-\subsection{Model performance by forecast week}
+\subsection{Model performance by forecast week} \label{testing_forecast_week}
 \begin{figure}
 \label{fig:figure_date_plot_us}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
@@ -574,7 +574,7 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 \end{figure}
 
 
-\chapter{Discussion}
+\chapter{Discussion} \label{discussion}
 - thief ensembles are best
   - seems like there's no real meaningful difference between mean ensemble and weighted θ=3
   - both essentially always beat the baseline for WIS and MAE with all stratified evaluations
@@ -597,7 +597,7 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \appendix
-\unnumberedchapter{Appendix: Supplemental materials}
+\unnumberedchapter{Appendix: Supplemental materials} \label{supplemental}
 %% \chapter{THE FIRST APPENDIX TITLE}
 %% ...
 %% \chapter{THE SECOND APPENDIX TITLE}
