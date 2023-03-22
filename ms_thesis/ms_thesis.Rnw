@@ -446,12 +446,13 @@ Using the subset of best candidate models found during the validation phase, we 
 
 The testing phase analysis is broken down into five smaller evaluations, based on aggregating the testing phase forecasts for the overall period, by horizon week, by pandemic wave, by location, and by forecast date, each split by geographic scale (except for by location, where such a split would be redundant). The smaller evaluations are intended to help pinpoint any potential accuracy gains (or losses) the original THieF or THieF ensembles have over the COVIDhub-baseline (or COVIDhub-4\_week\_ensemble) and allow us to hypothesize the origin of these accuracy differences.
 
-The overall period evaluation provides a generalized view of the testing phase analysis and is meant to identify a single best model that could be used to inform decision-making\footnote{Though of course we cannot say this definitively given that we do not perform any formal statistical tests \cite{lauer}.}. The by-horizon evaluation allows identification of models that perform well at shorter horizons (typically 1 to 2 week ahead), as the larger WIS and MAE values for longer horizons (3 to 4 week ahead) will dominate these metrics in the overall period evaluation. This dominance is particularly undesirable given that the Forecast Hub ensemble models, which tend to be some of the most accurate models overall, experience a sharp decline in accuracy beyond two week ahead horizons for incident hospitalizations.
+The overall period evaluation provides a generalized view of the testing phase analysis and is meant to identify a single best model that could be used to inform decision-making\footnote{Though of course we cannot say this definitively given that we do not perform any formal statistical tests \cite{lauer}.}. The by-horizon evaluation allows identification of models that perform well at shorter horizons (typically 1 to 2 week ahead), as the larger WIS and MAE values for longer horizons (3 to 4 week ahead) will dominate these metrics in the overall period evaluation. This dominance is particularly undesirable given that the Forecast Hub ensemble models, which tend to be some of the most accurate models overall, experience a sharp decline in accuracy beyond two week ahead horizons for incident hospitalizations \cite{short_horizons}.
 
-The by--pandemic wave and by--forecast-date evaluations allow investigation into time periods in which the number of incident hospitalizations is of different magnitudes and is changing a different rates. Times of greater values or of rapid changes have larger WIS and MAE and are generally harder to predict \cite{mech_bayes, short_horizons}, and it may be useful to identify which models perform best under different scenarios. These two evaluations are also stratified by horizon week. However, the by-location evaluation, which provides insight into differences in model performance between higher and lower count locations, is not stratified by horizon week.
+The by--pandemic wave and by--forecast date evaluations allow investigation into time periods in which the number of incident hospitalizations is of different magnitudes and is changing a different rates. Times of greater values or of rapid changes have larger WIS and MAE and are generally harder to predict \cite{mech_bayes, short_horizons}, and it may be useful to identify which models perform best under different scenarios. These two evaluations are also stratified by horizon week. However, the by-location evaluation, which provides insight into differences in model performance between higher and lower count locations, is not stratified by horizon week.
 
 \chapter{Results}
 \section{Validation phase}
+
 \begin{table}[h]
 \begin{center}
 \label{tab:table_validation_us}
@@ -476,6 +477,8 @@ print(table_validation_states, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
+% plot best subset, 3 locations (US, high, low), maybe after tables?
+
 \section{Testing phase}
 
 \begin{figure}
@@ -487,7 +490,6 @@ tar_read(plot_models_1, store="../_targets")
 \caption{}
 \end{figure}
 
-\subsection{Summary of comparison models}
 \subsection{Overall model performance}
 
 
