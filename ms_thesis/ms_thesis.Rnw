@@ -423,16 +423,16 @@ We perform no statistical tests to assess the significance of performance differ
 \subsection{Validation phase} \label{validation_eval}
 The validation phase serves as a period during which to train the candidate models, calibrate the forecasts, and to select the best models to pass on to the testing phase based on performance during the validation phase. We opt to call this period the "validation phase" over the more common "training phase" because truth data from this first phase continues to inform the forecasts made during the testing phase, unlike is defined for a more traditional training-testing split of observed data for model validation.
 
-All validation phase evaluations are restricted to forecasts with target end dates (date for which the prediction of instant hospitalizations is being made) within the validation phase (July 27, 2020 to October 31, 2021), with forecasts beginning on Monday, December 7, 2020. We select one model that meets the criteria for each of the following categories to pass onto the testing phase:
+All validation phase evaluations are restricted to forecasts with target end dates (date for which the prediction of incident hospitalizations is being made) within the validation phase (July 27, 2020 to October 31, 2021), with forecasts beginning on Monday, December 7, 2020. We select one model that meets the criteria for each of the following categories to pass onto the testing phase:
 \begin{itemize}
-\item Best original THieF overall for U.S. national location category
 \item Best original THieF overall for average states location category
-\item Best THieF trained ensemble overall for U.S. national location category
+\item Best original THieF overall for U.S. national location category
 \item Best THieF trained ensemble overall for average states location category
-\item Best SARIMA overall for U.S. national location category
+\item Best THieF trained ensemble overall for U.S. national location category
 \item Best SARIMA overall for average states location category
-\item Best original THieF in last 17 weeks for U.S. national location category
+\item Best SARIMA overall for U.S. national location category
 \item Best original THieF in last 17 weeks for average states location category
+\item Best original THieF in last 17 weeks for U.S. national location category
 \item THieF untrained ensemble,
 \end{itemize}
 where "best" is defined by lowest WIS.
@@ -460,18 +460,6 @@ Hence, the best subset that passes onto the testing phase consists of the follow
 
 \begin{table}[h]
 \begin{center}
-\label{tab:table_validation_us}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_validation_us <- tar_read(overall_validation_us, store="../_targets") %>%
-  xtable()
-print(table_validation_us, booktabs=FALSE, floating=FALSE)
-@
-\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
-\end{center}
-\end{table}
-
-\begin{table}[h]
-\begin{center}
 \label{tab:table_validation_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_validation_states <- tar_read(overall_validation_states, store="../_targets") %>%
@@ -482,11 +470,23 @@ print(table_validation_states, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
+\begin{table}[h]
+\begin{center}
+\label{tab:table_validation_us}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_validation_us <- tar_read(overall_validation_us, store="../_targets") %>%
+  xtable()
+print(table_validation_us, booktabs=FALSE, floating=FALSE)
+@
+\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+\end{center}
+\end{table}
+
 % plot best subset, 3 locations (US, high, low), maybe after tables?
 
 \section{Testing phase} \label{testing_results}
 
-\begin{figure}
+\begin{figure}[h]
 \label{fig:figure_forecasts_plot1}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<forecast_models_plot, echo=FALSE, fig=TRUE>>=
@@ -500,18 +500,6 @@ tar_read(plot_models_1, store="../_targets")
 
 \begin{table}[h]
 \begin{center}
-\label{tab:table_overall_us}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_overall_us <- tar_read(overall_metrics_us, store="../_targets") %>%
-  xtable()
-print(table_overall_us, booktabs=FALSE, floating=FALSE)
-@
-\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
-\end{center}
-\end{table}
-
-\begin{table}[h]
-\begin{center}
 \label{tab:table_overall_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_overall_states <- tar_read(overall_metrics_states, store="../_targets") %>%
@@ -519,6 +507,18 @@ table_overall_states <- tar_read(overall_metrics_states, store="../_targets") %>
 print(table_overall_states, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\label{tab:table_overall_us}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_overall_us <- tar_read(overall_metrics_us, store="../_targets") %>%
+  xtable()
+print(table_overall_us, booktabs=FALSE, floating=FALSE)
+@
+\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
 \end{center}
 \end{table}
 
@@ -548,6 +548,15 @@ tar_read(combined_wis_wave_plot, store="../_targets")
 \caption{Average WIS by the horizon week and pandemic wave for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week and pandemic wave compared to being stratified only across horizon week. Again, all models show worse performance relative to the baseline at the 1-week ahead horizon likely due to being overconfident at this horizon. Model performance is more similar among the top four models during the Alpha wave compared to during the Winter21 wave. Notably, although the THieF-4wk-4root models largely show the lowest WIS, longer horizons during the Winter21 wave saw better performance by the poor-performing THieF-12wk models. Plots for average MAE are not shown due to their similarity to the average WIS plots.}
 \end{figure}
 
+\begin{figure}
+\label{fig:figure_date_plot_states}
+% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
+<<states_date_plot, echo=FALSE, fig=TRUE>>=
+tar_read(combined_wis_cov95_plot_states, store="../_targets")
+@
+\caption{Average h-week ahead WIS and 95\% PI coverage for each model for the states level. Once again, model performance differs from week to week with the lowest WIS values during weeks with stable and low incident hospitalization values and the THieF-4wk models showing the best performance. However, the THieF-12wk did not show good performance during high incidence and changed points for the states level; instead, THieF-12-4root actually showed some strangely large WIS values during April and May 2021. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. One-week ahead coverage rates generally improved as time went on, the best models gaining stable and fairly good coverage rates starting in February 2021. For the 4-week ahead horizon, models without a data transformation showed the best performance and stable coverage starting around February 2021, though THieF-4wk-4root and THieF-8wk-4root also saw decent and fairly stable coverage rates after the downward Winter 21 change point.}
+\end{figure}
+
 \subsection{Model performance by forecast week} \label{testing_forecast_week}
 \begin{figure}
 \label{fig:figure_date_plot_us}
@@ -556,15 +565,6 @@ tar_read(combined_wis_wave_plot, store="../_targets")
 tar_read(combined_wis_cov95_plot_us, store="../_targets")
 @
 \caption{Average h-week ahead WIS and 95\% PI coverage for each model for the US national level. Model performance differs from week to week: the WIS is the lowest during weeks with stable and low incident hospitalization values. The THieF-4wk models show the best performance with lower or comparable WIS to the baseline during the majority of the training period with especially good performance for 1-week ahead horizons. Meanwhile, the THieF-12wk showed lower or comparable WIS to the baseline during high incidence and changed points, which have been historically found difficult to forecast accurately. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. All THieF models show very variable coverage rates, especially for a 1 week ahead horizon, only the models without a data transformation showing stable coverage starting around February 2021.}
-\end{figure}
-
-\begin{figure}
-\label{fig:figure_date_plot_states}
-% \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
-<<states_date_plot, echo=FALSE, fig=TRUE>>=
-tar_read(combined_wis_cov95_plot_states, store="../_targets")
-@
-\caption{Average h-week ahead WIS and 95\% PI coverage for each model for the states level. Once again, model performance differs from week to week with the lowest WIS values during weeks with stable and low incident hospitalization values and the THieF-4wk models showing the best performance. However, the THieF-12wk did not show good performance during high incidence and changed points for the states level; instead, THieF-12-4root actually showed some strangely large WIS values during April and May 2021. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. One-week ahead coverage rates generally improved as time went on, the best models gaining stable and fairly good coverage rates starting in February 2021. For the 4-week ahead horizon, models without a data transformation showed the best performance and stable coverage starting around February 2021, though THieF-4wk-4root and THieF-8wk-4root also saw decent and fairly stable coverage rates after the downward Winter 21 change point.}
 \end{figure}
 
 \subsection{Model performance by location} \label{testing_location}
@@ -609,18 +609,6 @@ tar_read(wis_location_plot, store="../_targets")
 
 \begin{table}[h]
 \begin{center}
-\label{tab:table_last17_us}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
-  xtable()
-print(table_last17_us, booktabs=FALSE, floating=FALSE)
-@
-\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
-\end{center}
-\end{table}
-
-\begin{table}[h]
-\begin{center}
 \label{tab:table_last17_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
@@ -631,18 +619,18 @@ print(table_last17_states, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
-
 \begin{table}[h]
 \begin{center}
-\label{tab:table_horizon_us}
+\label{tab:table_last17_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
+table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
   xtable()
-print(table_horizon_us, booktabs=FALSE, floating=FALSE)
+print(table_last17_us, booktabs=FALSE, floating=FALSE)
 @
-\caption{Summary of model performance stratified by horizon week for the US national level, aggregated across forecast week. The results from this table were used to create Figure 4 that summarized average WIS by horizon week for the US national level and the states level. The table is ordered by ascending horizon week and WIS, with THieF-4wk-4root having the lowest WIS except for the 4 week ahead horizon. The baseline consistently does not have the best WIS.}
+\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
 \end{center}
 \end{table}
+
 
 \begin{table}[h]
 \begin{center}
@@ -656,23 +644,23 @@ print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
-<<echo=FALSE, eval=FALSE>>=
-knitr::kable(tar_read(horizon_metrics_us, store="../_targets"))
-knitr::kable(tar_read(horizon_metrics_states, store="../_targets"))
-@
-
-
 \begin{table}[h]
 \begin{center}
-\label{tab:table_wave_us}
+\label{tab:table_horizon_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
+table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
   xtable()
-print(table_wave_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE)
+print(table_horizon_us, booktabs=FALSE, floating=FALSE)
 @
-\caption{Summary of model performance stratified by horizon week and pandemic waves for the US national level, aggregated across forecast week. The results from this table were used to create Figure 5 that summarized average WIS by horizon week and pandemic wave for the US national level and the states level. The table is ordered by ascending pandemic wave, horizon week, and WIS, with THieF-4wk-4root having the lowest WIS for all horizons of the alpha wave and shorter horizons of the Winter 21 wave. The THieF-12wk-noTrans and THieF-12wk-4root models have the lowest and second lowest WIS for 3 week ahead and 4 week ahead horizons during the Winter 21 wave. The baseline consistently does not have the best WIS.}
+\caption{Summary of model performance stratified by horizon week for the US national level, aggregated across forecast week. The results from this table were used to create Figure 4 that summarized average WIS by horizon week for the US national level and the states level. The table is ordered by ascending horizon week and WIS, with THieF-4wk-4root having the lowest WIS except for the 4 week ahead horizon. The baseline consistently does not have the best WIS.}
 \end{center}
 \end{table}
+
+<<echo=FALSE, eval=FALSE>>=
+knitr::kable(tar_read(horizon_metrics_states, store="../_targets"))
+knitr::kable(tar_read(horizon_metrics_us, store="../_targets"))
+@
+
 
 \begin{table}[h]
 \begin{center}
@@ -686,9 +674,21 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', floati
 \end{center}
 \end{table}
 
+\begin{table}[h]
+\begin{center}
+\label{tab:table_wave_us}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
+  xtable()
+print(table_wave_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE)
+@
+\caption{Summary of model performance stratified by horizon week and pandemic waves for the US national level, aggregated across forecast week. The results from this table were used to create Figure 5 that summarized average WIS by horizon week and pandemic wave for the US national level and the states level. The table is ordered by ascending pandemic wave, horizon week, and WIS, with THieF-4wk-4root having the lowest WIS for all horizons of the alpha wave and shorter horizons of the Winter 21 wave. The THieF-12wk-noTrans and THieF-12wk-4root models have the lowest and second lowest WIS for 3 week ahead and 4 week ahead horizons during the Winter 21 wave. The baseline consistently does not have the best WIS.}
+\end{center}
+\end{table}
+
 <<echo=FALSE, eval=FALSE>>=
-knitr::kable(tar_read(wave_metrics_us, store="../_targets"))
 knitr::kable(tar_read(wave_metrics_states, store="../_targets"))
+knitr::kable(tar_read(wave_metrics_us, store="../_targets"))
 @
 
 
