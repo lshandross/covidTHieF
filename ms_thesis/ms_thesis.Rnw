@@ -452,6 +452,11 @@ The by--pandemic wave and by--forecast date evaluations allow investigation into
 
 \chapter{Results} \label{results}
 \section{Validation phase} \label{validation_results}
+Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us} show the overall model ranking and evaluation metrics during the validation phase for the averaged states and U.S. national location scales, in order of ascending WIS. We can see that for the averaged location scale the THieF ensembles generally perform the best, followed by the original THieF models, then the SARIMA models. This pattern is not as strictly followed for the U.S. national location scale, in which the two original THieF models with a 6-week top aggregation level have lower WIS than at least half of the THieF ensembles.
+
+For averaged states, we pass on THieF\_6wk-4root, THieF\_ensemble-train3, and sarima\_s7-noTransform as the best models of each class during the validation phase overall. While THieF\_ensemble-train3 is not strictly the highest ranked THieF ensemble for this location scale, we pass it along based on the selection rule from cross-validation in which the simplest model should be chosen if it does not perform substantially worse than more complex models. For U.S. national, we pass along THieF\_6wk-noTransform, THieF\_ensemble-train3, and sarima\_s7-noTransform as the best representative of each class for the overall validation phase of evaluation. The best original THieF models during the last 17 weeks of the validation phase are THieF\_6wk-4root and THieF\_12wk-4root for averaged states and U.S.national, respectively, with the full evaluation results shown in Supplemental Tables \ref{tab:table_last17_states} and \ref{tab:table_last17_us}. The untrained THieF ensemble, while not a top performer for either location scale in the overall analysis, is also passed on to serve as a reference model. % something is wrong with the supplemental table references
+
+Hence, the best subset that passes onto the testing phase consists of the following six (6) models: THieF\_6wk-4root, THieF\_6wk-noTransform, THieF\_ensemble-train3, sarima\_s7-noTransform, THieF\_12wk-noTransform, and THieF\_ensemble-mean.
 
 \begin{table}[h]
 \begin{center}
