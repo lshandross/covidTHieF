@@ -30,11 +30,11 @@
 \contentsline {section}{\numberline {3.1}Validation phase}{22}{section.3.1}%
 \contentsline {section}{\numberline {3.2}Testing phase}{23}{section.3.2}%
 \contentsline {subsection}{\numberline {3.2.1}Overall model performance}{23}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Model performance by horizon week}{26}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Model performance by pandemic wave}{27}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Model performance by forecast week}{29}{subsection.3.2.4}%
-\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{31}{subsection.3.2.5}%
-\contentsline {Chapter}{\numberline {4.}\MakeUppercase []{Discussion}}{37}{chapter.4}%
+\contentsline {subsection}{\numberline {3.2.2}Model performance by horizon week}{25}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Model performance by pandemic wave}{26}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Model performance by forecast week}{28}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{33}{subsection.3.2.5}%
+\contentsline {Chapter}{\numberline {4.}\MakeUppercase []{Discussion}}{38}{chapter.4}%
 \setcounter {tocdepth}{0}
-\contentsline {Appendix}{\MakeUppercase []{Appendix: Supplemental materials}}{38}{appendix*.5}%
-\contentsline {BackMatter}{\MakeUppercase []{Bibliography}}{45}{appendix*.6}%
+\contentsline {Appendix}{\MakeUppercase []{Appendix: Supplemental materials}}{43}{appendix*.5}%
+\contentsline {BackMatter}{\MakeUppercase []{Bibliography}}{50}{appendix*.6}%
