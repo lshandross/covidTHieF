@@ -116,6 +116,7 @@
 \usepackage{Sweave}
 \begin{document}
 \input{ms_thesis-concordance}
+\setkeys{Gin}{width=0.95\textwidth}
 
 
 %%
@@ -257,12 +258,25 @@ We generate candidate models formulated using the THieF methodology, which diffe
 \mainmatter   %% <-- This line is mandatory
 
 \chapter{Introduction} \label{Introduction}
+Throughout the past three years, the COVID-19 pandemic has illuminated repercussions beyond mortality alone. This type of infectious disease outbreak can strain public health systems, burden economies, and result in other individual and societal costs. During the early years of the pandemic, infectious disease forecasting served as an important bridge between the scientific community, policymakers, and general public to communicate information about potential future directions of the pandemic.
 
-\section{Infectious disease forecasting} \label{infectious_disease_forecasting}
-\section{COVID-19 forecasting} \label{covid19_forecasting}
-\subsection{US COVID-19 Forecast Hub} \label{forecast_hub}
-\section{Temporal hierarchical forecasting} \label{thief_intro}
-\section{Goals} \label{goals}
+Substantial forecasting efforts for outbreaks of other transmissable diseases---including dengue, ebola, SARS, and influenza---have also been undertaken to reduce their spread and wider impact, in which modelers make quantitative predictions about the future based on already observed data. These predictions usually pertain to a specific event, outcome, or trend related to one (though occasionally more) infectious disease\cite{lauer}. Decision-makers may use infectious disease forecasts to effectively balance prevention or mitigation efforts\cite{disease_economics}. For example, forecasted trends may help determine hospital staffing or allocation of limited resources; influence the timing of targeted communication campaigns about social distances or vaccination to pre-date predicted increases; or inform decisions to ease lockdowns to boost the economy during downward trends.
+
+COVID-19 (and other infections disease) forecasts are short-term---predicting no more than four weeks into the future---quantifiable, and specific for a fixed period of time. Therefore, these types of forecasts may be evaluated through comparisons to the eventually observed data\cite{cramer, lauer}. While longer-term COVID-19 scenario projections under specific, hypothetical conditions have great utility in more lasting plans to combat infectious disease, we restrict the scope of this work to short-term COVID-19 forecasts.
+
+Short-term COVID-19 forecasting has been heavily researched in the past three years, with efforts synthesize, collected, archived, and evaluated in a centralized repository called the US COVID-19 Forecast Hub (referred to as the Forecast Hub from here on). COVID-19 forecasts are mainly probabilistic, a distinguishing characteristic of outbreak forecasting efforts. This type of forecast is more informative than a simple point forecast because probabilistic forecasts quantify the likelihood of their occurrence\cite{cramer, hub_data_repo, lauer}.
+
+Producing accurate forecasts, however, is not an easy task. The systems that govern the spread of infectious disease are partially dependent on human behavior and thus tend to be non-stationary\cite{lauer}. For COVID-19, this non-stationarity was a result of continually changing policies and behaviors due to school closures, lock downs, masking, social distances, and the appearance of new variants with different characteristics. Trends of non-stationary processes are more difficult to forecast. Further, COVID-19 forecasts were used to inform such shifting policies, which induced the forecasting feedback loop. The forecasting feedback loop describes a paradox that results when infectious disease forecasts guide intervention or risk communication, which in turn impacts the path of the epidemic being forecast\cite{cramer, lauer}.
+
+COVID-19 forecasting also initially faced the challenges inherent for an emergent outbreak setting, in which data availability and quality is severely limited\cite{lauer}. While the availability and quality of data improved throughout the pandemic, data accuracy concerns still remain due to a lack of national testing protocols and issues with properly categorizing deaths. Hence, incident hospitalizations became a more relevant public health metric than incident cases and incident deaths, despite fewer initial forecasting efforts for this target, given requirements for Medicare reimbursement. The ceasing of data collection and reporting for COVID-19 incident cases and deaths by Johns Hopkins University (the official ground truth data source) also points to incident hospitalizations as the most appropriate forecast target to investigate \cite{mech_bayes, jhu_covid, lauer}.
+
+Prior COVID-19 forecasting research has also shown most models struggle to accurately predict trend fluctuations in which the slope or direction of the data change from the previously held pattern. Even with a range of data sources and modeling techniques, many models from the Forecasts Hub do not assign a probability to the potential of a large change in trend \cite{cramer}. This gap clearly necessitates the exploration and testing of new methods.
+
+Temporal hierarchical forecasting (THieF) is one such method that uniquely combines hierarchical forecasting and forecasts combination for time series data. This approach, developed by Athanasopoulos, et. al in 2017, consists of 3 main steps: creation of a temporal hierarchy through data aggregation, generation of forecasts at each level of the hierarchy with the classic statistical model, and reconciliation of those initial forecasts. The final step performs weighted forecast combination to not only achieve coherence but also improved accuracy\cite{thief}. Coherence describes when hierarchical forecasts predict the same trend, event, or outcome at every level, while reconciliation describes the process of making forecasts coherent. When forecasts from different levels of the hierarchy disagree about the future (are not coherent), it is unclear which level's forecasts should be trusted and chosen to inform decision-making\cite{hts_talk}.
+
+Based on the challenges that infectious disease forecasting faces, we propose that the THieF methodology may have something to offer. First, THieF relies on a phenomenological model, a class of models that use only observed data to make predictions, which have shown good performance for outbreak forecasting\cite{lauer}. While the body of knowledge about underlying disease transmission mechanisms for COVID-19 has grown significantly since the beginning of the pandemic, we may still prefer a model that does not incorporate a mechanistic understanding of outbreaks, especially for predicting trends of COVID-19 variants yet to be known or studied. Second, THieF has yet to be applied to outbreak forecasting to our knowledge. Hence, this methodology may offer insights about effective modeling techniques, regardless of its performance. Third, THieF has shown significant performance gains in other settings, which may translate to infectious disease forecasting\cite{cramer, thief}.
+
+We use models made with the THieF methodology and ensembles of the THieF models to retrospectively forecast for COVID-19 daily incident hospitalizations in the United States at both the state and national scale. These original THieF models, the THieF ensembles, and a group of seasonal ARIMA models make up a total of twenty-six (26) candidate models evaluated during the validation phase. A most-accurate subset of up to nine (9) models are passed on to the testing phase where they are compared to a naive baseline and an untrained median ensemble. Success is demonstrated by the THieF ensembles and a few original THieF models that showed substantial accuracy gains over the baseline, with the THieF ensembles also displaying several modest improvements over the ensemble.
 
 \chapter{Methods} \label{methods}
 \section{Surveillance data} \label{surveillance_data}
@@ -286,13 +300,13 @@ Short-term forecasts for COVID-19 have been defined to encapsulate horizons of 1
 We make forecasts for 53 of 55 locations from the HealthData.gov confirmed hospitalizations dataset during the period of analysis. These 55 locations include the 50 states, four jurisdictions/territories (Washington D.C., Puerto Rico, American Samoa, and Guam), and a U.S. national level. American Samoa and Guam are excluded due to their very low or zero COVID-19 incident hospitalizations over the entire pandemic. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations do not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches \cite{cramer}. Further, even though we include the U.S. national level, the remaining 52 locations are our primary focus, as the magnitude of national forecasts is much greater than out of any single state.
 
 \subsection{Forecast quantiles} \label{forecast_quantiles}
-The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We follow this construction, though with a slight modification: prediction intervals are used to define a full distribution of forecasts. The bounds of these intervals can be used to obtain the desired quantiles, as shown in Table \ref{tab:table_quant_int} below. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where "L" and "U" represent the lower and upper bounds, respectively).
+The Forecast Hub specifies the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We follow this construction, though with a slight modification: prediction intervals are used to define a full distribution of forecasts\footnote{We use prediction intervals generated from the `forecast()` function in the `forecast` `R` package because THieF is only defined for point forecasting, not probabilistic forecasting.}. The bounds of these intervals can be used to obtain the desired quantiles, as shown in Table \ref{tab:table_quant_int} below. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where "L" and "U" represent the lower and upper bounds, respectively).
 
 \begin{table}[h]
 \begin{center}
 \label{tab:table_quant_int}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:25 2023
+% Sun Mar 26 19:03:40 2023
 \begin{tabular}{rllllllllllll}
   \hline
  &  \\ 
@@ -309,11 +323,11 @@ We focused on the period between Monday, July 27, 2020 and Sunday, October 2, 20
 
 The first day of the period of analysis (July 27, 2020) was selected as the first day of reliable truth data for all locations of interests. Forecasting for the validation phase began on Monday, December 7, 2020, as this is the first Monday after the HealthData.gov confirmed hospitalizations data set was declared the official ground truth data. The division between the validation and testing phases was chosen to encapsulate three COVID-19 variant-based waves in the validation phase (Winter 2020-21, Alpha, and Delta) and two waves in the testing phase (Omicron and BA.4/BA.5). The separation between pandemic waves is made based on U.S. national level incident hospitalizations, pictured below in Figure \ref{fig:figure_evaluate_period_plot}.
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_evaluate_period_plot"}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-evaluation_period_plot}
-\caption{Overview of the period of analysis included in the paper, superimposed over COVID-19 incident hospitalizations for the entire United States. Vertical dashed lines indicate divisions between phases. The training phase begins on Monday, July 27, 2020 and ends on Monday, July 5, 2021. This phase covers 343 days, or 49 weeks. Forecasts for the training phase are made starting on Monday, December 7, 2020. The testing phase, although not included in this paper, begins Tuesday, July 6, 2021 and ends Monday, November 1, 2021. The division is based on including two waves (the Winter 2020-21 and the Alpha variant) of the pandemic in the training phase and one (Delta variant) in the testing phase. July 27, 2020 marks the beginning of when the forecast locations of interest had reliable truth data.}
+\caption{A plot of the period of analysis, superimposed over COVID-19 incident hospitalizations for the entire United States. Vertical solid lines indicate divisions between phases while dashed lines indicate divisions between variant waves.}
 \end{figure}
 
 
@@ -330,35 +344,42 @@ The forecasts for the two comparison models are obtained from the Zoltar forecas
 
 
 \section{Temporal hierarchical forecasting (THieF)} \label{thief}
-Historically, hierarchical forecasting has been utilized in business, economics, operations management, and similar fields. This type of forecasting brings advantages like producing coherent forecasts\footnote{Hierarchical forecasts are coherent if the forecasts at lower levels sum up to those at higher levels. Coherence is not an intrinsic property of all hierarchical forecasts. A lack of coherence causes a dilemma in which it is hard to know which level of forecasts to trust, but a single level must be chosen regardless \cite{hts_talk}.} and increasing prediction accuracy compared to other methods \cite{thief}. Forecast combination has likewise shown favorable outcomes in a myriad of applications. The unique merging of forecast combination with hierarchical forecasting in the THieF methodology has resulted in promising accuracy improvements over more traditional techniques that solely involve hierarchical forecasting \cite{thief}.
+Historically, hierarchical forecasting has been utilized in business, economics, operations management, and similar fields. This type of forecasting brings advantages like producing coherent forecasts (hierarchical forecasts that predict the same trend, event, or outcome at every level)\footnote{Note that coherence is not an intrinsic property of all hierarchical forecasts.} and increasing prediction accuracy compared to other methods \cite{thief, hts_talk}. Forecast combination has likewise shown favorable outcomes in a myriad of applications. The unique merging of forecast combination with hierarchical forecasting in the THieF methodology has resulted in promising accuracy improvements over more traditional techniques that solely involve hierarchical forecasting \cite{thief}.
 
 Forecast combination that integrates forecasts from different, independent modeling frameworks to create ensembles often results in better infectious disease forecasts compared to those from individual models \cite{ensemble_accuracy}. Likewise, classical statistical models have demonstrated good performance for short-term forecasts in outbreak settings \cite{lauer}. THieF's built-in forecast combination (which shares some key similarities with that of ensemble methods) and underlying ARIMA base-forecaster suggest that this methodology will show accuracy improvements when forecasting COVID-19 incident hospitalizations.
 
-Surveillance data tends to be quite noisy due to reporting artifacts, especially when considering small time scales %\cite{}.
-COVID-19 incident hospitalizations suffer a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since patients are not admitted on weekends. We may better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we are careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels are included in model schemes to investigate the existence of hidden patterns at higher time scales and if such a pattern could improve model accuracy.
+Surveillance data tends to be quite noisy due to reporting artifacts, especially when considering small time scales. COVID-19 incident hospitalizations suffer a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since patients are not admitted on weekends. We may better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we are careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels are included in model schemes to investigate the existence of hidden patterns at higher time scales and if such a pattern could improve model accuracy \cite{ideal_interval}.
 
-The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure \cite{thief}. We begin with truth data aggregation to create the temporal hierarchy. The daily confirmed hospitalizations dataset is a time-series consisting of $T = 798$ observations that can be represented as \{$y_t; t = 1, \cdots, 798$\}. These data are then aggregated to different time scales based on the aggregation levels of interest for a particular model (e.g. weekly, every two weeks, every four weeks, etc.\footnote{see Section \ref{thief_models} for a full list of time scales considered}). While each aggregation level can be thought of as a separate, univariate time series with different frequencies, together they constitute the temporal hierarchy for one model. Next, we make base forecasts at every level of the hierarchy using an ARIMA model for each level. These forecasts will likely not be coherent, meaning that they predict different trends for the next $h = 28$ days. This disagreement between the forecasts is desirable at this stage, as it may indicate that important patterns have been detected at different time scales. However, through the step of reconciliation (making the forecasts coherent), the information from all of the aggregation levels are combined into forecasts that are expected to be more accurate than any single level. Following this stage, the forecasts from every timescale will agree about the amount of daily incident hospitalizations for the next 1 to 28 days.
+The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure. These steps---data aggregation and hierarchy construction, base forecast creation, and reconciliation of base forecasts---are outlined in further detail in this section \cite{thief}.
 
-\subsection{Data Aggregation and Hierarchy} \label{thief_agg_hierarchy}
-Suppose we are interested in constructing a THieF model that combines forecasts from 1-week, 2-week, and 4-week intervals because we believe these time scales each contain important information. Aggregate series for each of these times scales can be constructed from the original daily time series. In fact, any combination of time scales can be chosen for the hierarchy as long as they are factors\footnote{Non-factor levels tend to be more difficult to compute and do not necessarily abide by the following equations.} of the topmost aggregation level (see Section \ref{thief_models} for some examples).
+We begin with truth data aggregation to create the temporal hierarchy. The daily confirmed hospitalizations dataset is a time-series consisting of $T = 798$ observations that can be represented as \{$y_t; t = 1, \cdots, 798$\}. These data are then aggregated to different time scales based on the aggregation levels of interest for a particular model (e.g. weekly, every two weeks, every four weeks, etc.\footnote{see Section \ref{thief_models} for a full list of time scales considered})\cite{thief}. All of our models define the lowest (and least aggregate) level to be the original daily time scale. For example, a four-level model can be created from the hospitalization truth data by aggregating the original daily time series to one week, two week, and four week levels. Although each level in this example is a multiple of all the levels below it, any combination of time scales can be selected for the hierarchy as long as they are factors\footnote{Non-factor levels tend to be more difficult to compute and do not necessarily abide by the following equations.} of the topmost aggregation level (see Section \ref{thief_models} for some examples)\cite{thief}.
 
-$m$ is the number of observations of the smallest timescale (or highest sampling frequency) that aggregate to create a single data point for the highest level. In our example case, $m = 28$ since there are 28 days in 4 weeks.
-$k \in$ \{$k_p,\cdot,k_2,k_1$\} can take on multiple values and indicates the particular aggregation level, where $k_p = m$, $k_1 = 1$, and $p$ is the total number of aggregation levels. In our example case, $k \in$ \{$28, 14, 7$\}, where $p = 3$
-Athanasopuolos et. al provide a mathematical equation to obtain the data points $y_j^{[k]}$ in each aggregated series, written as \[y_j^{[k]} = \Sigma_{t = t^* + (j-1)k}^{t^*+jk-1} y_t\] for $j = 1, \cdots, \lfloor T/k \rfloor$, $M_k = m/k$ for the aggregated series. We define $t^*= T - \lfloor T/m\rfloor m + 1$ to ensure non-overlapping aggregation
-  using our example, we can calculate $t^*= 798 - \lfloor 798/28 \rfloor 28 + 1 = 15$, then we obtain the first data point for the 1-week time series with the equation $y_1^{[7]} = \Sigma_{t = 15 + (0)7}^{15+7-1} y_t = y_{15} + \cdots + y_ {21}$, which is as we expect given that the first $t^*$ observations are removed
-However, the index $j$ used above is clearly aggregation-level specific, with no way to translate between levels of the hierarchy. Hence, the authors propose an alternative index $i$ where $i$ is the observation index of the most aggregate series $y_i^{[m]}$ so $j = i$ at that level. A more general form for all levels is $y_j^{[k]} = y_{M_k(i-1)+z}^{[k]}$ for $z = 1, \cdots, M_k$. This new index $i$ is used for the remaining equations and in the figure below.
-  Using our example, we can show that the new notation is consistent with the old notation: $y_5^{[7]} = y_{M_7(1)+1}^{[7]} = y_{4+1}^{[7]}$
-For each period of the top-level aggregation (2 weeks in our example), we create a column vector of data points
+If the number of data points in the original time series can not be evenly aggregated into all of the levels above (e.g. 31 observations of daily data versus 1-, 2-, and 4-week higher aggregation levels), the number of remaining observations are removed from the beginning of the time series before aggregation. Additionally, while each aggregation level can be thought of as a separate, univariate time series with different frequencies, together they constitute the temporal hierarchy for a single model\cite{thief}.
 
+Next, we make base forecasts at every level of the hierarchy using a classic statistical model. Both ETS and ARIMA approaches are tested in the original paper, with ARIMA-based THieF forecasts shown to be more accurate. Hence, we select ARIMA models to create the initial forecasts at each level separately. Since the levels are treated as distinct time series, the order and parameter values of the ARIMA models are allowed to vary. Thus, these forecasts will likely not be coherent, meaning that they predict different trends for the next $h = 28$ days\cite{thief}.
 
-Each aggregation level can be thought of as a univariate time series from which forecasts can be made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model (although only up to 28-day ahead forecasts are evaluated).
+Disagreement between the forecasts is desirable at this stage, as it may indicate that important patterns have been detected at different time scales. However, through the step of reconciliation, the information from all of the aggregation levels is integrated into the output forecasts, which are expected to be more accurate than any single level. This forecast combination is performed using a simplified weighted least squares estimator called the variance scaling WLS estimator, which calculates the expected accuracy for each level\cite{thief}. Following the final step, the forecasts from every timescale will agree about the number of daily incident hospitalizations for the next 1 to 28 days.
 
-\subsection{Base Forecasts} \label{thief_base_forecasts}
-any given date's 1- to 28-day ahead base forecasts represented as \{$\hat{y}_h; h = 1, \cdots, 28$\}
-\subsection{Reconciled Forecasts} \label{thief_reconciled_forecasts}
+%\subsection{Data Aggregation and Hierarchy} \label{thief_agg_hierarchy}
+%Suppose we are interested in constructing a THieF model that combines forecasts from 1-week, 2-week, and 4-week intervals because we believe these time scales each contain important information. Aggregate series for each of these times scales can be constructed from the original daily time series. In fact, any combination of time scales can be chosen for the hierarchy as long as they are factors\footnote{Non-factor levels tend to be more difficult to compute and do not necessarily abide by the following equations.} of the topmost aggregation level (see Section \ref{thief_models} for some examples).
+%
+%$m$ is the number of observations of the smallest timescale (or highest sampling frequency) that aggregate to create a single data point for the highest level. In our example case, $m = 28$ since there are 28 days in 4 weeks.
+%$k \in$ \{$k_p,\cdot,k_2,k_1$\} can take on multiple values and indicates the particular aggregation level, where $k_p = m$, $k_1 = 1$, and $p$ is the total number of aggregation levels. In our example case, $k \in$ \{$28, 14, 7$\}, where $p = 3$
+%Athanasopuolos et. al provide a mathematical equation to obtain the data points $y_j^{[k]}$ in each aggregated series, written as \[y_j^{[k]} = \Sigma_{t = t^* + (j-1)k}^{t^*+jk-1} y_t\] for $j = 1, \cdots, \lfloor T/k \rfloor$, $M_k = m/k$ for the aggregated series. We define $t^*= T - \lfloor T/m\rfloor m + 1$ to ensure non-overlapping aggregation
+%  using our example, we can calculate $t^*= 798 - \lfloor 798/28 \rfloor 28 + 1 = 15$, then we obtain the first data point for the 1-week time series with the equation $y_1^{[7]} = \Sigma_{t = 15 + (0)7}^{15+7-1} y_t = y_{15} + \cdots + y_ {21}$, which is as we expect given that the first $t^*$ observations are removed
+%However, the index $j$ used above is clearly aggregation-level specific, with no way to translate between levels of the hierarchy. Hence, the authors propose an alternative index $i$ where $i$ is the observation index of the most aggregate series $y_i^{[m]}$ so $j = i$ at that level. A more general form for all levels is $y_j^{[k]} = y_{M_k(i-1)+z}^{[k]}$ for $z = 1, \cdots, M_k$. This new index $i$ is used for the remaining equations and in the figure below.
+%  Using our example, we can show that the new notation is consistent with the old notation: $y_5^{[7]} = y_{M_7(1)+1}^{[7]} = y_{4+1}^{[7]}$
+%For each period of the top-level aggregation (2 weeks in our example), we create a column vector of data points
+%
+%
+%Each aggregation level can be thought of as a univariate time series from which forecasts can be made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model (although only up to 28-day ahead forecasts are evaluated).
+%
+%\subsection{Base Forecasts} \label{thief_base_forecasts}
+%any given date's 1- to 28-day ahead base forecasts represented as \{$\hat{y}_h; h = 1, \cdots, 28$\}
+%\subsection{Reconciled Forecasts} \label{thief_reconciled_forecasts}
 
 \section{Model specifications} \label{model_specifications}
-We create three distinct classes of models for comparison during the validation phase: the original THieF models, the THieF ensembles, and the SARIMA models. In total, these three groups consist of twenty-six (26) candidate models.
+We create three distinct classes of models for comparison during the validation phase: the original THieF models, the THieF ensembles, and the SARIMA models. In total, these three groups consist of twenty-six (26) candidate models, all of which are implemented using the `forecast` package in `R`.
 
 \subsection{THieF models} \label{thief_models}
 The THieF models are constructed using the THieF methodology outlined in Section \ref{thief} with different combinations of aggregation levels and data transformations. Seven hierarchical structures and two data transformations result in fourteen (14) original THieF models. Each model is defined (and named) based on the highest level of its temporal hierarchy and the data transformation performed on the forecasts. For example, the simplest of the THieF models is THieF\_1wk-noTransform while the most complicated is THieF\_12wk-4root.
@@ -392,7 +413,7 @@ We use the same metrics as the Forecast Hub to evaluate model accuracy for both 
 \item $WIS_{{\alpha}_{0:K}} (F, y_i) = \frac{1}{N} \Sigma_{i=1}^N \frac{1}{K+1/2}(w_0\cdot |y_i - m| + \Sigma_{k = 1}^K w_k \cdot IS_{{\alpha}_k}(F, y_i))$
 \item $(1 - \alpha)*100 \textrm{\% PI Coverage} = \frac{1}{N} \Sigma_{i=1}^N 1(l_i^{\alpha} \leq y_i \leq u_i^{\alpha}),$
 \end{enumerate}
-where $N$ is the number of forecasts being averaged, $y_i$ is the true observed value at a particular time point (date) and location, and $\hat{y}_i$ is the point forecast value for a particular forecast date, horizon, and location combination. The PI uncertainty level is given by $\alpha$, $k$ is the particular prediction interval ($k = 1, \cdots, K$), and $F$ is the forecast distribution. The weights $w_0$ and $w_k$ are set as $w_0 = 1/2$ and $w_k = \alpha_k/2$ respectively while $u_i^{\alpha}$ and $l_i^{\alpha}$ are the upper and lower bounds of a $(1 - \alpha) * 100$-level prediction interval for a particular forecast date and location. Lastly, the interval score of a particular $(1 - \alpha) * 100$-level prediction interval is $IS_{{\alpha}_k}(F, y_i) = (u_i-l_i) + \frac{2}{\alpha} \cdot (l_i-y_i) \cdot 1(y_i < l_i) + \frac{2}{\alpha} \cdot (y_i - u_i) \cdot 1(y_i > u_i)$ where $1()$ is the indicator function.
+where $N$ is the number of forecasts being averaged, $y_i$ is the true observed value at a particular time point (date) and location, and $\hat{y}_i$ is the point forecast value for a particular forecast date, horizon, and location combination. The PI uncertainty level is given by $\alpha$, $k$ is the particular prediction interval ($k = 1, \cdots, K$), and $F$ is the forecast distribution. The weights $w_0$ and $w_k$ are set as $w_0 = 1/2$ and $w_k = \alpha_k/2$ respectively while $u_i^{\alpha}$ and $l_i^{\alpha}$ are the upper and lower bounds of a $(1 - \alpha) * 100$-level prediction interval for a particular forecast date and location. Lastly, the interval score of a particular $(1 - \alpha) * 100$-level prediction interval is $IS_{{\alpha}_k}(F, y_i) = (u_i-l_i) + \frac{2}{\alpha} \cdot (l_i-y_i) \cdot 1(y_i < l_i) + \frac{2}{\alpha} \cdot (y_i - u_i) \cdot 1(y_i > u_i)$ where $1()$ is the indicator function. For these metrics, lower WIS and MAE is better while coverage levels approximating $1-\alpha$ indicate a well-calibrated forecast. This means that the intervals are narrow enough to provide useful information but not so narrow as to exclude the truth.
 
 Relative versions of MAE and WIS are also used to adjust for truth data magnitude to allow for comparison between forecast values of different scales. These relative metrics are calculated as $MAE_{\textrm{model m}} / MAE_{\textrm{baseline}}$ and $WIS_{\textrm{model m}} /WIS_{\textrm{baseline}}$, respectively.
 
@@ -438,11 +459,11 @@ For averaged states, we pass on THieF\_6wk-4root, THieF\_ensemble-train3, and sa
 
 Hence, the best subset that passes onto the testing phase consists of the following six (6) models: THieF\_6wk-4root, THieF\_6wk-noTransform, THieF\_ensemble-train3, sarima\_s7-noTransform, THieF\_12wk-noTransform, and THieF\_ensemble-mean.
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_validation_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:26 2023
+% Sun Mar 26 19:03:41 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -475,15 +496,15 @@ Hence, the best subset that passes onto the testing phase consists of the follow
   26 & sarima\_s1-noTransform & 39.41 & 56.38 & 0.54 & 0.88 & 1.10 & 1.13 \\ 
   27 & THieF\_12wk-4root & 84.32 & 54.49 & 0.41 & 0.86 & 2.35 & 1.09 \\ 
    \hline
-\end{tabular}\caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{tabular}\caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}
 \end{center}
 \end{table}
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_validation_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:26 2023
+% Sun Mar 26 19:03:41 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -516,14 +537,14 @@ Hence, the best subset that passes onto the testing phase consists of the follow
   26 & sarima\_s7-4root & 1601.50 & 2467.20 & 0.22 & 0.76 & 1.25 & 1.24 \\ 
   27 & THieF\_12wk-4root & 2270.60 & 2039.90 & 0.34 & 0.66 & 1.78 & 1.02 \\ 
    \hline
-\end{tabular}\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+\end{tabular}\caption{Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}
 \end{center}
 \end{table}
 
 \section{Testing phase} \label{testing_results}
 Using forecasts made every four weeks during the testing phase, we plot 1- to 28-day ahead incident hospitalization point and 95\% interval forecasts for the eight models of interest during this period in Figures \ref{fig:figure_forecasts_plot_1}. This group consists of six models from the best subset and two Forecast Hub comparison models, the COVIDhub-baseline and the COVIDhub-4\_week\_ensemble. Generally, the THieF ensembles, the original THieF models with 6-week top aggregation levels, and COVIDHub-4\_week\_ensemble appear to better follow the true confirmed hospitalizations compared to the other three models, and these five models also tend to have narrower 95\% interval forecasts. These results are mirrored (and perhaps further explained) by the following stratified evaluations.498
 
-\begin{figure}[h]
+\begin{figure}%[h]
 \label{fig:figure_forecasts_plot1}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-forecast_models_plot}
@@ -537,11 +558,11 @@ For averaged states (see Table \ref{tab:table_overall_states}), the WIS and MAE 
 
 For U.S. national (see Table \ref{tab:table_overall_US}), however, the WIS and MAE values tend to be more spread out, partially a result of their larger magnitude. At this location scale, our models had below-nominal coverage rates for both uncertainty levels. The Forecast Hub models had above-nominal coverage rates at the 50\% level but also fell short of nominal coverage at the 95\% level. The THieF\_6wk-noTransform model showed more similar performance to the top four ranked models compared to that of the COVIDhub-baseline, unlike for averaged states. The bottom two models for the U.S. national ranking were also substantially worse compared to the COVIDhub-baseline in terms of relative WIS and relative MAE values.
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_overall_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:38 2023
+% Sun Mar 26 19:03:53 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -555,7 +576,7 @@ For U.S. national (see Table \ref{tab:table_overall_US}), however, the WIS and M
   7 & THieF\_12wk-noTransform & 41.66 & 60.97 & 0.51 & 0.88 & 1.00 & 1.07 \\ 
   8 & sarima\_s7-noTransform & 43.54 & 58.94 & 0.60 & 0.87 & 1.05 & 1.04 \\ 
    \hline
-\end{tabular}\caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{tabular}\caption{Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}
 \end{center}
 \end{table}
 
@@ -563,7 +584,7 @@ For U.S. national (see Table \ref{tab:table_overall_US}), however, the WIS and M
 \begin{center}
 \label{tab:table_overall_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:38 2023
+% Sun Mar 26 19:03:53 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -577,95 +598,100 @@ For U.S. national (see Table \ref{tab:table_overall_US}), however, the WIS and M
   7 & THieF\_12wk-noTransform & 2074.10 & 2908.30 & 0.37 & 0.86 & 1.11 & 1.16 \\ 
   8 & sarima\_s7-noTransform & 2316.80 & 3042.40 & 0.41 & 0.80 & 1.24 & 1.21 \\ 
    \hline
-\end{tabular}\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+\end{tabular}\caption{Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}
 \end{center}
 \end{table}
 
 
 
 \subsection{Model performance by horizon week} \label{testing_horizon}
-Only WIS plots are shown because this is our principle evaluation metric and the MAE plots are very similar.
+We display the results graphically from this stratified evaluation forward for improved readability. (Only WIS plots are shown because it is our principle evaluation metric and the MAE plots show very similar results.) The by-horizon evaluation shows similar model rankings to those of the overall evaluation (see Figure \ref{fig:figure_horizon_plot} and Supplemental Tables \ref{tab:table_horizon_states} and \ref{tab:table_horizon_us}). The top four models for both location scales are the same and perform no worse (but usually tend to do better) than the COVIDhub-baseline at all horizons, and the COVIDhub-4\_week\_ensemble significantly outperforms all other seven models.  However, aggregating the forecasts by horizon illustrates some important differences in accuracy between horizon weeks.
 
-The by-horizon evaluation shows similar model rankings to those of the overall evaluation (see Figure \ref{} and Supplemental Table \ref{}). The top four models for both location scales are the same and perform no worse (but usually tend to do better) than the COVIDhub-baseline at all horizons, and the COVIDhub-4\_week\_ensemble significantly outperforms all other seven models.  However, aggregating the forecasts by horizon illustrates some important differences in accuracy between horizon weeks.
+For averaged states (see Figure \ref{fig:figure_horizon_plot}), THieF\_6wk-4root outperforms the THieF ensembles for WIS end MAE at all horizons, except for 1-week ahead. Similarly, THieF\_6wk-noTransform has lower WIS and MAE than three models at 2- to 4-weeks ahead but is only better than THieF\_12wk-noTransform for the 1-week horizon. Additionally, while sarima\_s7-noTransform is ranked fifth and THieF\_12-noTransform is ranked last for the 1-week ahead horizon, these ranks flip to be sixth and last for the 3- and 4-week ahead horizons, after briefly crossing with each other (and the COVIDhub-baseline) at 2-weeks ahead. The COVIDhub-baseline is consistently the second worst model. Coverage rates remain high across horizons for all models, with 95\% coverage rates fall into no more than 10% of the nominal rate at any horizon.
 
-For averaged states (see Figure \ref({})), THieF\_6wk-4root outperforms the THieF ensembles for WIS end MAE at all horizons, except for 1-week ahead. Similarly, THieF\_6wk-noTransform has lower WIS and MAE than three models at 2- to 4-weeks ahead but is only better than THieF\_12wk-noTransform for the 1-week horizon. Additionally, while sarima\_s7-noTransform is ranked fifth and THieF\_12-noTransform is ranked last for the 1-week ahead horizon, these ranks flip to be sixth and last for the 3- and 4-week ahead horizons, after briefly crossing with each other (and the COVIDhub-baseline) at 2-weeks ahead. The COVIDhub-baseline is consistently the second worst model. Coverage rates remain high across horizons for all models, with 95\% coverage rates fall into no more than 10% of the nominal rate at any horizon.
+For U.S. national (see Figure \ref{fig:figure_horizon_plot}) WIS and MAE, THieF\_6wk-4root outperforms the THieF ensembles for the two longest horizons while the ensembles (and COVIDhub-baseline) perform slightly better at the shortest horizon. The difference in performance among the three models is barely discernible at a horizon of 2 weeks. The sarima\_s7-noTransform and THieF\_12wk-noTransform models occupy the bottom of the ranking, with THieF\_12wk-noTransform scoring better WIS values for all but the 1-week ahead horizon. The difference is especially pronounced at longer horizons, where this model has much lower WIS than that of sarima\_s7-noTransform. The COVIDhub-baseline ranks sixth for WIS at the U.S. national location scale for all but the 1-week ahead horizon where it ranks fourth. Coverage rates are slightly lower at this location scale, falling to up to 19\% below the nominal rate (though most are no lower than 15\%).
 
-For U.S. national (see Figure \ref{}) WIS and MAE, THieF\_6wk-4root outperforms the THieF ensembles for the two longest horizons while the ensembles (and COVIDhub-baseline) perform slightly better at the shortest horizon. The difference in performance among the three models is barely discernible at a horizon of 2 weeks. The sarima\_s7-noTransform and THieF\_12wk-noTransform models occupy the bottom of the ranking, with THieF\_12wk-noTransform scoring better WIS values for all but the 1-week ahead horizon. The difference is especially pronounced at longer horizons, where this model has much lower WIS than that of sarima\_s7-noTransform. The COVIDhub-baseline ranks sixth for WIS at the U.S. national location scale for all but the 1-week ahead horizon where it ranks fourth. Coverage rates are slightly lower at this location scale, falling to up to 19\% below the nominal rate (though most are no lower than 15\%).
-
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_horizon_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-horizon_plot}
-\caption{Average WIS by the horizon week for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week compared to being aggregated across horizon weeks. All models show worse performance relative to the baseline at the 1-week ahead horizon, likely a result of being overconfident at this horizon. Once again, the THieF-4wk-4root model performs the best for WIS. Plots for average MAE are not shown due to their similarity to the average WIS plots.}
+\caption{Average WIS plotted by horizon week during the testing phase for each model at both location scales}
 \end{figure}
 
 \subsection{Model performance by pandemic wave} \label{testing_wave}
-One overall theme that continues for the by--pandemic wave evaluation (see Figure \ref{} and Supplemental Tables \ref{}) is that the COVIDhub-4\_week\_ensemble ranks first for lowest WIS, and this model is substantially better than all the other models at every horizon. For each pandemic wave--location scale combination, most horizons show the next three models to be THieF\_6wk-4root and the two THieF ensembles, with THieF\_12wk-4root and sarima\_s7-noTransform ranking near the bottom. The COVIDhub-baseline also ranks similarly low among the eight models. Plots for the same pandemic wave generally bear greater resemblance in terms of overall trends than plots for the same location scale; the one notable exception is numerical scale for average WIS.
+One overall theme that continues for the by--pandemic wave evaluation (see Figure \ref{fig:figure_wave_plot} and Supplemental Tables \ref{tab:table_wave_states} and \ref{tab:table_wave_states}) is that the COVIDhub-4\_week\_ensemble ranks first for lowest WIS, and this model is substantially better than all the other models at every horizon. For each pandemic wave--location scale combination, most horizons show the next three models to be THieF\_6wk-4root and the two THieF ensembles, with THieF\_12wk-4root and sarima\_s7-noTransform ranking near the bottom. The COVIDhub-baseline also ranks similarly low among the eight models. Plots for the same pandemic wave generally bear greater resemblance in terms of overall trends than plots for the same location scale; the one notable exception is numerical scale for average WIS.
 
-For the Omicron variant wave, the best and worst models---COVIDhub-4\_week\_ensemble and sarima\_s7-noTransform---are easily distinguishable from the middle six models. THieF\_ensemble-mean and THieF\_ensemble-train3 rank second and third for short horizons but drop to forth and fifth for the 4-week ahead horizon. THieF\_6wk-noTransform performs better at all horizons for the U.S. national scale during this wave. The COVIDhub-baseline also appears to perform better for U.S. national. On the other hand, sarima\_s7-noTransform has more comparable performance for the averaged states scale at every horizon. All models have greater WIS values during the Omicron wave compared to during the BA.4/BA.5 wave for their respective location scale.
+For the Omicron variant wave, the best and worst models---COVIDhub-4\_week\_ensemble and sarima\_s7-noTransform---are easily distinguishable from the middle six models. THieF\_ensemble-mean and THieF\_ensemble-train3 rank second and third for short horizons but drop to forth and fifth for the 4-week ahead horizon. THieF\_6wk-4root performs better at all horizons for the U.S. national scale during this wave. The COVIDhub-baseline also appears to perform better for U.S. national. On the other hand, sarima\_s7-noTransform has more comparable performance for the averaged states scale at every horizon. All models have greater WIS values during the Omicron wave compared to during the BA.4/BA.5 wave for their respective location scale.
 
 For the BA.4/BA.5 variant wave, model rankings by WIS are more distinct and tend to remain static from one horizon week to another. The best three and worst models are the same regardless of location scale; however, the COVIDhub-baseline is noticeably better ranked for U.S. national scores, where it is approximately tied with THieF\_ensemble-mean for fourth-best, compared to a clear seventh place for averaged states scores. THieF\_6wk-noTransform also performs as well or better than sarima\_s7-noTransform for all horizons during this wave at the U.S. national scale, while the ranks of these two models depends on horizon length at the averaged states scale. Coverage rates are exceedingly high for the averaged states level and approximately nominal for all but the last-ranked models for U.S. national.
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_wave_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-wave_plot}
-\caption{Average WIS by the horizon week and pandemic wave for each model for the US national level and the states level. The figures show similar trends in WIS when forecasts are stratified by horizon week and pandemic wave compared to being stratified only across horizon week. Again, all models show worse performance relative to the baseline at the 1-week ahead horizon likely due to being overconfident at this horizon. Model performance is more similar among the top four models during the Alpha wave compared to during the Winter21 wave. Notably, although the THieF-4wk-4root models largely show the lowest WIS, longer horizons during the Winter21 wave saw better performance by the poor-performing THieF-12wk models. Plots for average MAE are not shown due to their similarity to the average WIS plots.}
+\caption{Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both location scales}
 \end{figure}
 
 \subsection{Model performance by forecast week} \label{testing_forecast_week}
 For the by--forecast week evaluation, we make four plots for each location scale (see Figures \ref{fig:figure_date_plot_states} and \ref{fig:figure_date_plot_us}), with WIS or 95\% PI coverage (restricted to either 1-week or 4-week ahead) on the y-axis and forecast date on the x-axis. The WIS plots generally follow the shape of the incident hospitalization truth data (see Figure \ref{fig:figure_evaluate_period_plot}), with greater WIS observed during times of high incidence and rapid change. The 95\% coverage plots tend to follow a vertically flipped transformation of the truth data, with below-nominal coverage rates observed during times of high incidence and rapid change.
 
-Many of the patterns observed in the evaluations described above continued to hold for this subset of the testing phase analysis. The COVIDhub-4\_week\_ensemble consistently is one of the the top few, if not the top, models for both WIS and 95\% coverage. The one exception is near the crest of the Omicron wave when this model ranks around seventh for lowest WIS at the 4-week ahead horizon. Conversely, while the two THieF ensembles rarely beat the COVIDhub-4\_week\_ensemble in terms of WIS and often occupy ranks second to sixth, these ensembles demonstrate incredibly stable performance, never ranking below sixth. In this way, the THieF ensembles are quite similar to the COVIDhub-baseline during times of high incidence and rapid change: their WIS is much more stable and consistent from week-to-week than that of other models; however, THieF\_ensemble-mean and THieF\_ensemble-train3 often out-perform the COVIDhub-baseline, which has the worst WIS for several weeks. Generally, though, THieF\_12wk-noTransform and sarima\_s7-noTransform alternate for having the worst WIS and 95\% coverage rates, the THieF model ranking better for 4-week metrics and sarima\_s7-noTransform for 1-week.
+Many of the patterns observed in the evaluations described above continued to hold for this subset of the testing phase analysis. The COVIDhub-4\_week\_ensemble consistently is one of the the top few, if not the top, models for both WIS and 95\% coverage. The one exception is near the crest of the Omicron wave when this model ranks around seventh for lowest WIS at the 4-week ahead horizon. Here, and in a few other places, the COVIDhub-4\_week\_ensemble loses out to THieF\_6wk-4root at the 4-week ahead horizon. The two THieF ensembles also rarely beat the COVIDhub-4\_week\_ensemble in terms of WIS yet demonstrate incredibly stable performance, never ranking below sixth. In this way, the THieF ensembles are quite similar to the COVIDhub-baseline during times of high incidence and rapid change: their WIS is much more stable and consistent from week-to-week than that of other models; however, THieF\_ensemble-mean and THieF\_ensemble-train3 often out-perform the COVIDhub-baseline, which has the worst WIS for several weeks. Generally, though, THieF\_12wk-noTransform and sarima\_s7-noTransform alternate for having the worst WIS and 95\% coverage rates, the THieF model ranking better for 4-week metrics and sarima\_s7-noTransform for 1-week.
 
-Several observations stand out from the averaged states plots.
-The by--forecast week break down of THieF\_6wk-noTransform is particularly interesting. This model tended to fall in the middle of the rankings for the previously described evaluations, yet Figures \ref{fig:figure_date_plot_states} and \ref{fig:figure_date_plot_us} show that this model actually tended to have more extreme performance, either performing rather well or quite badly. Investigating less aggregate scores for THieF\_12wk-noTransform similarly reveals several instances of good performance, usually experienced at long horizons under settings of rapid change or high incidence. In addition, we notice that sarima\_s7-noTransform demonstrated noticeably worse performance for U.S. national WIS at a horizon of 1 week compared to that for averaged states. Further, THieF\_6wk-noTransform's strangely low coverage for averaged states following the decline of the Omicron wave at both plotted horizons is also noteworthy, especially since the other seven models experience significantly higher coverage rates during this time.\footnote{Comparisons among models for U.S. national 95\% coverage by forecast week are harder to make since this location scale only includes seven 95\% interval forecasts for one location (compared to seven per 52 locations for averaged states), so we simply allow the plots in Figure \ref{fig:figure_date_plot_states} to speak for themselves.}
+The by--forecast week break down of THieF\_6wk-noTransform is particularly interesting. This model tended to fall in the middle of the rankings for the previously described evaluations, yet Figures \ref{fig:figure_date_plot_states} and \ref{fig:figure_date_plot_us} show that this model actually tended to have more extreme performance, either performing rather well or quite badly. Investigating less aggregate scores for THieF\_12wk-noTransform similarly reveals several instances of good performance, usually experienced at long horizons under settings of rapid change or high incidence. In addition, we notice that sarima\_s7-noTransform demonstrated noticeably worse performance for U.S. national WIS at a horizon of 1 week compared to that for averaged states. Further, THieF\_6wk-4root's strangely low coverage for averaged states following the decline of the Omicron wave at both plotted horizons is also noteworthy, especially since the other seven models experience significantly higher coverage rates during this time.\footnote{Comparisons among models for U.S. national 95\% coverage by forecast week are harder to make since this location scale only includes seven 95\% interval forecasts for one location (compared to seven per 52 locations for averaged states), so we simply allow the plots in Figure \ref{fig:figure_date_plot_states} to speak for themselves.}
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_date_plot_states}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-states_date_plot}
-\caption{Average h-week ahead WIS and 95\% PI coverage for each model for the states level. Once again, model performance differs from week to week with the lowest WIS values during weeks with stable and low incident hospitalization values and the THieF-4wk models showing the best performance. However, the THieF-12wk did not show good performance during high incidence and changed points for the states level; instead, THieF-12-4root actually showed some strangely large WIS values during April and May 2021. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. One-week ahead coverage rates generally improved as time went on, the best models gaining stable and fairly good coverage rates starting in February 2021. For the 4-week ahead horizon, models without a data transformation showed the best performance and stable coverage starting around February 2021, though THieF-4wk-4root and THieF-8wk-4root also saw decent and fairly stable coverage rates after the downward Winter 21 change point.}
+\caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}
 \end{figure}
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_date_plot_us}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-us_date_plot}
-\caption{Average h-week ahead WIS and 95\% PI coverage for each model for the US national level. Model performance differs from week to week: the WIS is the lowest during weeks with stable and low incident hospitalization values. The THieF-4wk models show the best performance with lower or comparable WIS to the baseline during the majority of the training period with especially good performance for 1-week ahead horizons. Meanwhile, the THieF-12wk showed lower or comparable WIS to the baseline during high incidence and changed points, which have been historically found difficult to forecast accurately. Plots for h-week ahead MAE are not shown due to their similarity to the WIS plots. All THieF models show very variable coverage rates, especially for a 1 week ahead horizon, only the models without a data transformation showing stable coverage starting around February 2021.}
+\caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for U.S. national}
 \end{figure}
 
 \subsection{Model performance by location} \label{testing_location}
-Figure \ref{fig:figure_location_plot} summarizes the by-location evaluation, with the models on the x-axis ordered by lowest-to-highest overall relative WIS at the average states location scale for the testing phase and locations on the y-axis ordered by descending cumulative hospitalizations. The top five models show either better or equal performance than the COVIDhub-baseline---represented by shades of blue ranging from dark to light and white---with the COVIDhub-4\_week\_ensemble clearly the best. The next three models are very close in terms of lowest WIS across all of the locations. The worst two models include some shades of red which represent performance worse than the COVIDhub-baseline. However, it should be noted that these models actually perform better than the baseline for a significant number of locations, with THieF\_12wk-noTransform sharing the top rank for Puerto Rico and Alaska. In addition, most of the worst performance relative to the baseline occurs in the locations with the highest cumulative hospitalizations during the testing phase. This is perhaps unsurprising since we know that high-count settings tend to be more difficult to forecast accurately.
+Figure \ref{fig:figure_location_plot} summarizes the by-location evaluation, with the models on the x-axis ordered by lowest-to-highest overall relative WIS at the average states location scale for the testing phase and locations on the y-axis ordered by descending cumulative hospitalizations. The top five models show either better or equal performance than the COVIDhub-baseline---represented by shades of blue ranging from dark to light and white---with the COVIDhub-4\_week\_ensemble clearly the best. The next three models are fairly close in terms of lowest WIS across all of the locations, though THieF\_6wk-4root is marginally better with lower relative WIS by a difference of more than 0.05 in over 18% of locations. The worst two models include some shades of red which represent performance worse than the COVIDhub-baseline. However, it should be noted that these models actually perform better than the baseline for a significant number of locations, with THieF\_12wk-noTransform sharing the top rank for Puerto Rico and Alaska. In addition, most of the worst performance relative to the baseline occurs in the locations with the highest cumulative hospitalizations during the testing phase. This is perhaps unsurprising since we know that high-count settings tend to be more difficult to forecast accurately.
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_location_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 \includegraphics{ms_thesis-location_plot}
-\caption{Relative WIS by location for each model across all horizons for the entire testing phase. Each square contains the average relative WIS or a model at a particular location, colored based on the relative WIS compare to the baseline. Blue indicates model outperformed the baseline for that location on average, while red indicates the model performed worse than the baseline. Locations are sorted based on cumulative hospitalizations during the testing phase while models are sorted from lowest to highest overall relative WIS, aggregated across states (Table 2). The top three models by relative WIS overall during the testing phase outperformed the baseline in every location.}
+\caption{Relative WIS plotted by location during the testing phase for each model across all horizons}
 \end{figure}
 
 
 \chapter{Discussion} \label{discussion}
-THieF is a unique forecast methodology that combines hierarchical forecasting with forecast combination that shows a number of improvements in forecast accuracy over the COVIDhub-baseline. Models with temporal hierarchies consisting of different aggregation levels forecast well under different settings, and we may take advantage of these diverse strengths by ensembling a range of THieF models. Such THieF ensembles produced consistently accurate forecasts for incident hospitalizations using real-time truth data during the 48-week long testing phase. The two THieF ensembles run during this period ranked within the top three models in terms of WIS and MAE. The testing phase evaluations allowed us to draw the following conclusions about the models we generated and the underlying methodology.
+THieF is a unique forecast methodology that combines hierarchical forecasting with forecast combination that shows a number of improvements in forecast accuracy over the COVIDhub-baseline. Such accuracy gains vary based on each model's temporal hierarchy, with well-crafted THieF models demonstrating competitive performance. Different aggregation levels cause a model to forecast well under different settings, and we may take advantage of these diverse strengths by ensembling a range of THieF models. These THieF ensembles performed nearly as well as the best original THieF model, and all three best models produced consistently accurate forecasts for incident hospitalizations using real-time truth data during the 48-week long testing phase. Specifically, THieF\_6wk-4root almost always ranked second in terms of WIS and MAE. The testing phase evaluations allow us to draw the following conclusions about the models we generated and the underlying methodology.
 
 \begin{itemize}
-\item \textbf{The THieF ensembles and original THieF models with mid-length top aggregation levels are accurate compared to baseline model.} in terms of WIS and MAE, THieF\_ensemble-train3 and THieF\_ensemble-mean almost always beat the COVIDhub-baseline (performing equally well), while THieF\_6wk-4root and THieF\_6wk-noTransform almost always performed as well (though sometimes better) than the baseline. This was true across horizon, pandemic wave, forecast date, and location. The greatest improvements occurred in stable, low incidence settings, but rapidly-changing, high-incidence settings also showed moderate improvements. These models also demonstrated good 50\% coverage and reasonable 95\% coverage, with narrower (and thus typically more useful) prediction intervals. Hence, we conclude that these four models may be presented as better alternatives to the COVIDHub-baseline for incident hospitalizations.
-\item \textbf{The THieF ensembles yield the best performance when compared to alternate models from the best subset.} THieF\_ensemble-train3 and THieF\_ensemble-mean tended to rank within the top four for every testing phase evaluation, which compared eight models including the COVIDhub-baseline and COVIDhub-4\_week\_ensemble. While the two THieF ensembles only rarely beat the COVIDhub-4\_week\_ensemble, these models consistently had competitive performance for all four metrics out of the best subset models that moved on from the validation phase. While THieF\_6wk-4root sometimes had better metric values, especially during times of high incidence or rapid change, the THieF ensembles showed greater stability and resistance to jumps in WIS, MAE, and PI coverage. Therefore, we conclude that these models are preferable for informing any decision-making related to COVID-19.
-\item \textbf{There may not be a meaningful difference between the trained and untrained THieF ensembles.} THieF\_ensemble-train3 and THieF\_ensemble-mean showed limited differences in performance during the testing phase analysis, regardless of location scale, horizon, pandemic wave, forecast date, or evaluation metric. THieF\_ensemble-train3 is marginally better than the untrained THieF\_ensemble-mean in most evaluations, its relative WIS better in over 18\% of individual locations by more than 0.05 (only 3.6% of locations have a difference of 0.1, see Figure \ref{fig:figure_location_plot}) and worse in 3.6% of locations. Since this trained ensemble has a small $\theta$ value, indicating a lighter weighting scheme, this result is not all too surprising.
-\item \textbf{The accuracy improvements of the original THieF models with mid-length top aggregation levels over the baseline are a result of the THieF methodology itself, not the underlying ARIMA base forecaster.} During the analyses of both phases, sarima\_s7-noTransform demonstrated poor performance, as did the other SARIMA models in the validation phase, and only rarely beat the COVIDhub-baseline. The best performance sarima\_s7-noTransform achieved occurred during static, low-count periods at short horizons, which was equivalent to that of higher ranking models. We thus conclude that it does not the underlying ARIMA base forecaster that lends most THieF models their accuracy improvements but rather the other aspects of the THieF methodology. Namely, the union of hierarchical forecasting and forecast combination.
-\item \textbf{The THieF ensembles combine the best aspects of each component model to produce a more accurate model overall.} The THieF ensembles consist of fourteen (14) original THieF component models with top aggregation levels of periods ranging from 1 to 12 weeks. THieF\_12wk-noTransform, while generally one of the worst models for all metrics, performs competitively under high-count or rapidly-changing settings, especially for long horizons. Conversely, sarima\_s7-noTransform (which shares some important similarities with THieF\_1wk-noTransform) showcases similarly competitive performance during low-count or stable settings while otherwise occupying the bottom ranks. The THieF ensembles are the best models overall, sans the COVIDhub-4\_week\_ensemble, and perform fairly well under all settings. Therefore, based on our results and other prior research\cite{ensemble_accuracy}, we conclude that the accuracy gains experienced by THieF ensembles originate from the strengths of their component models.
+\item \textbf{The THieF ensembles and original THieF models with mid-length top aggregation levels are accurate compared to baseline model.} In terms of WIS and MAE, THieF\_6wk-4root, THieF\_ensemble-train3, and THieF\_ensemble-mean almost always beat the COVIDhub-baseline (performing equally well), while THieF\_6wk-noTransform almost always performed as well (though sometimes better) than the baseline. This was true across horizon, pandemic wave, forecast date, and location; for the top three models, approximately equal improvements occurred in stable, low incidence settings and rapidly-changing, high-incidence settings also showed moderate improvements. These models also demonstrated good 50\% coverage and reasonable 95\% coverage, with narrower (and thus typically more useful) prediction intervals. Hence, we conclude that these four models may be presented as better alternatives to the COVIDHub-baseline for incident hospitalizations.
+
+\item \textbf{THieF\_6wk-4root, followed closely by the THieF ensembles, yields the best performance when compared to alternate models from the best subset.} THieF\_6wk-4root, THieF\_ensemble-train3, and THieF\_ensemble-mean tended to rank within the top four for every testing phase evaluation, which compared eight models including the COVIDhub-baseline and COVIDhub-4\_week\_ensemble. In fact, except for the 1-week ahead horizon during times of rapid change or high incidence, THieF\_6wk-4root ranked second for most analyses. While any of these models rarely beat the COVIDhub-4\_week\_ensemble, these models consistently had competitive performance for all four metrics out of the best subset models that moved on from the validation phase.
+
+\item \textbf{THieF\_6wk-4root, followed closely by the THieF ensembles, yields the best performance when compared to alternate models from the best subset.} THieF\_6wk-4root, THieF\_ensemble-train3, and THieF\_ensemble-mean tended to rank within the top four for every testing phase evaluation, which compared eight models including the COVIDhub-baseline and COVIDhub-4\_week\_ensemble. In fact, except for the 1-week ahead horizon during times of rapid change or high incidence, THieF\_6wk-4root ranked second for most analyses. It should be noted, however, that despite slightly lower rankings, especially during times of high incidence or rapid change, the THieF ensembles showed greater stability and resistance to jumps in WIS, MAE, and PI coverage compared to THieF\_6wk-4root. Overall, these models consistently had competitive performance for all four metrics out of the best subset models that moved on from the validation phase; therefore, we conclude that any of these three models would be suitable for informing decision-making related to COVID-19.
+
+\item \textbf{There may not be a meaningful difference between the trained and untrained THieF ensembles.} THieF\_ensemble-train3 and THieF\_ensemble-mean showed limited differences in performance during the testing phase analysis, regardless of location scale, horizon, pandemic wave, forecast date, or evaluation metric. THieF\_ensemble-train3 is marginally better than the untrained THieF\_ensemble-mean in most evaluations, the largest difference in relative WIS being 0.07 for any single horizon, horizon--wave, or location comparison between the models. Usually, though, the relative WIS of these two models is much closer. The by--forecast date plots provide further evidence of their similarity, as the two ensembles have almost identical WIS for every forecast date (see Figures \ref{fig:figure_date_plot_states} and \ref{fig:figure_date_plot_us}). Since this trained ensemble has a small $\theta$ value, indicating a lighter weighting scheme, this result is not all too surprising.
+
+\item \textbf{The accuracy improvements of the original THieF models with mid-length top aggregation levels over the baseline are likely a result of the THieF methodology itself, not the underlying ARIMA base forecaster.} During the analyses of both phases, sarima\_s7-noTransform demonstrated poor performance, as did the other SARIMA models in the validation phase, and only rarely beat the COVIDhub-baseline. The best performance sarima\_s7-noTransform achieved occurred during static, low-count periods at short horizons, which was equivalent to that of higher ranking models. We thus conclude that it does not the underlying ARIMA base forecaster that lends most THieF models their accuracy improvements but rather the other aspects of the THieF methodology. Namely, the union of hierarchical forecasting and forecast combination.
+
+\item \textbf{Choosing the correct top aggregation level\footnote{and perhaps all other aggregation levels} is essential to achieving the best results when using the THieF methodology.} We saw a range of performance demonstrated by the different THieF models during the validation and testing phase analyses, with THieF\_6wk-4root consistently obtaining some of the best WIS, followed by THieF\_6wk-noTransform. Conversely, THieF\_12wk-noTransform nearly always ranked near the bottom for all evaluations. Other THieF models also out-performed the COVIDhub-baseline during the validation phase, including the THieF models with the second longest top aggregation level of eight weeks. Hence, it appears that any accuracy gains from THieF methodology are dependent on the choice of top aggregation level.
+
+% \item \textbf{The THieF ensembles combine the best aspects of each component model to produce a more accurate model overall.} The THieF ensembles consist of fourteen (14) original THieF component models with top aggregation levels of periods ranging from 1 to 12 weeks. THieF\_12wk-noTransform, while generally one of the worst models for all metrics, performs competitively under high-count or rapidly-changing settings, especially for long horizons. Conversely, sarima\_s7-noTransform (which shares some important similarities with THieF\_1wk-noTransform) showcases similarly competitive performance during low-count or stable settings while otherwise occupying the bottom ranks. The THieF ensembles are the best models overall, sans the COVIDhub-4\_week\_ensemble, and perform fairly well under all settings. Therefore, based on our results and other prior research\cite{ensemble_accuracy}, we conclude that the accuracy gains experienced by THieF ensembles originate from the strengths of their component models.
 \end{itemize}
 
-We have demonstrated that THIEF is a powerful methodology that can model the real-world complexities of an infectious disease system, provided that appropriate top aggregation levels are chosen for the temporal hierarchy. The initial base forecasts are created using a classic statistical model, a type of model that has shown good performance when forecasting outbreak settings\cite{lauer}, but it is the final reconciliation of these forecasts that likely explains THIEF's accuracy gains. Ensembling a large number of THIEF models with a range of top aggregation levels significantly added to initial accuracy improvements. Finally, careful selection of the period of analysis and day of the week on which to make forecasts helped to prevent any potential issues due to missing data, while the choice of incident hospitalizations as the forecast target limited in accuracies due to under reporting.
+We have demonstrated that THieF is a powerful methodology that can model the real-world complexities of an infectious disease system, provided that appropriate top aggregation levels are chosen for the temporal hierarchy. The initial base forecasts are created using a classic statistical model, a type of model that has shown good performance when forecasting outbreak settings\cite{lauer}, but it is the final reconciliation of these forecasts that likely explains THieF's accuracy gains. Ensembling a large number of THieF models with a range of top aggregation levels significantly added to initial accuracy improvements for all but the best original THieF model. Finally, careful selection of the period of analysis and day of the week on which to make forecasts helped to prevent any potential issues due to missing data, while the choice of incident hospitalizations as the forecast target limited in accuracies due to under reporting.
 
-%While we chose an underlying ARIMA model to implement THIEF (based on recommendations from Athanasoupolos), there are a multitude of alternative classic statistical models that
+%While we chose an underlying ARIMA model to implement THieF (based on recommendations from Athanasoupolos), there are a multitude of alternative classic statistical models that
 
 Further work might consider different evaluation metrics, alternative ways of aggregating forecast scores, or implementing logarithmic scores. The magnitude of WIS and MAE is dependent on the scale of forecasts, meaning that averages calculated from these metrics will be dominated by forecasts with large WIS and MAE values. For example, average metrics calculated during the entire validation phase will have the largest contributions from longer horizons and high-count locations; that is, a model that forecasts low-count locations well but high-count locations poorly is penalized in the overall evaluation more harshly than that of a model that does the opposite. The same is true for short versus long horizons. We attempted to address this issue by considering a range of stratified analyses, but these evaluations are limited in scope. Future work that makes use of logarithmic scores may better solve the problem of unequal contributions to metric values.
 
-The other main direction for future work is employing one of the existing probabilistic applications of THIEF to forecast COVID-19 incident hospitalizations or other outbreak data. Such a method would generate a complete probabilistic distribution instead of using prediction intervals from point forecasts, which may be more useful or more accurate. Alternative ensemble formulations might also be considered, such as a median ensemble, a trained ensemble with a shifting $\theta$ value, or even ensembles of THIEF implementations specifically tailored for point and probabilistic forecasting. We are also curious about accuracy comparisons to other models that submitted to the Forecast Hub during the period of analysis.
+The other main direction for future work is employing one of the existing probabilistic applications of THieF to forecast COVID-19 incident hospitalizations or other outbreak data. Such a method would generate a complete probabilistic distribution instead of using prediction intervals from point forecasts, which may be more useful or more accurate. Alternative ensemble formulations might also be considered, such as a median ensemble, a trained ensemble with a shifting $\theta$ value, or even ensembles of THieF implementations specifically tailored for point and probabilistic forecasting. We are also curious about accuracy comparisons to other models that submitted to the Forecast Hub during the period of analysis.
 
-We demonstrated the utility and success of THIEF and ensembles of THIEF models when forecasting incident hospitalizations for COVID-19 through the results of this paper. THIEF models with well-selected top aggregation levels and THIEF ensembles demonstrate clear improvements over the baseline model for both point and probabilistic forecasts, with the THIEF ensembles ranking just below the top-performing COVIDhub-4\_week\_ensemble model. Infections disease forecasting continues to be important for acute disease outbreaks, epidemics, pandemic, and endemic diseases, and we hope that the THIEF methodology will be used in such settings given its demonstrated accuracy improvements in this application.
+We demonstrated the utility and success of THieF and ensembles of THieF models when forecasting incident hospitalizations for COVID-19 through the results of this paper. THieF models with well-selected top aggregation levels and THieF ensembles demonstrate clear improvements over the baseline model for both point and probabilistic forecasts, with THieF\_6wk-4root ranking just below the top-performing COVIDhub-4\_week\_ensemble model. Infections disease forecasting continues to be important for acute disease outbreaks, epidemics, pandemic, and endemic diseases, and we hope that the THieF methodology will be used in such settings given its demonstrated accuracy improvements in this application.
 
 
 %% End of body
@@ -674,15 +700,12 @@ We demonstrated the utility and success of THIEF and ensembles of THIEF models w
 \appendix
 \unnumberedchapter{Appendix: Supplemental materials} \label{supplemental}
 %% \chapter{THE FIRST APPENDIX TITLE}
-%% ...
-%% \chapter{THE SECOND APPENDIX TITLE}
-%% ...
 
 \begin{table}[h]
 \begin{center}
 \label{tab:table_last17_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:44 2023
+% Sun Mar 26 19:03:59 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -715,15 +738,15 @@ We demonstrated the utility and success of THIEF and ensembles of THIEF models w
   26 & sarima\_s7-noTransform & 43.81 & 62.42 & 0.45 & 0.84 & 1.02 & 0.97 \\ 
   27 & sarima\_s1-noTransform & 46.51 & 67.02 & 0.42 & 0.83 & 1.09 & 1.04 \\ 
    \hline
-\end{tabular}\caption{Summary of overall model performance averaged over the states level. A similar ordering of models is seen, with the THieF-4wk-4root model performing the best and the THieF-12wk models performing the worst. However, the THieF-8wk models perform better in terms of model ranking for the states level. Additionally, relative WIS sees smaller values and 50\% and 95\% PI coverage see values closer to the nominal levels compared to that at the US national level, although relative MAE is larger with every model performing worse than the baseline.}
+\end{tabular}\caption{Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS}
 \end{center}
 \end{table}
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_last17_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:44 2023
+% Sun Mar 26 19:03:59 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & model & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -756,16 +779,16 @@ We demonstrated the utility and success of THIEF and ensembles of THIEF models w
   26 & sarima\_s7-noTransform & 1958.00 & 2920.00 & 0.15 & 0.63 & 1.26 & 1.12 \\ 
   27 & sarima\_s7-4root & 2198.90 & 3418.20 & 0.18 & 0.75 & 1.41 & 1.31 \\ 
    \hline
-\end{tabular}\caption{Summary of overall model performance for the US national level, aggregated across forecast week and 1 to 4 week ahead horizons. Prediction interval (PI) coverage rates measure the fraction of times the fraction of times the 50\% and 95\% PIs covered the true values. A well-calibrated model should achieve close to nominal (0.5 and 0.95, respectively) coverage rates. The “rwis” and “rmae” show relative weighted interval score and relative mean absolute error, which compare each model to the baseline. The baseline is defined to have relative metrics of 1. Models that perform better than the baseline have relative WIS or MAE less than 1. The table is ordered by ascending WIS value. Thus two THieF-4wk models show the best performance out of the THieF models, meeting the baseline for both relative WIS and MAE.}
+\end{tabular}\caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS}
 \end{center}
 \end{table}
 
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_horizon_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:44 2023
+% Sun Mar 26 19:03:59 2023
 \begin{tabular}{rlrrrrrrr}
   \hline
  & model & horizon\_wk & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -803,15 +826,15 @@ We demonstrated the utility and success of THIEF and ensembles of THIEF models w
   31 & COVIDhub-baseline & 4.00 & 58.35 & 81.23 & 0.77 & 0.95 & 1.00 & 1.00 \\ 
   32 & sarima\_s7-noTransform & 4.00 & 63.89 & 86.44 & 0.60 & 0.85 & 1.09 & 1.06 \\ 
    \hline
-\end{tabular}\caption{Summary of model performance stratified by horizon week for the states level, aggregated across forecast week. The results from this table were used to create Figure 4 that summarized average WIS by horizon week for the US national level and the states level. The table is ordered by ascending horizon week and WIS, with THieF-4wk-4root having the lowest WIS except for the 3 week (although it is second lowest) and 4 week ahead horizon. The baseline again consistently does not have the best WIS, performing progressively worse compared to the other models for each additional week ahead horizon.}
+\end{tabular}\caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS}
 \end{center}
 \end{table}
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_horizon_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:44 2023
+% Sun Mar 26 19:03:59 2023
 \begin{tabular}{rlrrrrrrr}
   \hline
  & model & horizon\_wk & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -849,17 +872,17 @@ We demonstrated the utility and success of THIEF and ensembles of THIEF models w
   31 & THieF\_12wk-noTransform & 4.00 & 2852.50 & 4049.10 & 0.31 & 0.86 & 1.03 & 1.07 \\ 
   32 & sarima\_s7-noTransform & 4.00 & 3549.40 & 4630.40 & 0.45 & 0.76 & 1.28 & 1.22 \\ 
    \hline
-\end{tabular}\caption{Summary of model performance stratified by horizon week for the US national level, aggregated across forecast week. The results from this table were used to create Figure 4 that summarized average WIS by horizon week for the US national level and the states level. The table is ordered by ascending horizon week and WIS, with THieF-4wk-4root having the lowest WIS except for the 4 week ahead horizon. The baseline consistently does not have the best WIS.}
+\end{tabular}\caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS}
 \end{center}
 \end{table}
 
 
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_wave_states}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:44 2023
+% Sun Mar 26 19:03:59 2023
 \begin{longtable}{rlrlrrrrrr}
   \hline
  & model & horizon\_wk & wave & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -896,73 +919,49 @@ We demonstrated the utility and success of THIEF and ensembles of THIEF models w
   30 & sarima\_s7-noTransform & 4.00 & ba4\_ba5 & 25.95 & 36.72 & 0.80 & 0.99 & 0.94 & 1.12 \\ 
   31 & COVIDhub-baseline & 4.00 & ba4\_ba5 & 27.46 & 32.80 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
   32 & THieF\_12wk-noTransform & 4.00 & ba4\_ba5 & 29.06 & 45.41 & 0.69 & 1.00 & 1.06 & 1.38 \\ 
-  33 & sarima\_s7-noTransform & 1.00 & delta & 10.38 & 14.69 & 0.70 & 0.97 & 0.30 & 0.30 \\ 
-  34 & THieF\_ensemble-mean & 1.00 & delta & 11.60 & 18.76 & 0.64 & 0.99 & 0.34 & 0.39 \\ 
-  35 & THieF\_ensemble-train3 & 1.00 & delta & 11.87 & 19.30 & 0.60 & 0.99 & 0.35 & 0.40 \\ 
-  36 & THieF\_6wk-4root & 1.00 & delta & 14.16 & 22.68 & 0.51 & 0.95 & 0.42 & 0.47 \\ 
-  37 & THieF\_12wk-noTransform & 1.00 & delta & 14.89 & 23.52 & 0.52 & 0.95 & 0.44 & 0.49 \\ 
-  38 & THieF\_6wk-noTransform & 1.00 & delta & 15.57 & 25.83 & 0.51 & 0.97 & 0.46 & 0.54 \\ 
-  39 & sarima\_s7-noTransform & 2.00 & delta & 14.64 & 20.80 & 0.69 & 0.98 & 0.27 & 0.27 \\ 
-  40 & THieF\_ensemble-mean & 2.00 & delta & 16.33 & 26.27 & 0.65 & 0.99 & 0.30 & 0.34 \\ 
-  41 & THieF\_ensemble-train3 & 2.00 & delta & 16.52 & 26.76 & 0.64 & 0.98 & 0.30 & 0.34 \\ 
-  42 & THieF\_6wk-4root & 2.00 & delta & 17.99 & 29.88 & 0.54 & 0.98 & 0.33 & 0.38 \\ 
-  43 & THieF\_12wk-noTransform & 2.00 & delta & 19.35 & 30.10 & 0.60 & 0.95 & 0.35 & 0.39 \\ 
-  44 & THieF\_6wk-noTransform & 2.00 & delta & 19.58 & 32.20 & 0.62 & 0.97 & 0.36 & 0.41 \\ 
-  45 & sarima\_s7-noTransform & 3.00 & delta & 23.20 & 35.71 & 0.60 & 0.97 & 0.32 & 0.34 \\ 
-  46 & THieF\_ensemble-mean & 3.00 & delta & 25.61 & 41.49 & 0.58 & 0.97 & 0.35 & 0.40 \\ 
-  47 & THieF\_ensemble-train3 & 3.00 & delta & 25.77 & 41.94 & 0.57 & 0.98 & 0.35 & 0.40 \\ 
-  48 & THieF\_6wk-4root & 3.00 & delta & 27.03 & 44.49 & 0.52 & 0.99 & 0.37 & 0.43 \\ 
-  49 & THieF\_12wk-noTransform & 3.00 & delta & 27.96 & 44.22 & 0.51 & 0.92 & 0.38 & 0.42 \\ 
-  50 & THieF\_6wk-noTransform & 3.00 & delta & 28.40 & 46.47 & 0.53 & 0.94 & 0.39 & 0.44 \\ 
-  51 & sarima\_s7-noTransform & 4.00 & delta & 30.50 & 49.25 & 0.54 & 0.94 & 0.35 & 0.39 \\ 
-  52 & THieF\_ensemble-mean & 4.00 & delta & 31.71 & 51.12 & 0.54 & 0.97 & 0.36 & 0.40 \\ 
-  53 & THieF\_ensemble-train3 & 4.00 & delta & 31.80 & 51.46 & 0.53 & 0.97 & 0.36 & 0.41 \\ 
-  54 & THieF\_6wk-4root & 4.00 & delta & 32.28 & 52.56 & 0.52 & 0.99 & 0.37 & 0.41 \\ 
-  55 & THieF\_6wk-noTransform & 4.00 & delta & 34.18 & 55.44 & 0.47 & 0.93 & 0.39 & 0.44 \\ 
-  56 & THieF\_12wk-noTransform & 4.00 & delta & 34.38 & 54.48 & 0.49 & 0.90 & 0.39 & 0.43 \\ 
-  57 & COVIDhub-4\_week\_ensemble & 1.00 & omicron & 25.02 & 37.57 & 0.57 & 0.92 & 0.74 & 0.78 \\ 
-  58 & THieF\_ensemble-train3 & 1.00 & omicron & 31.71 & 46.62 & 0.40 & 0.86 & 2.19 & 2.81 \\ 
-  59 & THieF\_ensemble-mean & 1.00 & omicron & 31.97 & 46.75 & 0.41 & 0.85 & 2.21 & 2.82 \\ 
-  60 & COVIDhub-baseline & 1.00 & omicron & 34.00 & 48.18 & 0.66 & 0.94 & 1.00 & 1.00 \\ 
-  61 & sarima\_s7-noTransform & 1.00 & omicron & 35.20 & 47.14 & 0.45 & 0.78 & 2.43 & 2.84 \\ 
-  62 & THieF\_6wk-4root & 1.00 & omicron & 36.90 & 53.71 & 0.35 & 0.80 & 2.55 & 3.24 \\ 
-  63 & THieF\_6wk-noTransform & 1.00 & omicron & 38.16 & 54.61 & 0.34 & 0.78 & 2.63 & 3.29 \\ 
-  64 & THieF\_12wk-noTransform & 1.00 & omicron & 41.89 & 58.55 & 0.36 & 0.77 & 2.89 & 3.53 \\ 
-  65 & COVIDhub-4\_week\_ensemble & 2.00 & omicron & 39.33 & 58.67 & 0.56 & 0.91 & 0.72 & 0.75 \\ 
-  66 & THieF\_6wk-4root & 2.00 & omicron & 48.67 & 71.22 & 0.33 & 0.81 & 2.47 & 3.29 \\ 
-  67 & THieF\_ensemble-train3 & 2.00 & omicron & 49.00 & 71.16 & 0.38 & 0.82 & 2.49 & 3.28 \\ 
-  68 & THieF\_ensemble-mean & 2.00 & omicron & 49.04 & 70.92 & 0.39 & 0.82 & 2.49 & 3.27 \\ 
-  69 & THieF\_6wk-noTransform & 2.00 & omicron & 53.99 & 77.42 & 0.33 & 0.76 & 2.74 & 3.57 \\ 
-  70 & COVIDhub-baseline & 2.00 & omicron & 54.64 & 77.98 & 0.64 & 0.92 & 1.00 & 1.00 \\ 
-  71 & THieF\_12wk-noTransform & 2.00 & omicron & 55.13 & 78.44 & 0.36 & 0.76 & 2.80 & 3.62 \\ 
-  72 & sarima\_s7-noTransform & 2.00 & omicron & 59.62 & 78.63 & 0.44 & 0.74 & 3.03 & 3.63 \\ 
-  73 & COVIDhub-4\_week\_ensemble & 3.00 & omicron & 54.85 & 81.62 & 0.53 & 0.89 & 0.76 & 0.78 \\ 
-  74 & THieF\_6wk-4root & 3.00 & omicron & 62.25 & 90.82 & 0.32 & 0.80 & 2.60 & 3.30 \\ 
-  75 & THieF\_ensemble-mean & 3.00 & omicron & 66.37 & 95.65 & 0.37 & 0.79 & 2.77 & 3.48 \\ 
-  76 & THieF\_ensemble-train3 & 3.00 & omicron & 66.58 & 96.20 & 0.36 & 0.79 & 2.78 & 3.50 \\ 
-  77 & THieF\_12wk-noTransform & 3.00 & omicron & 69.01 & 98.88 & 0.34 & 0.74 & 2.88 & 3.60 \\ 
-  78 & THieF\_6wk-noTransform & 3.00 & omicron & 69.99 & 100.15 & 0.32 & 0.74 & 2.92 & 3.64 \\ 
-  79 & COVIDhub-baseline & 3.00 & omicron & 72.69 & 104.38 & 0.60 & 0.90 & 1.00 & 1.00 \\ 
-  80 & sarima\_s7-noTransform & 3.00 & omicron & 82.60 & 109.30 & 0.42 & 0.72 & 3.45 & 3.98 \\ 
-  81 & COVIDhub-4\_week\_ensemble & 4.00 & omicron & 68.91 & 100.99 & 0.50 & 0.87 & 0.79 & 0.80 \\ 
-  82 & THieF\_6wk-4root & 4.00 & omicron & 75.30 & 110.30 & 0.29 & 0.77 & 2.74 & 3.36 \\ 
-  83 & THieF\_12wk-noTransform & 4.00 & omicron & 80.39 & 116.31 & 0.32 & 0.73 & 2.93 & 3.55 \\ 
-  84 & THieF\_ensemble-mean & 4.00 & omicron & 80.41 & 116.55 & 0.35 & 0.77 & 2.93 & 3.55 \\ 
-  85 & THieF\_ensemble-train3 & 4.00 & omicron & 80.87 & 117.46 & 0.34 & 0.77 & 2.94 & 3.58 \\ 
-  86 & THieF\_6wk-noTransform & 4.00 & omicron & 83.75 & 120.76 & 0.30 & 0.72 & 3.05 & 3.68 \\ 
-  87 & COVIDhub-baseline & 4.00 & omicron & 87.33 & 126.66 & 0.58 & 0.90 & 1.00 & 1.00 \\ 
-  88 & sarima\_s7-noTransform & 4.00 & omicron & 102.60 & 136.89 & 0.41 & 0.70 & 3.74 & 4.17 \\ 
+  33 & COVIDhub-4\_week\_ensemble & 1.00 & omicron & 25.02 & 37.57 & 0.57 & 0.92 & 0.74 & 0.78 \\ 
+  34 & THieF\_ensemble-train3 & 1.00 & omicron & 31.71 & 46.62 & 0.40 & 0.86 & 0.93 & 0.97 \\ 
+  35 & THieF\_ensemble-mean & 1.00 & omicron & 31.97 & 46.75 & 0.41 & 0.85 & 0.94 & 0.97 \\ 
+  36 & COVIDhub-baseline & 1.00 & omicron & 34.00 & 48.18 & 0.66 & 0.94 & 1.00 & 1.00 \\ 
+  37 & sarima\_s7-noTransform & 1.00 & omicron & 35.20 & 47.14 & 0.45 & 0.78 & 1.03 & 0.98 \\ 
+  38 & THieF\_6wk-4root & 1.00 & omicron & 36.90 & 53.71 & 0.35 & 0.80 & 1.08 & 1.11 \\ 
+  39 & THieF\_6wk-noTransform & 1.00 & omicron & 38.16 & 54.61 & 0.34 & 0.78 & 1.12 & 1.13 \\ 
+  40 & THieF\_12wk-noTransform & 1.00 & omicron & 41.89 & 58.55 & 0.36 & 0.77 & 1.23 & 1.22 \\ 
+  41 & COVIDhub-4\_week\_ensemble & 2.00 & omicron & 39.33 & 58.67 & 0.56 & 0.91 & 0.72 & 0.75 \\ 
+  42 & THieF\_6wk-4root & 2.00 & omicron & 48.67 & 71.22 & 0.33 & 0.81 & 0.89 & 0.91 \\ 
+  43 & THieF\_ensemble-train3 & 2.00 & omicron & 49.00 & 71.16 & 0.38 & 0.82 & 0.90 & 0.91 \\ 
+  44 & THieF\_ensemble-mean & 2.00 & omicron & 49.04 & 70.92 & 0.39 & 0.82 & 0.90 & 0.91 \\ 
+  45 & THieF\_6wk-noTransform & 2.00 & omicron & 53.99 & 77.42 & 0.33 & 0.76 & 0.99 & 0.99 \\ 
+  46 & COVIDhub-baseline & 2.00 & omicron & 54.64 & 77.98 & 0.64 & 0.92 & 1.00 & 1.00 \\ 
+  47 & THieF\_12wk-noTransform & 2.00 & omicron & 55.13 & 78.44 & 0.36 & 0.76 & 1.01 & 1.01 \\ 
+  48 & sarima\_s7-noTransform & 2.00 & omicron & 59.62 & 78.63 & 0.44 & 0.74 & 1.09 & 1.01 \\ 
+  49 & COVIDhub-4\_week\_ensemble & 3.00 & omicron & 54.85 & 81.62 & 0.53 & 0.89 & 0.76 & 0.78 \\ 
+  50 & THieF\_6wk-4root & 3.00 & omicron & 62.25 & 90.82 & 0.32 & 0.80 & 0.86 & 0.87 \\ 
+  51 & THieF\_ensemble-mean & 3.00 & omicron & 66.37 & 95.65 & 0.37 & 0.79 & 0.91 & 0.92 \\ 
+  52 & THieF\_ensemble-train3 & 3.00 & omicron & 66.58 & 96.20 & 0.36 & 0.79 & 0.92 & 0.92 \\ 
+  53 & THieF\_12wk-noTransform & 3.00 & omicron & 69.01 & 98.88 & 0.34 & 0.74 & 0.95 & 0.95 \\ 
+  54 & THieF\_6wk-noTransform & 3.00 & omicron & 69.99 & 100.15 & 0.32 & 0.74 & 0.96 & 0.96 \\ 
+  55 & COVIDhub-baseline & 3.00 & omicron & 72.69 & 104.38 & 0.60 & 0.90 & 1.00 & 1.00 \\ 
+  56 & sarima\_s7-noTransform & 3.00 & omicron & 82.60 & 109.30 & 0.42 & 0.72 & 1.14 & 1.05 \\ 
+  57 & COVIDhub-4\_week\_ensemble & 4.00 & omicron & 68.91 & 100.99 & 0.50 & 0.87 & 0.79 & 0.80 \\ 
+  58 & THieF\_6wk-4root & 4.00 & omicron & 75.30 & 110.30 & 0.29 & 0.77 & 0.86 & 0.87 \\ 
+  59 & THieF\_12wk-noTransform & 4.00 & omicron & 80.39 & 116.31 & 0.32 & 0.73 & 0.92 & 0.92 \\ 
+  60 & THieF\_ensemble-mean & 4.00 & omicron & 80.41 & 116.55 & 0.35 & 0.77 & 0.92 & 0.92 \\ 
+  61 & THieF\_ensemble-train3 & 4.00 & omicron & 80.87 & 117.46 & 0.34 & 0.77 & 0.93 & 0.93 \\ 
+  62 & THieF\_6wk-noTransform & 4.00 & omicron & 83.75 & 120.76 & 0.30 & 0.72 & 0.96 & 0.95 \\ 
+  63 & COVIDhub-baseline & 4.00 & omicron & 87.33 & 126.66 & 0.58 & 0.90 & 1.00 & 1.00 \\ 
+  64 & sarima\_s7-noTransform & 4.00 & omicron & 102.60 & 136.89 & 0.41 & 0.70 & 1.18 & 1.08 \\ 
    \hline
 \hline
-\end{longtable}\caption{Summary of model performance stratified by horizon week and pandemic waves for the states level, aggregated across forecast week. The results from this table were used to create Figure 5 that summarized average WIS by horizon week and pandemic wave for the US national level and the states level. The table is ordered by ascending pandemic wave, horizon week, and WIS, with THieF-4wk-4root again having the lowest WIS for all horizons of the alpha wave and shorter horizons of the Winter 21 wave. The THieF-12wk-noTrans has the lowest WIS for 3 week ahead and 4 week ahead horizons during the Winter 21 wave. The baseline only has the best WIS for the 1 week ahead horizon during the Winter 21 wave.}
+\end{longtable}\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS}
 \end{center}
 \end{table}
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_wave_us}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Mar 25 18:59:44 2023
+% Sun Mar 26 19:03:59 2023
 \begin{longtable}{rlrlrrrrrr}
   \hline
  & model & horizon\_wk & wave & wis & mae & cov\_50 & cov\_95 & rwis & rmae \\ 
@@ -999,65 +998,41 @@ We demonstrated the utility and success of THIEF and ensembles of THIEF models w
   30 & THieF\_6wk-noTransform & 4.00 & ba4\_ba5 & 1034.00 & 1631.70 & 0.61 & 1.00 & 1.06 & 1.24 \\ 
   31 & sarima\_s7-noTransform & 4.00 & ba4\_ba5 & 1169.60 & 1821.80 & 0.60 & 1.00 & 1.20 & 1.38 \\ 
   32 & THieF\_12wk-noTransform & 4.00 & ba4\_ba5 & 1501.80 & 2581.80 & 0.34 & 1.00 & 1.54 & 1.96 \\ 
-  33 & THieF\_ensemble-mean & 1.00 & delta & 239.10 & 305.40 & 0.86 & 1.00 & 0.16 & 0.15 \\ 
-  34 & THieF\_ensemble-train3 & 1.00 & delta & 247.90 & 326.80 & 0.86 & 1.00 & 0.17 & 0.16 \\ 
-  35 & sarima\_s7-noTransform & 1.00 & delta & 270.90 & 454.30 & 0.29 & 1.00 & 0.18 & 0.22 \\ 
-  36 & THieF\_6wk-4root & 1.00 & delta & 327.60 & 536.40 & 0.71 & 1.00 & 0.22 & 0.26 \\ 
-  37 & THieF\_6wk-noTransform & 1.00 & delta & 332.50 & 563.70 & 0.43 & 1.00 & 0.22 & 0.27 \\ 
-  38 & THieF\_12wk-noTransform & 1.00 & delta & 381.80 & 523.00 & 1.00 & 1.00 & 0.26 & 0.25 \\ 
-  39 & THieF\_6wk-noTransform & 2.00 & delta & 286.50 & 260.10 & 1.00 & 1.00 & 0.11 & 0.07 \\ 
-  40 & sarima\_s7-noTransform & 2.00 & delta & 290.70 & 240.00 & 1.00 & 1.00 & 0.11 & 0.07 \\ 
-  41 & THieF\_ensemble-mean & 2.00 & delta & 313.60 & 215.30 & 1.00 & 1.00 & 0.12 & 0.06 \\ 
-  42 & THieF\_ensemble-train3 & 2.00 & delta & 316.20 & 207.60 & 1.00 & 1.00 & 0.12 & 0.06 \\ 
-  43 & THieF\_6wk-4root & 2.00 & delta & 324.40 & 280.40 & 1.00 & 1.00 & 0.13 & 0.08 \\ 
-  44 & THieF\_12wk-noTransform & 2.00 & delta & 487.90 & 404.70 & 1.00 & 1.00 & 0.19 & 0.12 \\ 
-  45 & THieF\_6wk-noTransform & 3.00 & delta & 396.00 & 511.10 & 0.86 & 1.00 & 0.11 & 0.10 \\ 
-  46 & sarima\_s7-noTransform & 3.00 & delta & 486.30 & 701.80 & 1.00 & 1.00 & 0.14 & 0.14 \\ 
-  47 & THieF\_ensemble-mean & 3.00 & delta & 509.60 & 800.20 & 1.00 & 1.00 & 0.14 & 0.16 \\ 
-  48 & THieF\_ensemble-train3 & 3.00 & delta & 509.60 & 797.20 & 1.00 & 1.00 & 0.14 & 0.16 \\ 
-  49 & THieF\_6wk-4root & 3.00 & delta & 547.90 & 979.90 & 0.86 & 1.00 & 0.15 & 0.20 \\ 
-  50 & THieF\_12wk-noTransform & 3.00 & delta & 585.80 & 276.30 & 1.00 & 1.00 & 0.16 & 0.06 \\ 
-  51 & THieF\_6wk-noTransform & 4.00 & delta & 530.60 & 831.20 & 0.71 & 1.00 & 0.12 & 0.14 \\ 
-  52 & THieF\_ensemble-mean & 4.00 & delta & 691.00 & 1128.00 & 0.86 & 1.00 & 0.16 & 0.18 \\ 
-  53 & THieF\_ensemble-train3 & 4.00 & delta & 691.80 & 1135.10 & 0.86 & 1.00 & 0.16 & 0.19 \\ 
-  54 & THieF\_12wk-noTransform & 4.00 & delta & 710.80 & 555.60 & 1.00 & 1.00 & 0.16 & 0.09 \\ 
-  55 & sarima\_s7-noTransform & 4.00 & delta & 745.20 & 1232.60 & 0.71 & 1.00 & 0.17 & 0.20 \\ 
-  56 & THieF\_6wk-4root & 4.00 & delta & 801.60 & 1496.10 & 0.43 & 1.00 & 0.18 & 0.25 \\ 
-  57 & COVIDhub-4\_week\_ensemble & 1.00 & omicron & 1067.90 & 1595.10 & 0.46 & 0.87 & 0.72 & 0.77 \\ 
-  58 & COVIDhub-baseline & 1.00 & omicron & 1487.90 & 2083.40 & 0.53 & 0.83 & 1.00 & 1.00 \\ 
-  59 & THieF\_ensemble-train3 & 1.00 & omicron & 1509.90 & 2136.20 & 0.24 & 0.69 & 3.35 & 4.39 \\ 
-  60 & THieF\_ensemble-mean & 1.00 & omicron & 1517.90 & 2127.80 & 0.24 & 0.69 & 3.37 & 4.37 \\ 
-  61 & THieF\_6wk-noTransform & 1.00 & omicron & 1632.50 & 2228.70 & 0.32 & 0.73 & 3.62 & 4.58 \\ 
-  62 & THieF\_6wk-4root & 1.00 & omicron & 1772.10 & 2437.80 & 0.26 & 0.54 & 3.93 & 5.01 \\ 
-  63 & THieF\_12wk-noTransform & 1.00 & omicron & 1850.90 & 2381.20 & 0.43 & 0.75 & 4.11 & 4.89 \\ 
-  64 & sarima\_s7-noTransform & 1.00 & omicron & 1881.90 & 2370.80 & 0.22 & 0.60 & 4.17 & 4.87 \\ 
-  65 & COVIDhub-4\_week\_ensemble & 2.00 & omicron & 1919.40 & 2844.90 & 0.47 & 0.84 & 0.74 & 0.81 \\ 
-  66 & THieF\_ensemble-mean & 2.00 & omicron & 2361.20 & 3270.00 & 0.27 & 0.68 & 3.61 & 4.41 \\ 
-  67 & THieF\_ensemble-train3 & 2.00 & omicron & 2365.40 & 3287.90 & 0.26 & 0.67 & 3.62 & 4.44 \\ 
-  68 & THieF\_6wk-4root & 2.00 & omicron & 2421.10 & 3411.40 & 0.19 & 0.68 & 3.70 & 4.60 \\ 
-  69 & THieF\_6wk-noTransform & 2.00 & omicron & 2442.90 & 3368.80 & 0.31 & 0.71 & 3.73 & 4.55 \\ 
-  70 & COVIDhub-baseline & 2.00 & omicron & 2579.10 & 3519.70 & 0.50 & 0.70 & 1.00 & 1.00 \\ 
-  71 & THieF\_12wk-noTransform & 2.00 & omicron & 2827.30 & 3600.00 & 0.36 & 0.69 & 4.32 & 4.86 \\ 
-  72 & sarima\_s7-noTransform & 2.00 & omicron & 3275.90 & 4104.90 & 0.25 & 0.63 & 5.01 & 5.54 \\ 
-  73 & COVIDhub-4\_week\_ensemble & 3.00 & omicron & 2757.20 & 4201.20 & 0.43 & 0.80 & 0.77 & 0.85 \\ 
-  74 & THieF\_6wk-4root & 3.00 & omicron & 3141.50 & 4483.10 & 0.12 & 0.67 & 3.81 & 4.32 \\ 
-  75 & THieF\_6wk-noTransform & 3.00 & omicron & 3167.40 & 4447.50 & 0.30 & 0.69 & 3.84 & 4.28 \\ 
-  76 & THieF\_ensemble-mean & 3.00 & omicron & 3250.50 & 4481.10 & 0.25 & 0.66 & 3.94 & 4.31 \\ 
-  77 & THieF\_ensemble-train3 & 3.00 & omicron & 3273.10 & 4511.80 & 0.22 & 0.62 & 3.97 & 4.34 \\ 
-  78 & COVIDhub-baseline & 3.00 & omicron & 3583.00 & 4912.10 & 0.43 & 0.67 & 1.00 & 1.00 \\ 
-  79 & THieF\_12wk-noTransform & 3.00 & omicron & 3601.40 & 4700.20 & 0.34 & 0.72 & 4.37 & 4.52 \\ 
-  80 & sarima\_s7-noTransform & 3.00 & omicron & 4672.10 & 5833.20 & 0.32 & 0.58 & 5.66 & 5.62 \\ 
-  81 & COVIDhub-4\_week\_ensemble & 4.00 & omicron & 3556.30 & 5294.60 & 0.37 & 0.79 & 0.80 & 0.87 \\ 
-  82 & THieF\_6wk-noTransform & 4.00 & omicron & 3854.40 & 5589.80 & 0.25 & 0.70 & 3.96 & 4.23 \\ 
-  83 & THieF\_6wk-4root & 4.00 & omicron & 3897.80 & 5515.50 & 0.08 & 0.58 & 4.01 & 4.18 \\ 
-  84 & THieF\_ensemble-mean & 4.00 & omicron & 4046.90 & 5650.10 & 0.20 & 0.60 & 4.16 & 4.28 \\ 
-  85 & THieF\_ensemble-train3 & 4.00 & omicron & 4084.80 & 5718.60 & 0.14 & 0.58 & 4.20 & 4.33 \\ 
-  86 & THieF\_12wk-noTransform & 4.00 & omicron & 4274.30 & 5646.60 & 0.25 & 0.71 & 4.40 & 4.28 \\ 
-  87 & COVIDhub-baseline & 4.00 & omicron & 4439.60 & 6090.80 & 0.36 & 0.61 & 1.00 & 1.00 \\ 
-  88 & sarima\_s7-noTransform & 4.00 & omicron & 6010.40 & 7538.60 & 0.29 & 0.51 & 6.18 & 5.71 \\ 
+  33 & COVIDhub-4\_week\_ensemble & 1.00 & omicron & 1067.90 & 1595.10 & 0.46 & 0.87 & 0.72 & 0.77 \\ 
+  34 & COVIDhub-baseline & 1.00 & omicron & 1487.90 & 2083.40 & 0.53 & 0.83 & 1.00 & 1.00 \\ 
+  35 & THieF\_ensemble-train3 & 1.00 & omicron & 1509.90 & 2136.20 & 0.24 & 0.69 & 1.01 & 1.02 \\ 
+  36 & THieF\_ensemble-mean & 1.00 & omicron & 1517.90 & 2127.80 & 0.24 & 0.69 & 1.02 & 1.02 \\ 
+  37 & THieF\_6wk-noTransform & 1.00 & omicron & 1632.50 & 2228.70 & 0.32 & 0.73 & 1.10 & 1.07 \\ 
+  38 & THieF\_6wk-4root & 1.00 & omicron & 1772.10 & 2437.80 & 0.26 & 0.54 & 1.19 & 1.17 \\ 
+  39 & THieF\_12wk-noTransform & 1.00 & omicron & 1850.90 & 2381.20 & 0.43 & 0.75 & 1.24 & 1.14 \\ 
+  40 & sarima\_s7-noTransform & 1.00 & omicron & 1881.90 & 2370.80 & 0.22 & 0.60 & 1.26 & 1.14 \\ 
+  41 & COVIDhub-4\_week\_ensemble & 2.00 & omicron & 1919.40 & 2844.90 & 0.47 & 0.84 & 0.74 & 0.81 \\ 
+  42 & THieF\_ensemble-mean & 2.00 & omicron & 2361.20 & 3270.00 & 0.27 & 0.68 & 0.92 & 0.93 \\ 
+  43 & THieF\_ensemble-train3 & 2.00 & omicron & 2365.40 & 3287.90 & 0.26 & 0.67 & 0.92 & 0.93 \\ 
+  44 & THieF\_6wk-4root & 2.00 & omicron & 2421.10 & 3411.40 & 0.19 & 0.68 & 0.94 & 0.97 \\ 
+  45 & THieF\_6wk-noTransform & 2.00 & omicron & 2442.90 & 3368.80 & 0.31 & 0.71 & 0.95 & 0.96 \\ 
+  46 & COVIDhub-baseline & 2.00 & omicron & 2579.10 & 3519.70 & 0.50 & 0.70 & 1.00 & 1.00 \\ 
+  47 & THieF\_12wk-noTransform & 2.00 & omicron & 2827.30 & 3600.00 & 0.36 & 0.69 & 1.10 & 1.02 \\ 
+  48 & sarima\_s7-noTransform & 2.00 & omicron & 3275.90 & 4104.90 & 0.25 & 0.63 & 1.27 & 1.17 \\ 
+  49 & COVIDhub-4\_week\_ensemble & 3.00 & omicron & 2757.20 & 4201.20 & 0.43 & 0.80 & 0.77 & 0.85 \\ 
+  50 & THieF\_6wk-4root & 3.00 & omicron & 3141.50 & 4483.10 & 0.12 & 0.67 & 0.88 & 0.91 \\ 
+  51 & THieF\_6wk-noTransform & 3.00 & omicron & 3167.40 & 4447.50 & 0.30 & 0.69 & 0.88 & 0.90 \\ 
+  52 & THieF\_ensemble-mean & 3.00 & omicron & 3250.50 & 4481.10 & 0.25 & 0.66 & 0.91 & 0.91 \\ 
+  53 & THieF\_ensemble-train3 & 3.00 & omicron & 3273.10 & 4511.80 & 0.22 & 0.62 & 0.91 & 0.92 \\ 
+  54 & COVIDhub-baseline & 3.00 & omicron & 3583.00 & 4912.10 & 0.43 & 0.67 & 1.00 & 1.00 \\ 
+  55 & THieF\_12wk-noTransform & 3.00 & omicron & 3601.40 & 4700.20 & 0.34 & 0.72 & 1.00 & 0.96 \\ 
+  56 & sarima\_s7-noTransform & 3.00 & omicron & 4672.10 & 5833.20 & 0.32 & 0.58 & 1.30 & 1.19 \\ 
+  57 & COVIDhub-4\_week\_ensemble & 4.00 & omicron & 3556.30 & 5294.60 & 0.37 & 0.79 & 0.80 & 0.87 \\ 
+  58 & THieF\_6wk-noTransform & 4.00 & omicron & 3854.40 & 5589.80 & 0.25 & 0.70 & 0.87 & 0.92 \\ 
+  59 & THieF\_6wk-4root & 4.00 & omicron & 3897.80 & 5515.50 & 0.08 & 0.58 & 0.88 & 0.91 \\ 
+  60 & THieF\_ensemble-mean & 4.00 & omicron & 4046.90 & 5650.10 & 0.20 & 0.60 & 0.91 & 0.93 \\ 
+  61 & THieF\_ensemble-train3 & 4.00 & omicron & 4084.80 & 5718.60 & 0.14 & 0.58 & 0.92 & 0.94 \\ 
+  62 & THieF\_12wk-noTransform & 4.00 & omicron & 4274.30 & 5646.60 & 0.25 & 0.71 & 0.96 & 0.93 \\ 
+  63 & COVIDhub-baseline & 4.00 & omicron & 4439.60 & 6090.80 & 0.36 & 0.61 & 1.00 & 1.00 \\ 
+  64 & sarima\_s7-noTransform & 4.00 & omicron & 6010.40 & 7538.60 & 0.29 & 0.51 & 1.35 & 1.24 \\ 
    \hline
 \hline
-\end{longtable}\caption{Summary of model performance stratified by horizon week and pandemic waves for the US national level, aggregated across forecast week. The results from this table were used to create Figure 5 that summarized average WIS by horizon week and pandemic wave for the US national level and the states level. The table is ordered by ascending pandemic wave, horizon week, and WIS, with THieF-4wk-4root having the lowest WIS for all horizons of the alpha wave and shorter horizons of the Winter 21 wave. The THieF-12wk-noTrans and THieF-12wk-4root models have the lowest and second lowest WIS for 3 week ahead and 4 week ahead horizons during the Winter 21 wave. The baseline consistently does not have the best WIS.}
+\end{longtable}\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}
 \end{center}
 \end{table}
 
