@@ -341,7 +341,7 @@ We focused on the period between Monday, July 27, 2020 and Sunday, October 2, 20
 
 The first day of the period of analysis (July 27, 2020) was selected as the first day of reliable truth data for all locations of interests. Forecasting for the validation phase began on Monday, December 7, 2020, as this is the first Monday after the HealthData.gov confirmed hospitalizations data set was declared the official ground truth data. The division between the validation and testing phases was chosen to encapsulate three COVID-19 variant-based waves in the validation phase (Winter 2020-21, Alpha, and Delta) and two waves in the testing phase (Omicron and BA.4/BA.5). The separation between pandemic waves is made based on U.S. national level incident hospitalizations, pictured below in Figure \ref{fig:figure_evaluate_period_plot}.
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_evaluate_period_plot"}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<evaluation_period_plot, echo=FALSE, fig=TRUE>>=
@@ -433,7 +433,7 @@ We use the same metrics as the Forecast Hub to evaluate model accuracy for both 
 \item $WIS_{{\alpha}_{0:K}} (F, y_i) = \frac{1}{N} \Sigma_{i=1}^N \frac{1}{K+1/2}(w_0\cdot |y_i - m| + \Sigma_{k = 1}^K w_k \cdot IS_{{\alpha}_k}(F, y_i))$
 \item $(1 - \alpha)*100 \textrm{\% PI Coverage} = \frac{1}{N} \Sigma_{i=1}^N 1(l_i^{\alpha} \leq y_i \leq u_i^{\alpha}),$
 \end{enumerate}
-where $N$ is the number of forecasts being averaged, $y_i$ is the true observed value at a particular time point (date) and location, and $\hat{y}_i$ is the point forecast value for a particular forecast date, horizon, and location combination. The PI uncertainty level is given by $\alpha$, $k$ is the particular prediction interval ($k = 1, \cdots, K$), and $F$ is the forecast distribution. The weights $w_0$ and $w_k$ are set as $w_0 = 1/2$ and $w_k = \alpha_k/2$ respectively while $u_i^{\alpha}$ and $l_i^{\alpha}$ are the upper and lower bounds of a $(1 - \alpha) * 100$-level prediction interval for a particular forecast date and location. Lastly, the interval score of a particular $(1 - \alpha) * 100$-level prediction interval is $IS_{{\alpha}_k}(F, y_i) = (u_i-l_i) + \frac{2}{\alpha} \cdot (l_i-y_i) \cdot 1(y_i < l_i) + \frac{2}{\alpha} \cdot (y_i - u_i) \cdot 1(y_i > u_i)$ where $1()$ is the indicator function.
+where $N$ is the number of forecasts being averaged, $y_i$ is the true observed value at a particular time point (date) and location, and $\hat{y}_i$ is the point forecast value for a particular forecast date, horizon, and location combination. The PI uncertainty level is given by $\alpha$, $k$ is the particular prediction interval ($k = 1, \cdots, K$), and $F$ is the forecast distribution. The weights $w_0$ and $w_k$ are set as $w_0 = 1/2$ and $w_k = \alpha_k/2$ respectively while $u_i^{\alpha}$ and $l_i^{\alpha}$ are the upper and lower bounds of a $(1 - \alpha) * 100$-level prediction interval for a particular forecast date and location. Lastly, the interval score of a particular $(1 - \alpha) * 100$-level prediction interval is $IS_{{\alpha}_k}(F, y_i) = (u_i-l_i) + \frac{2}{\alpha} \cdot (l_i-y_i) \cdot 1(y_i < l_i) + \frac{2}{\alpha} \cdot (y_i - u_i) \cdot 1(y_i > u_i)$ where $1()$ is the indicator function. For these metrics, lower WIS and MAE is better while coverage levels approximating $1-\alpha$ indicate a well-calibrated forecast. This means that the intervals are narrow enough to provide useful information but not so narrow as to exclude the truth.
 
 Relative versions of MAE and WIS are also used to adjust for truth data magnitude to allow for comparison between forecast values of different scales. These relative metrics are calculated as $MAE_{\textrm{model m}} / MAE_{\textrm{baseline}}$ and $WIS_{\textrm{model m}} /WIS_{\textrm{baseline}}$, respectively.
 
@@ -479,7 +479,7 @@ For averaged states, we pass on THieF\_6wk-4root, THieF\_ensemble-train3, and sa
 
 Hence, the best subset that passes onto the testing phase consists of the following six (6) models: THieF\_6wk-4root, THieF\_6wk-noTransform, THieF\_ensemble-train3, sarima\_s7-noTransform, THieF\_12wk-noTransform, and THieF\_ensemble-mean.
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_validation_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
@@ -491,7 +491,7 @@ print(table_validation_states, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_validation_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
@@ -506,7 +506,7 @@ print(table_validation_us, booktabs=FALSE, floating=FALSE)
 \section{Testing phase} \label{testing_results}
 Using forecasts made every four weeks during the testing phase, we plot 1- to 28-day ahead incident hospitalization point and 95\% interval forecasts for the eight models of interest during this period in Figures \ref{fig:figure_forecasts_plot_1}. This group consists of six models from the best subset and two Forecast Hub comparison models, the COVIDhub-baseline and the COVIDhub-4\_week\_ensemble. Generally, the THieF ensembles, the original THieF models with 6-week top aggregation levels, and COVIDHub-4\_week\_ensemble appear to better follow the true confirmed hospitalizations compared to the other three models, and these five models also tend to have narrower 95\% interval forecasts. These results are mirrored (and perhaps further explained) by the following stratified evaluations.498
 
-\begin{figure}[h]
+\begin{figure}%[h]
 \label{fig:figure_forecasts_plot1}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<forecast_models_plot, echo=FALSE, fig=TRUE>>=
@@ -522,7 +522,7 @@ For averaged states (see Table \ref{tab:table_overall_states}), the WIS and MAE 
 
 For U.S. national (see Table \ref{tab:table_overall_US}), however, the WIS and MAE values tend to be more spread out, partially a result of their larger magnitude. At this location scale, our models had below-nominal coverage rates for both uncertainty levels. The Forecast Hub models had above-nominal coverage rates at the 50\% level but also fell short of nominal coverage at the 95\% level. The THieF\_6wk-noTransform model showed more similar performance to the top four ranked models compared to that of the COVIDhub-baseline, unlike for averaged states. The bottom two models for the U.S. national ranking were also substantially worse compared to the COVIDhub-baseline in terms of relative WIS and relative MAE values.
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_overall_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
@@ -553,15 +553,13 @@ knitr::kable(tar_read(overall_metrics_states, store="../_targets"))
 
 
 \subsection{Model performance by horizon week} \label{testing_horizon}
-Only WIS plots are shown because this is our principle evaluation metric and the MAE plots are very similar.
-
-The by-horizon evaluation shows similar model rankings to those of the overall evaluation (see Figure \ref{fig:figure_horizon_plot} and Supplemental Tables \ref{tab:table_horizon_states} and \ref{tab:table_horizon_us}). The top four models for both location scales are the same and perform no worse (but usually tend to do better) than the COVIDhub-baseline at all horizons, and the COVIDhub-4\_week\_ensemble significantly outperforms all other seven models.  However, aggregating the forecasts by horizon illustrates some important differences in accuracy between horizon weeks.
+We display the results graphically from this stratified evaluation forward for improved readability. (Only WIS plots are shown because it is our principle evaluation metric and the MAE plots show very similar results.) The by-horizon evaluation shows similar model rankings to those of the overall evaluation (see Figure \ref{fig:figure_horizon_plot} and Supplemental Tables \ref{tab:table_horizon_states} and \ref{tab:table_horizon_us}). The top four models for both location scales are the same and perform no worse (but usually tend to do better) than the COVIDhub-baseline at all horizons, and the COVIDhub-4\_week\_ensemble significantly outperforms all other seven models.  However, aggregating the forecasts by horizon illustrates some important differences in accuracy between horizon weeks.
 
 For averaged states (see Figure \ref{fig:figure_horizon_plot}), THieF\_6wk-4root outperforms the THieF ensembles for WIS end MAE at all horizons, except for 1-week ahead. Similarly, THieF\_6wk-noTransform has lower WIS and MAE than three models at 2- to 4-weeks ahead but is only better than THieF\_12wk-noTransform for the 1-week horizon. Additionally, while sarima\_s7-noTransform is ranked fifth and THieF\_12-noTransform is ranked last for the 1-week ahead horizon, these ranks flip to be sixth and last for the 3- and 4-week ahead horizons, after briefly crossing with each other (and the COVIDhub-baseline) at 2-weeks ahead. The COVIDhub-baseline is consistently the second worst model. Coverage rates remain high across horizons for all models, with 95\% coverage rates fall into no more than 10% of the nominal rate at any horizon.
 
 For U.S. national (see Figure \ref{fig:figure_horizon_plot}) WIS and MAE, THieF\_6wk-4root outperforms the THieF ensembles for the two longest horizons while the ensembles (and COVIDhub-baseline) perform slightly better at the shortest horizon. The difference in performance among the three models is barely discernible at a horizon of 2 weeks. The sarima\_s7-noTransform and THieF\_12wk-noTransform models occupy the bottom of the ranking, with THieF\_12wk-noTransform scoring better WIS values for all but the 1-week ahead horizon. The difference is especially pronounced at longer horizons, where this model has much lower WIS than that of sarima\_s7-noTransform. The COVIDhub-baseline ranks sixth for WIS at the U.S. national location scale for all but the 1-week ahead horizon where it ranks fourth. Coverage rates are slightly lower at this location scale, falling to up to 19\% below the nominal rate (though most are no lower than 15\%).
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_horizon_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<horizon_plot, echo=FALSE, fig=TRUE>>=
@@ -577,7 +575,7 @@ For the Omicron variant wave, the best and worst models---COVIDhub-4\_week\_ense
 
 For the BA.4/BA.5 variant wave, model rankings by WIS are more distinct and tend to remain static from one horizon week to another. The best three and worst models are the same regardless of location scale; however, the COVIDhub-baseline is noticeably better ranked for U.S. national scores, where it is approximately tied with THieF\_ensemble-mean for fourth-best, compared to a clear seventh place for averaged states scores. THieF\_6wk-noTransform also performs as well or better than sarima\_s7-noTransform for all horizons during this wave at the U.S. national scale, while the ranks of these two models depends on horizon length at the averaged states scale. Coverage rates are exceedingly high for the averaged states level and approximately nominal for all but the last-ranked models for U.S. national.
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_wave_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<wave_plot, echo=FALSE, fig=TRUE>>=
@@ -593,7 +591,7 @@ Many of the patterns observed in the evaluations described above continued to ho
 
 The by--forecast week break down of THieF\_6wk-noTransform is particularly interesting. This model tended to fall in the middle of the rankings for the previously described evaluations, yet Figures \ref{fig:figure_date_plot_states} and \ref{fig:figure_date_plot_us} show that this model actually tended to have more extreme performance, either performing rather well or quite badly. Investigating less aggregate scores for THieF\_12wk-noTransform similarly reveals several instances of good performance, usually experienced at long horizons under settings of rapid change or high incidence. In addition, we notice that sarima\_s7-noTransform demonstrated noticeably worse performance for U.S. national WIS at a horizon of 1 week compared to that for averaged states. Further, THieF\_6wk-4root's strangely low coverage for averaged states following the decline of the Omicron wave at both plotted horizons is also noteworthy, especially since the other seven models experience significantly higher coverage rates during this time.\footnote{Comparisons among models for U.S. national 95\% coverage by forecast week are harder to make since this location scale only includes seven 95\% interval forecasts for one location (compared to seven per 52 locations for averaged states), so we simply allow the plots in Figure \ref{fig:figure_date_plot_states} to speak for themselves.}
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_date_plot_states}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<states_date_plot, echo=FALSE, fig=TRUE>>=
@@ -602,7 +600,7 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 \caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}
 \end{figure}
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_date_plot_us}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<us_date_plot, echo=FALSE, fig=TRUE>>=
@@ -614,7 +612,7 @@ tar_read(combined_wis_cov95_plot_us, store="../_targets")
 \subsection{Model performance by location} \label{testing_location}
 Figure \ref{fig:figure_location_plot} summarizes the by-location evaluation, with the models on the x-axis ordered by lowest-to-highest overall relative WIS at the average states location scale for the testing phase and locations on the y-axis ordered by descending cumulative hospitalizations. The top five models show either better or equal performance than the COVIDhub-baseline---represented by shades of blue ranging from dark to light and white---with the COVIDhub-4\_week\_ensemble clearly the best. The next three models are fairly close in terms of lowest WIS across all of the locations, though THieF\_6wk-4root is marginally better with lower relative WIS by a difference of more than 0.05 in over 18% of locations. The worst two models include some shades of red which represent performance worse than the COVIDhub-baseline. However, it should be noted that these models actually perform better than the baseline for a significant number of locations, with THieF\_12wk-noTransform sharing the top rank for Puerto Rico and Alaska. In addition, most of the worst performance relative to the baseline occurs in the locations with the highest cumulative hospitalizations during the testing phase. This is perhaps unsurprising since we know that high-count settings tend to be more difficult to forecast accurately.
 
-\begin{figure}
+\begin{figure}%[h]
 \label{fig:figure_location_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<location_plot, echo=FALSE, fig=TRUE>>=
@@ -673,7 +671,7 @@ print(table_last17_states, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_last17_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
@@ -686,7 +684,7 @@ print(table_last17_us, booktabs=FALSE, floating=FALSE)
 \end{table}
 
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_horizon_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
@@ -698,7 +696,7 @@ print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_horizon_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
@@ -716,7 +714,7 @@ knitr::kable(tar_read(horizon_metrics_us, store="../_targets"))
 @
 
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_wave_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
@@ -728,7 +726,7 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', floati
 \end{center}
 \end{table}
 
-\begin{table}[h]
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_wave_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
