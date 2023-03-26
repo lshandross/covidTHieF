@@ -131,9 +131,10 @@ list(
             unit = "weeks", 
             week_start = getOption("lubricate.week.start", 1)
           ) + weeks(1),
-        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7)
+        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
+#        forecast_date = mon_fc_date,
       ) %>%
-      #select(-mon_fc_date) %>%
+      select(-mon_fc_date) %>%
       filter(horizon_wk %in% 1:4)
   ),
   tar_target(
@@ -146,9 +147,10 @@ list(
             unit = "weeks", 
             week_start = getOption("lubricate.week.start", 1)
           ) + weeks(1),
-        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7)
+        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
+#        forecast_date = mon_fc_date,
       ) %>%
-      #select(-mon_fc_date) %>%
+      select(-mon_fc_date) %>%
       filter(horizon_wk %in% 1:4)
   ),
   tar_target(
@@ -180,7 +182,7 @@ tar_target(
     annotate(geom = "text", x = as.Date("2021-10-20"), y = 2500, 
              label = "Testing Start", size = 4, angle = 90) + 
     annotate(geom = "text", x = as.Date("2022-09-22"), y = 2500, 
-             label = "Testing Start", size = 4, angle = 90) + 
+             label = "Testing End", size = 4, angle = 90) + 
     annotate(geom = "text", x = as.Date("2021-01-03"), y = 25000, 
              label = "Winter 2020-21", size = 4, angle = 0) + 
     annotate(geom = "text", x = as.Date("2021-05-11"), y = 25000, 
@@ -305,11 +307,15 @@ tar_target(
   
   tar_target(
     wave_metrics_us,
-    summarize_wave_metrics(testing_scores, baseline_name="COVIDhub-baseline", us_only=TRUE)
+    testing_scores %>%
+      filter(forecast_date >= as.Date("2021-11-01")) %>%
+      summarize_wave_metrics(baseline_name="COVIDhub-baseline", us_only=TRUE)
   ),
   tar_target(
     wave_metrics_states,
-    summarize_wave_metrics(testing_scores, baseline_name="COVIDhub-baseline", us_only=FALSE)
+    testing_scores %>%
+      filter(forecast_date >= as.Date("2021-11-01")) %>%
+      summarize_wave_metrics(baseline_name="COVIDhub-baseline", us_only=FALSE)
   ),
   tar_target(
     wis_plot_omicron_us, 
