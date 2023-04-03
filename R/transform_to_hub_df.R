@@ -80,7 +80,7 @@ transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_level
            horizon = as.numeric(rownames(low_fc)),
            target = paste(horizon, " day ahead inc hosp"),
            target_end_date = forecast_date + days(horizon)) %>%
-    pivot_longer(1:(2*length(pi_levels) + 1), "quantile", "value") %>%
+    pivot_longer(1:(2*length(pi_levels) + 1), names_to="quantile", values_to="value") %>%
     filter(horizon <= h_ahead) %>%
     arrange(target_end_date, quantile) %>%
     mutate(location = fips_code,
