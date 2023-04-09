@@ -5,14 +5,14 @@
 \addvspace {10\p@ }
 \contentsline {table}{\numberline {2.1}{\ignorespaces Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}}{9}{table.2.1}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {3.1}{\ignorespaces Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}}{26}{table.3.1}%
-\contentsline {table}{\numberline {3.2}{\ignorespaces Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}}{27}{table.3.2}%
-\contentsline {table}{\numberline {3.3}{\ignorespaces Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}}{29}{table.3.3}%
-\contentsline {table}{\numberline {3.4}{\ignorespaces Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}}{30}{table.3.4}%
+\contentsline {table}{\numberline {3.1}{\ignorespaces Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}}{28}{table.3.1}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}}{29}{table.3.2}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}}{31}{table.3.3}%
+\contentsline {table}{\numberline {3.4}{\ignorespaces Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}}{32}{table.3.4}%
 \addvspace {10\p@ }
-\contentsline {table}{\numberline {1}{\ignorespaces Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS}}{45}{table.Alph0.1}%
-\contentsline {table}{\numberline {2}{\ignorespaces Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS}}{46}{table.Alph0.2}%
-\contentsline {table}{\numberline {3}{\ignorespaces Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS}}{47}{table.Alph0.3}%
-\contentsline {table}{\numberline {4}{\ignorespaces Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS}}{48}{table.Alph0.4}%
-\contentsline {table}{\numberline {6}{\ignorespaces Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS}}{49}{table.Alph0.6}%
-\contentsline {table}{\numberline {8}{\ignorespaces Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}}{50}{table.Alph0.8}%
+\contentsline {table}{\numberline {1}{\ignorespaces Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS}}{48}{table.Alph0.1}%
+\contentsline {table}{\numberline {2}{\ignorespaces Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS}}{49}{table.Alph0.2}%
+\contentsline {table}{\numberline {3}{\ignorespaces Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS}}{50}{table.Alph0.3}%
+\contentsline {table}{\numberline {4}{\ignorespaces Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS}}{51}{table.Alph0.4}%
+\contentsline {table}{\numberline {6}{\ignorespaces Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS}}{52}{table.Alph0.6}%
+\contentsline {table}{\numberline {8}{\ignorespaces Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}}{53}{table.Alph0.8}%
