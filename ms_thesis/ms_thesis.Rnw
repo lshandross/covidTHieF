@@ -400,10 +400,8 @@ These column vectors are then collected into a larger $(\Sigma_{k} M_k \times 1)
 0 & 0 & \cdots & 0 & 1 & 1 & \cdots & 1 \\
   &   &   &   & I_{14} &   &   &
 \end{bmatrix}
-\begin{bmatrix} \boldsymbol{y_{14(i-1)+1}^{[1]}}\\ \boldsymbol {y_{14(i-1)+2}^{[1]}}\\ \cdots\\ \boldsymbol{y_{14i}^{[1]}} \end{bmatrix}\] in which the dimensions of the matrices are $(17 \times 1), (17 \times 14), (14 \times 1)$.
+\begin{bmatrix} \boldsymbol{y_{14(i-1)+1}^{[1]}}\\ \boldsymbol {y_{14(i-1)+2}^{[1]}}\\ \cdots\\ \boldsymbol{y_{14i}^{[1]}} \end{bmatrix}\] in which the dimensions of the matrices are $(17 \times 1)$, $(17 \times 14)$, and $(14 \times 1)$, respectively.
 
-%
-%
 %Each aggregation level can be thought of as a univariate time series from which forecasts can be made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model (although only up to 28-day ahead forecasts are evaluated).
 
 \subsection{Base Forecasts} \label{thief_base_forecasts}
@@ -696,7 +694,7 @@ print(table_last17_states, booktabs=FALSE, floating=FALSE)
 \label{tab:table_last17_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
-  xtable()
+  xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_last17_us, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS}
@@ -709,7 +707,8 @@ print(table_last17_us, booktabs=FALSE, floating=FALSE)
 \label{tab:table_horizon_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
-  xtable()
+  rename(`hzn` = horizon_wk) %>%
+  xtable(digits=c(rep(0, 3), rep(2, 6)))
 print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS}
@@ -721,7 +720,8 @@ print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 \label{tab:table_horizon_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
-  xtable()
+  rename(`hzn` = horizon_wk) %>%
+  xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)))
 print(table_horizon_us, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS}
@@ -739,7 +739,8 @@ knitr::kable(tar_read(horizon_metrics_us, store="../_targets"))
 \label{tab:table_wave_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
-  xtable()
+  rename(`hzn` = horizon_wk) %>%
+  xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)))
 print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE)
 @
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS}
@@ -751,7 +752,8 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', floati
 \label{tab:table_wave_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
-  xtable()
+  rename(`hzn` = horizon_wk) %>%
+  xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)))
 print(table_wave_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE)
 @
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}
