@@ -43,7 +43,7 @@ list(
   tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))),
   tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 7), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")),
   tar_target(validation_models, c(all_thief, sarima_models, thief_ensembles)),
-  tar_target(testing_models, c("sarima_s7-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-noTransform", "THieF_ensemble-mean", "THieF_ensemble-train3")),
+  tar_target(testing_models, c("sarima_s7-noTransform", "sarima_s1-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_12wk-noTransform", "THieF_ensemble-train3", "THieF_ensemble-mean")),
 
   tar_target(validation_model_names, c("COVIDhub-baseline", validation_models)),
   tar_target(
@@ -57,7 +57,7 @@ list(
   tar_target(testing_model_names, c("COVIDhub-baseline", "COVIDhub-4_week_ensemble", testing_models)),
   tar_target(
     testing_model_colors, 
-    c("black", "darkgrey", "red", "orange", "yellow", "green", "blue", "magenta")
+    c("black", "darkgrey", "red", "orange", "yellow", "green", "cyan", "blue", "purple", "magenta")
   ),
   
   # ADD FILEPATHS TO DATA
@@ -132,7 +132,7 @@ list(
             week_start = getOption("lubricate.week.start", 1)
           ) + weeks(1),
         horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
-#        forecast_date = mon_fc_date,
+        forecast_date = mon_fc_date,
       ) %>%
       select(-mon_fc_date) %>%
       filter(horizon_wk %in% 1:4)
@@ -148,7 +148,7 @@ list(
             week_start = getOption("lubricate.week.start", 1)
           ) + weeks(1),
         horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
-#        forecast_date = mon_fc_date,
+        forecast_date = mon_fc_date,
       ) %>%
       select(-mon_fc_date) %>%
       filter(horizon_wk %in% 1:4)
@@ -286,8 +286,8 @@ tar_target(
       summarized_metrics=horizon_metrics_us, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="wis", 
-      main="us")
+      y_var="WIS", 
+      main="US")
   ),
   tar_target(
     wis_plot_states, 
@@ -295,8 +295,8 @@ tar_target(
       summarized_metrics=horizon_metrics_states, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="wis", 
-      main="states")
+      y_var="WIS", 
+      main="States")
   ),
   tar_target(
     combined_wis_plot,
@@ -308,13 +308,11 @@ tar_target(
   tar_target(
     wave_metrics_us,
     testing_scores %>%
-      filter(forecast_date >= as.Date("2021-11-01")) %>%
       summarize_wave_metrics(baseline_name="COVIDhub-baseline", us_only=TRUE)
   ),
   tar_target(
     wave_metrics_states,
     testing_scores %>%
-      filter(forecast_date >= as.Date("2021-11-01")) %>%
       summarize_wave_metrics(baseline_name="COVIDhub-baseline", us_only=FALSE)
   ),
   tar_target(
@@ -323,8 +321,8 @@ tar_target(
       plot_summarized_metrics(
         testing_model_names, 
         testing_model_colors, 
-        y_var="wis", 
-        main="omicron (us)"
+        y_var="WIS", 
+        main="Omicron (US)"
       )
   ),
   tar_target(
@@ -333,8 +331,8 @@ tar_target(
       plot_summarized_metrics(
         testing_model_names, 
         testing_model_colors, 
-        y_var="wis", 
-        main="omicron (states)"
+        y_var="WIS", 
+        main="Omicron (States)"
       )
   ),
   tar_target(
@@ -343,8 +341,8 @@ tar_target(
       plot_summarized_metrics(
         testing_model_names, 
         testing_model_colors, 
-        y_var="wis", 
-        main="ba4/ba5 (us)"
+        y_var="WIS", 
+        main="BA.4/BA.5 (US)"
       )
   ),
   tar_target(
@@ -353,8 +351,8 @@ tar_target(
       plot_summarized_metrics(
         testing_model_names, 
         testing_model_colors, 
-        y_var="wis", 
-        main="ba4/ba5 (states)"
+        y_var="WIS", 
+        main="BA.4/BA.5 (States)"
       )
   ),
   tar_target(
@@ -374,9 +372,9 @@ tar_target(
       forecast_date_metrics=forecast_date_metrics_us, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="wis", 
+      y_var="WIS", 
       horizon_week=1,
-      main="wis (1 week)"
+      main="WIS (1 week)"
     )
   ),
   tar_target(
@@ -385,9 +383,9 @@ tar_target(
       forecast_date_metrics=forecast_date_metrics_us, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="wis", 
+      y_var="WIS", 
       horizon_week=4,
-      main="wis (4 week)"
+      main="WIS (4 week)"
     )
   ),
   tar_target(
@@ -396,7 +394,7 @@ tar_target(
       forecast_date_metrics=forecast_date_metrics_us, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="cov_95", 
+      y_var="Cov95", 
       horizon_week=1,
       main="95% coverage (1 week)"
     )
@@ -407,7 +405,7 @@ tar_target(
       forecast_date_metrics=forecast_date_metrics_us, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="cov_95", 
+      y_var="Cov95", 
       horizon_week=4,
       main="95% coverage (4 week)"
     )
@@ -430,9 +428,9 @@ tar_target(
       forecast_date_metrics=forecast_date_metrics_states, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="wis", 
+      y_var="WIS", 
       horizon_week=1,
-      main="wis (1 week)"
+      main="WIS (1 week)"
     )
   ),
   tar_target(
@@ -441,9 +439,9 @@ tar_target(
       forecast_date_metrics=forecast_date_metrics_states, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="wis", 
+      y_var="WIS", 
       horizon_week=4,
-      main="wis (4 week)"
+      main="WIS (4 week)"
     )
   ),
   tar_target(
@@ -452,7 +450,7 @@ tar_target(
       forecast_date_metrics=forecast_date_metrics_states, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="cov_95", 
+      y_var="Cov95", 
       horizon_week=1,
       main="95% coverage (1 week)"
     )
@@ -463,7 +461,7 @@ tar_target(
       forecast_date_metrics=forecast_date_metrics_states, 
       testing_model_names, 
       testing_model_colors, 
-      y_var="cov_95", 
+      y_var="Cov95", 
       horizon_week=4,
       main="95% coverage (4 week)"
     )
@@ -476,7 +474,7 @@ tar_target(
       theme(legend.position='bottom')
   ),
  
-  tar_target(ordered_testing_models, pull(overall_metrics_states, model)),
+  tar_target(ordered_testing_models, pull(overall_metrics_states, Model)),
   tar_target(
     wis_location_plot,
     plot_wis_loc(
