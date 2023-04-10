@@ -390,10 +390,10 @@ Notice that the index $j$ used above is aggregation-level specific, with no easy
 
 Once again using our example, we can show that the new notation is consistent with the old notation. The first observation ($z=1)$ at the $k = 7$-day level of the second 14-day period ($i = 2$) can be written in the new notation as $y_{M_7(2-1)+1}^{[7]} = y_{2(2-1)+1}^{[7]}$. This can be shown to simplify down to $y_{2+1}^{[7]} = y_3^{[7]}$, which is exactly how this observation (the third overall observation in the 7-day series) is written in the original notation for $j = 3$.
 
-For every index $i$, we stack the observations for each aggregation level $k$ escaped below the topmost one in $p-1$ total $(M_k \times 1)$ column vectors \[\boldsymbol{y_i}^{[k]} = (y_{M_k(i-1)+1}^{[k]}, y_{M_k(i-1)+2}^{[k]}, \cdots, y_{M_ki}^{[k]})'\]
+For every index $i$, we stack the observations for each aggregation level $k$ below the topmost one in $p-1$ total $(M_k \times 1)$ column vectors \[\boldsymbol{y_i}^{[k]} = (y_{M_k(i-1)+1}^{[k]}, y_{M_k(i-1)+2}^{[k]}, \cdots, y_{M_ki}^{[k]})'\]
 
 These column vectors are then collected into a larger $(\Sigma_{k} M_k \times 1)$ column vector $\boldsymbol{y_i} = (y_i^{[m]}, \cdots, \boldsymbol{y_i}^{[k_3]'}, \boldsymbol{y_i}^{[k_2]'}, \boldsymbol{y_i}^{[1]'})'$ such that \[\boldsymbol{y_i} = \boldsymbol{S y_i}^{[1]}\] where $\boldsymbol{S}$ is the $(\Sigma_{k} M_k \times m)$ summing matrix from \cite{summing_matrix} and $\boldsymbol{y_i}^{[1]}$ is the $(m \times 1)$ vector of observations from the daily time series with index $i$. For a hierarchy with levels $k \in$ {14, 7, 1}, this equation can be expanded out to be
-\[\begin{bmatrix} y_i^{[14]}\\ \boldsymbol{y_i}^{[7]'}\\ \boldsymbol{y_i}^{[1]'} \end{bmatrix} =
+\[\begin{bmatrix} y_i^{[14]}\\ \boldsymbol{y_i}^{[7]}\\ \boldsymbol{y_i}^{[1]} \end{bmatrix} =
 \begin{bmatrix}
 1 & 1 & \cdots & 1 & 1 & 1 & \cdots & 1 \\
 1 & 1 & \cdots & 1 & 0 & 0 & \cdots & 0 \\
@@ -405,16 +405,45 @@ These column vectors are then collected into a larger $(\Sigma_{k} M_k \times 1)
 %Each aggregation level can be thought of as a univariate time series from which forecasts can be made. Next, a classical statistical model is used to make these base forecasts. These consist of forecasts of up to 84-day ahead incident hospitalizations, depending on the forecasting model (although only up to 28-day ahead forecasts are evaluated).
 
 \subsection{Base Forecasts} \label{thief_base_forecasts}
-Next, we make base forecasts at every level of the hierarchy using an ARIMA model for each level. These forecasts will likely not be coherent, meaning that they predict different trends for the next $h = 28$ days. Disagreement between the forecasts is desirable at this stage, as it may indicate that important patterns have been detected at different time scales.
-%any given date's 1- to 28-day ahead base forecasts represented as \{$\hat{y}_h; h = 1, \cdots, 28$\}
+Before we can obtain coherent forecasts, we must begin by making base forecasts at every level of the hierarchy. Each level's base forecasts are independent of the other levels and are created as if each aggregation level is a separate, univariate time series. Theoretically, this means that different types of models could be used to make forecasts at every level prior to reconciliation, although in practice we generally use the same model type but allow the values of the parameters to vary between levels. Since the parameter values may vary, this usually results in incoherent forecasts at this stage. Such disagreement between the forecasts may indicate that important patterns have been detected at different time scales, suggesting the THieF method may be useful.
+
+No particular forecasting framework is specified in the original equations for the THieF methodology, but the authors later show that an underlying ARIMA model produces the most accurate forecasts. An ARIMA model is also used in the implementation of THieF in the associated R package\cite{thief}. Hence, we also choose to use ARIMA models to produce our base forecasts.
+
+Let $h^*$ be the maximum forecast horizon specified at the most disaggregate (daily) level in the hierarchy. Then we construct an index $h$ based on the most aggregate series, just as we did with the index $i$ for the observed series in the previous section, such that $h = 1, \cdots, \lceil h^*/m \rceil$. For each aggregation level $k$, we generate a set of $\lceil h^*/k \rceil$ forecasts of the form $\hat{y}_{M_k(h-1) + z}$ conditional on $\lfloor T/k \rfloor$ observations for $z = 1, \cdots, M_k$ \cite{thief}. For each forecast horizon $h$, we construct $(\Sigma_k M_k \times 1)$ column vectors the same way as with the data:
+\[\boldsymbol{\hat{y}_h} = (\hat{y}_h^{[m]}, \cdots, \boldsymbol{\hat{y}_h}^{[k_3]'}, \boldsymbol{\hat{y}_h}^{[k_2]'}, \boldsymbol{\hat{y}_h}^{[1]'})'\] where each $\boldsymbol{y_h}^{[k]} = (y_{M_k(h-1)+1}^{[k]}, y_{M_k(h-1)+2}^{[k]}, \cdots, y_{M_kh}^{[k]})'$ is a $(M_k \times 1)$ column vector \cite{thief}.
+
+The base forecasts may also be expressed as \[\boldsymbol{\hat{y}_h} = \boldsymbol{S \beta}(h) + \boldsymbol{\varepsilon_h}\] where $\boldsymbol{\beta}(h) = \boldsymbol{E}[\boldsymbol{y}_{\lfloor T/m \rfloor + h}^[1] | y_1, \cdots, y_T]$ is the unknown conditional mean conditional mean of the future values of the observed daily series (given the currently observed data points); and $\boldsymbol{\varepsilon_h}$ is the difference between the base forecasts $\boldsymbol{\hat{y}}_h$ and their expected value if they were reconciled, termed the reconciliation error. We assume that the reconciliation error $\varepsilon_h$ has zero mean and covariance matrix $\Sigma$ \cite{thief}.
 
 \subsection{Reconciled Forecasts} \label{thief_reconciled_forecasts}
-However, through the step of reconciliation (making the forecasts coherent), the information from all of the aggregation levels are combined into forecasts that are expected to be more accurate than any single level. Following this stage, the forecasts from every timescale will agree about the amount of daily incident hospitalizations for the next 1 to 28 days.
+%Through the step of reconciliation, we integrate the information from all of the aggregation levels into the output forecasts. Ideally, we want to combine the base forecasts $\boldsymbol{\hat{y}_{h}}$ in a way that minimizes the difference between them and the reconciled forecasts $\boldsymbol{\tilde{y}_{h}}$. These reconciled forecasts can be written as \[\boldsymbol{\hat{y}_h} = \boldsymbol{S \hat{\beta}}(h)\], since we must use an estimator for the unknown $\boldsymbol{\beta}(h)$. If we knew the covariance matrix of the reconciliation error $\boldsymbol{\Sigma}$, we could use a generalized least squares (GLS) estimator to solve this minimization problem; however, $\boldsymbol{\Sigma}$ is not identifiable.
+
+Through the step of reconciliation, we integrate the information from all of the aggregation levels into the output forecasts. Ideally, we want to combine the base forecasts $\boldsymbol{\hat{y}_{h}}$ in a way that minimizes the difference between them and the reconciled forecasts $\boldsymbol{\tilde{y}_{h}}$. These reconciled forecasts can be written as \[\boldsymbol{\hat{y}_h} = \boldsymbol{S \hat{\beta}}(h),\] since we must use an estimator for the unknown $\boldsymbol{\beta}(h)$ \cite{thief}.
+
+%If we knew the covariance matrix of the reconciliation error $\boldsymbol{\Sigma}$, we could use a generalized least squares (GLS) estimator to solve this minimization problem; however, $\boldsymbol{\Sigma}$ is not identifiable.
+
+We calculate the value of $\boldsymbol{\hat{\beta}}(h)$ using a weighted least squares (WLS) estimator $\Lambda_V$ called the series variance estimator. This WLS estimator is a diagonal $(\Sigma_k M_k \times \Sigma_k M_k)$ matrix of weights proportional to the error variance of each aggregated series that make up the levels of the hierarchy\cite{thief}. In other words, the series variance estimator estimator assumes that variance is constant across the forecasts for each time-series, a common assumption for time-series data\cite{thief}. For the THieF model with the top-most 14-day aggregation level, this matrix is given by
+\[ \boldsymbol{\Lambda}_V =
+\textrm{diag}(\hat{\sigma}^{[14]}, \hat{\sigma}^{[7]}, \hat{\sigma}^{[7]}, \hat{\sigma}^{[1]}, \hat{\sigma}^{[1]}, \hat{\sigma}^{[1]}, \hat{\sigma}^{[1]}, \hat{\sigma}^{[1]}, \hat{\sigma}^{[1]}, \hat{\sigma}^{[1]})^2.
+%\begin{bmatrix}
+%\hat{\sigma}^{2[k_p]} & 0 & 0 & 0 & 0 & \cdots & 0 \\
+%0 & \hat{\sigma}^{2[k_{p-1}]} & 0 & 0 & 0 & \cdots & 0 \\
+%  &   &   & \cdots &   &   & \\
+%0 & 0 & \cdots & 0 & \hat{\sigma}^{2[k_{3}]} & 0 & 0 \\
+%0 & 0 & 0 & \cdots & 0 & \hat{\sigma}^{2[k_{2}]} & 0 \\
+%0 & 0 & 0 & 0 & \cdots & 0 & \hat{\sigma}^{2[k_{1}]}
+%\end{bmatrix}.
+\]
+
+While Athanasopoulos, et al. propose two other alternative WLS estimators, they later show that $\boldsymbol{\Lambda_V}$ yields the most accurate reconciled forecasts. All of these WLS estimators are estimators for the covariance matrix of the base forecast error $\boldsymbol{W}$, which in turn is an estimator for $\boldsymbol{\Sigma}$. This covariance matrix of the reconciliation error $\boldsymbol{\Sigma}$ would allow us to calculate the generalized least squares estimator of $\boldsymbol{\beta}(h)$ to minimize the difference between the base forecasts and reconciled forecasts; however, we must rely on $\boldsymbol{\Lambda_V}$ instead since $\boldsymbol{\Sigma}$ has been shown to be unknowable\cite{thief}. 
+
+Following this final step of reconciliation, the forecasts from every time scale will agree about the number of daily incident hospitalizations for all horizons.
+
+%and contains estimates of the in-sample one-step ahead error variances across each level. Each
 
 \section{Model specifications} \label{model_specifications}
 We create three distinct classes of models for comparison during the validation phase: the original THieF models, the THieF ensembles, and the SARIMA models. In total, these three groups consist of twenty-six (26) candidate models, all of which are implemented using the `forecast` package in `R`.
 
-\subsection{original THieF models} \label{thief_models}
+\subsection{Original THieF models} \label{thief_models}
 The original THieF models are constructed using the THieF methodology outlined in Section \ref{thief} with different combinations of aggregation levels and data transformations. Seven hierarchical structures and two data transformations result in fourteen (14) original THieF models. Each model is defined (and named) based on the highest level of its temporal hierarchy and the data transformation performed on the forecasts. For example, the simplest of the THieF models is THieF\_1wk-noTransform while the most complex is THieF\_12wk-4root.
 
 The aggregation levels of any model's temporal hierarchy are daily, plus $f_m$-week periods where $f_m$ is the set of all factors for the highest time scale $m$. Hence, the THieF\_12wk-4root model (as well as the THieF\_12wk-noTransform model) has a temporal hierarchy made up of daily, weekly, 2-weekly, 3-weekly, 4-weekly, 6-weekly, and 12-weekly aggregation levels since $f_{12}=$ \{1, 2, 3, 4, 6, 12\}. Meanwhile, the THieF\_1wk-noTransform model's temporal hierarchy is only made up of daily and weekly aggregation levels ($f_1=$ \{1\}). We chose 1-week, 2-week, 3-week, 4-week, 6-week, 8-week, and 12-week top-level aggregations so as to have a range of time scales to inform the reconciled forecasts. Supplemental Figure \ref{fig:figure_thief_hierarchy} illustrates the construction of several models' temporal hierarchies.
