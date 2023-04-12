@@ -10,26 +10,27 @@
 \contentsline {subsection}{\numberline {2.2.3}Forecast quantiles}{8}{subsection.2.2.3}%
 \contentsline {section}{\numberline {2.3}Date range of analysis}{8}{section.2.3}%
 \contentsline {section}{\numberline {2.4}Benchmark comparison models}{9}{section.2.4}%
-\contentsline {section}{\numberline {2.5}Temporal hierarchical forecasting (THieF)}{12}{section.2.5}%
+\contentsline {section}{\numberline {2.5}Temporal hierarchical forecasting (THieF)}{11}{section.2.5}%
 \contentsline {subsection}{\numberline {2.5.1}Data Aggregation and Hierarchy}{13}{subsection.2.5.1}%
-\contentsline {subsection}{\numberline {2.5.2}Base Forecasts}{16}{subsection.2.5.2}%
+\contentsline {subsection}{\numberline {2.5.2}Base Forecasts}{15}{subsection.2.5.2}%
 \contentsline {subsection}{\numberline {2.5.3}Reconciled Forecasts}{17}{subsection.2.5.3}%
-\contentsline {section}{\numberline {2.6}Model specifications}{18}{section.2.6}%
-\contentsline {subsection}{\numberline {2.6.1}Original THieF models}{18}{subsection.2.6.1}%
-\contentsline {subsection}{\numberline {2.6.2}THieF ensemble models}{19}{subsection.2.6.2}%
-\contentsline {subsection}{\numberline {2.6.3}ARIMA and SARIMA models}{21}{subsection.2.6.3}%
+\contentsline {subsection}{\numberline {2.5.4}Making THieF Probabilistic}{18}{subsection.2.5.4}%
+\contentsline {section}{\numberline {2.6}Model specifications}{19}{section.2.6}%
+\contentsline {subsection}{\numberline {2.6.1}Original THieF models}{19}{subsection.2.6.1}%
+\contentsline {subsection}{\numberline {2.6.2}THieF ensemble models}{20}{subsection.2.6.2}%
+\contentsline {subsection}{\numberline {2.6.3}ARIMA and SARIMA models}{22}{subsection.2.6.3}%
 \contentsline {subsection}{\numberline {2.6.4}Metrics and Evaluation}{22}{subsection.2.6.4}%
-\contentsline {subsection}{\numberline {2.6.5}Validation phase}{24}{subsection.2.6.5}%
-\contentsline {subsection}{\numberline {2.6.6}Testing phase}{26}{subsection.2.6.6}%
-\contentsline {Chapter}{\numberline {3.}\MakeUppercase []{Results}}{28}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Validation phase}{28}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Testing phase}{29}{section.3.2}%
-\contentsline {subsection}{\numberline {3.2.1}Overall model performance}{29}{subsection.3.2.1}%
-\contentsline {subsection}{\numberline {3.2.2}Model performance by horizon week}{33}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}Model performance by pandemic wave}{35}{subsection.3.2.3}%
-\contentsline {subsection}{\numberline {3.2.4}Model performance by forecast week}{37}{subsection.3.2.4}%
-\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{40}{subsection.3.2.5}%
-\contentsline {Chapter}{\numberline {4.}\MakeUppercase []{Discussion}}{44}{chapter.4}%
+\contentsline {subsection}{\numberline {2.6.5}Validation phase}{25}{subsection.2.6.5}%
+\contentsline {subsection}{\numberline {2.6.6}Testing phase}{27}{subsection.2.6.6}%
+\contentsline {Chapter}{\numberline {3.}\MakeUppercase []{Results}}{29}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Validation phase}{29}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Testing phase}{30}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Overall model performance}{30}{subsection.3.2.1}%
+\contentsline {subsection}{\numberline {3.2.2}Model performance by horizon week}{34}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Model performance by pandemic wave}{36}{subsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.2.4}Model performance by forecast week}{38}{subsection.3.2.4}%
+\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{41}{subsection.3.2.5}%
+\contentsline {Chapter}{\numberline {4.}\MakeUppercase []{Discussion}}{45}{chapter.4}%
 \setcounter {tocdepth}{0}
-\contentsline {Appendix}{\MakeUppercase []{Appendix: Supplemental materials}}{49}{appendix*.5}%
-\contentsline {BackMatter}{\MakeUppercase []{Bibliography}}{56}{appendix*.6}%
+\contentsline {Appendix}{\MakeUppercase []{Appendix: Supplemental materials}}{50}{appendix*.5}%
+\contentsline {BackMatter}{\MakeUppercase []{Bibliography}}{63}{appendix*.6}%
