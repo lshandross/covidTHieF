@@ -107,6 +107,7 @@
 \usepackage{lipsum}
 \usepackage{amsmath}
 \usepackage{latexsym}
+\usepackage{booktabs}
 % Useful for Knitr. Otherwise, I use memoir class's 'ctabular' env.
 \usepackage{longtable}
 
@@ -545,7 +546,7 @@ print(table_validation_states, booktabs=FALSE, floating=FALSE)
 \label{tab:table_validation_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_validation_us <- tar_read(overall_validation_us, store="../_targets") %>%
-  xtable()
+  xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_validation_us, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}
@@ -588,7 +589,7 @@ print(table_overall_states, booktabs=FALSE, floating=FALSE)
 \label{tab:table_overall_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_overall_us <- tar_read(overall_metrics_us, store="../_targets") %>%
-  xtable()
+  xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_overall_us, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}
@@ -713,10 +714,19 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 \caption{Illustration of three hierarchy schemes used to create six of the fourteen total original THieF models}
 \end{figure}
 
-\begin{table}[h]
+\newpage
+
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
+  xtable(auto=TRUE)
+print(table_last17_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
+      include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
+@
+
+\begin{table}%[h]
 \begin{center}
 \label{tab:table_last17_states}
-<<echo=FALSE, eval=TRUE, results=tex>>=
+<<echo=FALSE, eval=FALSE, results=tex>>=
 table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
   xtable()
 print(table_last17_states, booktabs=FALSE, floating=FALSE)
@@ -725,10 +735,19 @@ print(table_last17_states, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
+\newpage
+
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
+  xtable(digits=c(rep(0, 1), rep(1, 3), rep(2, 4)), auto=TRUE)
+print(table_last17_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
+      include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
+@
+
 \begin{table}%[h]
 \begin{center}
 \label{tab:table_last17_us}
-<<echo=FALSE, eval=TRUE, results=tex>>=
+<<echo=FALSE, eval=FALSE, results=tex>>=
 table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
   xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_last17_us, booktabs=FALSE, floating=FALSE)
@@ -737,11 +756,21 @@ print(table_last17_us, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
+\newpage
+
+
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
+  rename(`hzn` = horizon_wk) %>%
+  xtable(digits=c(rep(0, 3), rep(2, 2), rep(2, 4)), auto=TRUE)
+print(table_horizon_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
+      include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
+@
 
 \begin{table}%[h]
 \begin{center}
 \label{tab:table_horizon_states}
-<<echo=FALSE, eval=TRUE, results=tex>>=
+<<echo=FALSE, eval=FALSE, results=tex>>=
 table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(2, 6)))
@@ -751,10 +780,20 @@ print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 \end{center}
 \end{table}
 
+\newpage
+
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
+  rename(`hzn` = horizon_wk) %>%
+  xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)), auto=TRUE)
+print(table_horizon_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
+      include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
+@
+
 \begin{table}%[h]
 \begin{center}
 \label{tab:table_horizon_us}
-<<echo=FALSE, eval=TRUE, results=tex>>=
+<<echo=FALSE, eval=FALSE, results=tex>>=
 table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)))
@@ -769,32 +808,50 @@ knitr::kable(tar_read(horizon_metrics_states, store="../_targets"))
 knitr::kable(tar_read(horizon_metrics_us, store="../_targets"))
 @
 
+\newpage
 
-\begin{table}%[h]
-\begin{center}
-\label{tab:table_wave_states}
+
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)))
-print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE)
+  xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)), auto=TRUE)
+print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
+      floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
 @
-\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS}
-\end{center}
-\end{table}
 
-\begin{table}%[h]
+\begin{table}[h]
 \begin{center}
-\label{tab:table_wave_us}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
+\label{tab:table_wave_states}
+<<echo=FALSE, eval=FALSE, results=tex>>=
+table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)))
-print(table_wave_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE)
+  xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)))
+print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
+      floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
 @
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}
 \end{center}
 \end{table}
+
+\newpage
+
+%\begin{longtable}
+%\begin{table}%[h]
+%\begin{center}
+%\label{tab:table_wave_us}
+%\setlength{\tabcolsep}{20pt}
+%\renewcommand{\arraystretch}{1.5}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
+  rename(`hzn` = horizon_wk) %>%
+  xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)), auto=TRUE)
+print(table_wave_us, booktabs=FALSE, tabular.environment='longtable',
+      floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
+@
+%\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS}
+%\end{center}
+%\end{table}
+%\end{longtable}
 
 <<echo=FALSE, eval=FALSE>>=
 knitr::kable(tar_read(wave_metrics_states, store="../_targets"))
