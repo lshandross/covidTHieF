@@ -327,12 +327,12 @@ We focused on the period between Monday, July 27, 2020 and Sunday, October 2, 20
 The first day of the period of analysis (July 27, 2020) was selected as the first day of reliable truth data for all locations of interest. Forecasting for the validation phase began on Monday, December 7, 2020, as this is the first Monday after the HHS Protect data confirmed hospitalizations data set was declared the official ground truth data. The division between the validation and testing phases was chosen to encapsulate three COVID-19 variant-based waves in the validation phase (Winter 2020-21, Alpha, and Delta) and two waves in the testing phase (Omicron and BA.4/BA.5). The separation between pandemic waves is made based on U.S. national level incident hospitalizations, pictured below in Figure \ref{fig:figure_evaluate_period_plot}.
 
 \begin{figure}%[h]
-\label{fig:figure_evaluate_period_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<evaluation_period_plot, echo=FALSE, fig=TRUE>>=
 tar_read(evaluation_period_plot, store="../_targets")
 @
 \caption{A plot of the period of analysis, superimposed over COVID-19 incident hospitalizations for the entire United States. Vertical solid lines indicate divisions between phases while dashed lines indicate divisions between variant waves.}
+\label{fig:figure_evaluate_period_plot}
 \end{figure}
 
 
@@ -409,7 +409,6 @@ Although it would be preferable to obtain quantiles from the reconciled forecast
 
 \begin{table}[h]
 \begin{center}
-\label{tab:table_quant_int}
 <<quant_int_table, message=FALSE, warning=FALSE, echo=FALSE, results=tex>>=
 Quantile <- c(".010", ".025", ".050", "0.100", "...", "0.500", "...", "0.900", "0.950", ".975", ".990")
 Interval <- c("98L", "95L", "90L", "80L", "...", "Median", "...", "80U", "90U", "95U", "98U")
@@ -419,6 +418,7 @@ colnames(quant_int_table) <- NULL
 print(quant_int_table, booktabs=FALSE, floating=FALSE)
 @
 \caption{Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}
+\label{tab:table_quant_int}
 \end{center}
 \end{table}
 
@@ -470,7 +470,7 @@ Evaluation for each of the seven aggregation categories (except for individual l
 We perform no statistical tests to assess the significance of performance differences between models, as certain issues arise when making time series forecasts that prevent usage of such tests. Namely, scores tend to be highly-correlated across multiple dimensions, like horizons, forecast dates, locations, etc. Assumptions of independent, identically distributed data found in standard inference are invalid in time series forecasting. In practice, numerical comparisons of forecast error between prospective models (without excluding any models that were compared) is sufficient for choosing the best model to inform decision-making, and foregoing formal statistical tests is common practice in infectious disease forecasting. Still, it should be noted that we cannot necessarily make a definitive statement about the predominance of one model over another without formal statistical testing \cite{lauer}.
 
 \subsection{Validation phase} \label{validation_eval}
-The validation phase serves as a period during which to train the candidate models, calibrate the forecasts, and to select the best models to pass on to the testing phase based on performance during the validation phase. All validation phase evaluations are restricted to forecasts with target end dates (date for which the prediction of incident hospitalizations is being made) within the validation phase (July 27, 2020 to October 31, 2021), with forecasts beginning on Monday, December 7, 2020. 
+The validation phase serves as a period during which to train the candidate models, calibrate the forecasts, and to select the best models to pass on to the testing phase based on performance during the validation phase. All validation phase evaluations are restricted to forecasts with target end dates (date for which the prediction of incident hospitalizations is being made) within the validation phase (July 27, 2020 to October 31, 2021), with forecasts beginning on Monday, December 7, 2020.
 
 We pre-specify a set of criteria that help us investigate several objectives of interest to help us determine which models to pass along as part of the best subset:
 \begin{itemize}
@@ -495,33 +495,33 @@ The by--pandemic wave and by--forecast date evaluations allow investigation into
 
 \chapter{Results} \label{results}
 \section{Validation phase} \label{validation_results}
-Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us} show the overall model ranking and evaluation metrics during the validation phase for the averaged states and U.S. national location scales, in order of ascending WIS. We can see that for the averaged location scale the THieF ensembles generally perform the best, followed by the original THieF models, then the ARIMA/SARIMA models. This pattern is not as strictly followed for the U.S. national location scale, in which the two original THieF models with a 6-week top aggregation level have lower WIS than at least half of the THieF ensembles.
+Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us} show the overall model ranking and evaluation metrics during the validation phase for the averaged states and U.S. national geographic scales, in order of ascending WIS. We can see that for the averaged location scale the THieF ensembles generally perform the best, followed by the original THieF models, then the ARIMA/SARIMA models. This pattern is not as strictly followed for the U.S. national location scale, in which the two original THieF models with a 6-week top aggregation level have lower WIS than at least half of the THieF ensembles.
 
-For averaged states, we pass on THieF\_6wk-4root, THieF\_ensemble-train3, and sarima\_s7-noTransform as the best models of each class during the validation phase overall. While THieF\_ensemble-train3 is not strictly the highest ranked THieF ensemble for this location scale, we pass it along based on the selection rule from cross-validation in which the simplest model should be chosen if it does not perform substantially worse than more complex models. For U.S. national, we pass along THieF\_6wk-noTransform, THieF\_ensemble-train3, and sarima\_s7-noTransform as the best representative of each class for the overall validation phase of evaluation. The best original THieF models during the last 17 weeks of the validation phase are THieF\_6wk-4root and THieF\_12wk-4root for averaged states and U.S.national, respectively, with the full evaluation results shown in Supplemental Tables \ref{tab:table_last17_states} and \ref{tab:table_last17_us}. The untrained THieF ensemble, while not a top performer for either location scale in the overall analysis, is also passed on to serve as a reference model. % something is wrong with the supplemental table references
+For averaged states, we pass on THieF\_6wk-4root, THieF\_ensemble-train3, and sarima\_s7-noTransform as the best models of each class during the validation phase overall. While THieF\_ensemble-train3 is not strictly the highest ranked THieF ensemble for this location scale, we pass it along based on the selection rule from cross-validation in which the simplest model should be chosen if it does not perform substantially worse than more complex models. For U.S. national, we pass along THieF\_6wk-noTransform, THieF\_ensemble-train3, and sarima\_s1-noTransform as the best representative of each class for the overall validation phase of evaluation. The best original THieF models during the last 17 weeks of the validation phase are THieF\_6wk-4root and THieF\_12wk-4root for averaged states and U.S.national, respectively, with the full evaluation results shown in Supplemental Tables \ref{tab:table_last17_states} and \ref{tab:table_last17_us}. The untrained THieF ensemble, while not a top performer for either location scale in the overall analysis, is also passed on to serve as a reference model. % something is wrong with the supplemental table references
 
 Hence, the best subset that passes onto the testing phase consists of the following six (6) models: THieF\_6wk-4root, THieF\_6wk-noTransform, THieF\_ensemble-train3, sarima\_s7-noTransform, THieF\_12wk-noTransform, and THieF\_ensemble-mean.
 
 \begin{table}%[h]
 \begin{center}
-\label{tab:table_validation_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_validation_states <- tar_read(overall_validation_states, store="../_targets") %>%
   xtable()
 print(table_validation_states, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}
+\label{tab:table_validation_states}
 \end{center}
 \end{table}
 
 \begin{table}%[h]
 \begin{center}
-\label{tab:table_validation_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_validation_us <- tar_read(overall_validation_us, store="../_targets") %>%
   xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_validation_us, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}
+\label{tab:table_validation_us}
 \end{center}
 \end{table}
 
@@ -529,16 +529,16 @@ print(table_validation_us, booktabs=FALSE, floating=FALSE)
 Using forecasts made every four weeks during the testing phase, we plot 1- to 28-day ahead incident hospitalization point and 95\% interval forecasts for the eight models of interest during this period in Figure \ref{fig:figure_forecasts_plot1}. This group consists of six models from the best subset and two Forecast Hub comparison models, the COVIDhub-baseline and the COVIDhub-4\_week\_ensemble. Generally, the THieF ensembles, the original THieF models with 6-week top aggregation levels, and COVIDHub-4\_week\_ensemble appear to better follow the true confirmed hospitalizations compared to the other three models, and these five models also tend to have narrower 95\% interval forecasts. These results are mirrored (and perhaps further explained) by the following stratified evaluations.
 
 \begin{figure}%[h]
-\label{fig:figure_forecasts_plot1}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<forecast_models_plot, echo=FALSE, fig=TRUE>>=
 tar_read(plot_models_1, store="../_targets")
 @
 \caption{U.S. national incident hospitalization forecasts during the testing phase, faceted by model}
+\label{fig:figure_forecasts_plot1}
 \end{figure}
 
 \subsection{Overall model performance} \label{testing_overall}
-Both location scales show the same model ranking for the overall testing phase evaluation, with the top five models outperforming the COVIDhub-baseline. The COVIDhub-4\_week\_ensemble takes the lead for best WIS and MAE by a significant margin. The next best three models---THieF\_6wk-4root, THieF\_ensemble-train3, THieF\_ensemble-mean---all have fairly similar relative WIS and relative MAE values, as do the two worst-performing models: THieF\_12wk-noTransform and sarima\_s7-noTransform. However, there are some notable differences between performance for averaged states versus U.S. national.
+Both geographic scales show the same model ranking for the overall testing phase evaluation, with the top five models outperforming the COVIDhub-baseline. The COVIDhub-4\_week\_ensemble takes the lead for best WIS and MAE by a significant margin. The next best three models---THieF\_6wk-4root, THieF\_ensemble-train3, THieF\_ensemble-mean---all have fairly similar relative WIS and relative MAE values, as do the two worst-performing models: THieF\_12wk-noTransform and sarima\_s7-noTransform. However, there are some notable differences between performance for averaged states versus U.S. national.
 
 For averaged states (see Table \ref{tab:table_overall_states}), the WIS and MAE values are more closely clustered together and are of a smaller magnitude. Every best subset model is well-calibrated, with near-nominal coverage rates at both uncertainty levels. In fact, our models had better 50\% coverage rates than those of the Forecast Hub models. In addition, for this location scale the models in the lower half of the ranking, including the COVIDhub-baseline, all showed very similar relative WIS and relative MAE values.
 
@@ -546,25 +546,25 @@ For U.S. national (see Table \ref{tab:table_overall_us}), however, the WIS and M
 
 \begin{table}%[h]
 \begin{center}
-\label{tab:table_overall_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_overall_states <- tar_read(overall_metrics_states, store="../_targets") %>%
   xtable()
 print(table_overall_states, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}
+\label{tab:table_overall_states}
 \end{center}
 \end{table}
 
 \begin{table}[h]
 \begin{center}
-\label{tab:table_overall_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_overall_us <- tar_read(overall_metrics_us, store="../_targets") %>%
   xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_overall_us, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}
+\label{tab:table_overall_us}
 \end{center}
 \end{table}
 
@@ -575,19 +575,19 @@ knitr::kable(tar_read(overall_metrics_states, store="../_targets"))
 
 
 \subsection{Model performance by horizon week} \label{testing_horizon}
-We display the results graphically from this stratified evaluation forward for improved readability, with the full tables of results displayed in the Appendix. (Only WIS plots are shown because it is our principle evaluation metric and the MAE plots show very similar results.) The by-horizon evaluation shows similar model rankings to those of the overall evaluation (see Figure \ref{fig:figure_horizon_plot} and Supplemental Tables \ref{tab:table_horizon_states} and \ref{tab:table_horizon_us}). The top four models for both location scales are the same and perform no worse (but usually tend to do better) than the COVIDhub-baseline at all horizons, and the COVIDhub-4\_week\_ensemble significantly outperforms all other seven models.  However, aggregating the forecasts by horizon illustrates some important differences in accuracy between horizon weeks.
+We display the results graphically from this stratified evaluation forward for improved readability, with the full tables of results displayed in the Appendix. (Only WIS plots are shown because it is our principle evaluation metric and the MAE plots show very similar results.) The by-horizon evaluation shows similar model rankings to those of the overall evaluation (see Figure \ref{fig:figure_horizon_plot} and Supplemental Tables \ref{tab:table_horizon_states} and \ref{tab:table_horizon_us}). The top four models for both geographic scales are the same and perform no worse (but usually tend to do better) than the COVIDhub-baseline at all horizons, and the COVIDhub-4\_week\_ensemble significantly outperforms all other seven models.  However, aggregating the forecasts by horizon illustrates some important differences in accuracy between horizon weeks.
 
 For averaged states (see Figure \ref{fig:figure_horizon_plot}), THieF\_6wk-4root outperforms the THieF ensembles for WIS end MAE at all horizons, except for 1-week ahead. Similarly, THieF\_6wk-noTransform has lower WIS and MAE than three models at 2- to 4-weeks ahead but is only better than THieF\_12wk-noTransform for the 1-week horizon. Additionally, while sarima\_s7-noTransform is ranked fifth and THieF\_12-noTransform is ranked last for the 1-week ahead horizon, these ranks flip to be sixth and last for the 3- and 4-week ahead horizons, after briefly crossing with each other (and the COVIDhub-baseline) at 2-weeks ahead. The COVIDhub-baseline is consistently the second worst model. Coverage rates remain high across horizons for all models, with 95\% coverage rates fall into no more than 10% of the nominal rate at any horizon.
 
 For U.S. national (see Figure \ref{fig:figure_horizon_plot}) WIS and MAE, THieF\_6wk-4root outperforms the THieF ensembles for the two longest horizons while the ensembles (and COVIDhub-baseline) perform slightly better at the shortest horizon. The difference in performance among the three models is barely discernible at a horizon of 2 weeks. The sarima\_s7-noTransform and THieF\_12wk-noTransform models occupy the bottom of the ranking, with THieF\_12wk-noTransform scoring better WIS values for all but the 1-week ahead horizon. The difference is especially pronounced at longer horizons, where this model has much lower WIS than that of sarima\_s7-noTransform. The COVIDhub-baseline ranks sixth for WIS at the U.S. national location scale for all but the 1-week ahead horizon where it ranks fourth. Coverage rates are slightly lower at this location scale, falling to up to 19\% below the nominal rate (though most are no lower than 15\%).
 
 \begin{figure}%[h]
-\label{fig:figure_horizon_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<horizon_plot, echo=FALSE, fig=TRUE>>=
 tar_read(combined_wis_plot, store="../_targets")
 @
-\caption{Average WIS plotted by horizon week during the testing phase for each model at both location scales}
+\caption{Average WIS plotted by horizon week during the testing phase for each model at both geographic scales}
+\label{fig:figure_horizon_plot}
 \end{figure}
 
 \subsection{Model performance by pandemic wave} \label{testing_wave}
@@ -598,12 +598,12 @@ For the Omicron variant wave, the best and worst models---COVIDhub-4\_week\_ense
 For the BA.4/BA.5 variant wave, model rankings by WIS are more distinct and tend to remain static from one horizon week to another. The best and worst three models are the same regardless of location scale; however, the COVIDhub-baseline is noticeably better ranked for U.S. national scores, where it is approximately tied with THieF\_ensemble-mean for fourth-best, compared to a clear seventh place for averaged states scores. THieF\_6wk-noTransform also performs as well or better than sarima\_s7-noTransform for all horizons during this wave at the U.S. national scale, while the ranks of these two models depends on horizon length at the averaged states scale. Coverage rates are exceedingly high for the averaged states level and approximately nominal for all but the last-ranked models for U.S. national.
 
 \begin{figure}%[h]
-\label{fig:figure_wave_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<wave_plot, echo=FALSE, fig=TRUE>>=
 tar_read(combined_wis_wave_plot, store="../_targets")
 @
-\caption{Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both location scales}
+\caption{Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both geographic scales}
+\label{fig:figure_wave_plot}
 \end{figure}
 
 \subsection{Model performance by forecast week} \label{testing_forecast_week}
@@ -614,33 +614,33 @@ Many of the patterns observed in the evaluations described above continued to ho
 The by--forecast week break down of THieF\_6wk-noTransform is particularly interesting. This model tended to fall in the middle of the rankings for the previously described evaluations, yet Figures \ref{fig:figure_date_plot_states} and \ref{fig:figure_date_plot_us} show that this model actually tended to have more extreme performance, either performing rather well or quite badly. Investigating less aggregate scores for THieF\_12wk-noTransform similarly reveals several instances of good performance, usually experienced at long horizons under settings of rapid change or high incidence. In addition, we notice that sarima\_s7-noTransform demonstrated noticeably worse performance for U.S. national WIS at a horizon of 1 week compared to that for averaged states. Further, THieF\_6wk-4root's strangely low coverage for averaged states following the decline of the Omicron wave at both plotted horizons is also noteworthy, especially since the other seven models experience significantly higher coverage rates during this time.\footnote{Comparisons among models for U.S. national 95\% coverage by forecast week are harder to make since this location scale only includes seven 95\% interval forecasts for one location (compared to seven per 52 locations for averaged states), so we simply allow the plots in Figure \ref{fig:figure_date_plot_states} to speak for themselves.}
 
 \begin{figure}%[h]
-\label{fig:figure_date_plot_states}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<states_date_plot, echo=FALSE, fig=TRUE>>=
 tar_read(combined_wis_cov95_plot_states, store="../_targets")
 @
 \caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}
+\label{fig:figure_date_plot_states}
 \end{figure}
 
 \begin{figure}%[h]
-\label{fig:figure_date_plot_us}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<us_date_plot, echo=FALSE, fig=TRUE>>=
 tar_read(combined_wis_cov95_plot_us, store="../_targets")
 @
 \caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for U.S. national}
+\label{fig:figure_date_plot_us}
 \end{figure}
 
 \subsection{Model performance by location} \label{testing_location}
 Figure \ref{fig:figure_location_plot} summarizes the by-location evaluation, with the models on the x-axis ordered by lowest-to-highest overall relative WIS at the average states location scale for the testing phase and locations on the y-axis ordered by descending cumulative hospitalizations. The top five models show either better or equal performance than the COVIDhub-baseline---represented by shades of blue ranging from dark to light and white---with the COVIDhub-4\_week\_ensemble clearly the best. The next three models are fairly close in terms of lowest WIS across all of the locations, though THieF\_6wk-4root is marginally better with lower relative WIS by a difference of more than 0.05 in over 18\% of locations. The worst two models include some shades of red which represent performance worse than the COVIDhub-baseline. However, it should be noted that these models actually perform better than the baseline for a significant number of locations, with THieF\_12wk-noTransform sharing the top rank for Puerto Rico and Alaska. In addition, most of the worst performance relative to the baseline occurs in the locations with the highest cumulative hospitalizations during the testing phase. This is perhaps unsurprising since we know that high-count settings tend to be more difficult to forecast accurately.
 
 \begin{figure}%[h]
-\label{fig:figure_location_plot}
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
 <<location_plot, echo=FALSE, fig=TRUE>>=
 tar_read(wis_location_plot, store="../_targets")
 @
 \caption{Relative WIS plotted by location during the testing phase for each model across all horizons}
+\label{fig:figure_location_plot}
 \end{figure}
 
 
@@ -680,10 +680,9 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 %% \chapter{THE FIRST APPENDIX TITLE}
 
 \begin{figure}[h]
-\label{fig:figure_thief_hierarchy}
 \includegraphics[width=0.8\textwidth]{../inst/thief_all}
-
 \caption{Illustration of three hierarchy schemes used to create six of the fourteen total original THieF models}
+\label{fig:figure_thief_hierarchy}
 \end{figure}
 
 \newpage
@@ -697,13 +696,13 @@ print(table_last17_states, booktabs=FALSE, tabular.environment='longtable', floa
 
 \begin{table}%[h]
 \begin{center}
-\label{tab:table_last17_states}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
   xtable()
 print(table_last17_states, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS}
+\label{tab:table_last17_states}
 \end{center}
 \end{table}
 
@@ -718,13 +717,13 @@ print(table_last17_us, booktabs=FALSE, tabular.environment='longtable', floating
 
 \begin{table}%[h]
 \begin{center}
-\label{tab:table_last17_us}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
   xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_last17_us, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS}
+\label{tab:table_last17_us}
 \end{center}
 \end{table}
 
@@ -741,7 +740,6 @@ print(table_horizon_states, booktabs=FALSE, tabular.environment='longtable', flo
 
 \begin{table}%[h]
 \begin{center}
-\label{tab:table_horizon_states}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
@@ -749,6 +747,7 @@ table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>
 print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS}
+\label{tab:table_horizon_states}
 \end{center}
 \end{table}
 
@@ -764,7 +763,6 @@ print(table_horizon_us, booktabs=FALSE, tabular.environment='longtable', floatin
 
 \begin{table}%[h]
 \begin{center}
-\label{tab:table_horizon_us}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
@@ -772,6 +770,7 @@ table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
 print(table_horizon_us, booktabs=FALSE, floating=FALSE)
 @
 \caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS}
+\label{tab:table_horizon_us}
 \end{center}
 \end{table}
 
@@ -793,7 +792,6 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
 
 \begin{table}[h]
 \begin{center}
-\label{tab:table_wave_states}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
@@ -802,6 +800,7 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
       floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
 @
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}
+\label{tab:table_wave_states}
 \end{center}
 \end{table}
 
@@ -810,7 +809,6 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
 %\begin{longtable}
 %\begin{table}%[h]
 %\begin{center}
-%\label{tab:table_wave_us}
 %\setlength{\tabcolsep}{20pt}
 %\renewcommand{\arraystretch}{1.5}
 <<echo=FALSE, eval=TRUE, results=tex>>=
@@ -821,6 +819,7 @@ print(table_wave_us, booktabs=FALSE, tabular.environment='longtable',
       floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
 @
 %\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS}
+%\label{tab:table_wave_us}
 %\end{center}
 %\end{table}
 %\end{longtable}
