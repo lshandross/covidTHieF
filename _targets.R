@@ -43,7 +43,7 @@ list(
   tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))),
   tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 7), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")),
   tar_target(validation_models, c(all_thief, sarima_models, thief_ensembles)),
-  tar_target(testing_models, c("sarima_s7-noTransform", "sarima_s1-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_12wk-noTransform", "THieF_ensemble-train3", "THieF_ensemble-mean")),
+  tar_target(testing_models, c("sarima_s7-noTransform", "sarima_s1-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_ensemble-train3", "THieF_ensemble-mean")),
 
   tar_target(validation_model_names, c("COVIDhub-baseline", validation_models)),
   tar_target(
@@ -57,7 +57,7 @@ list(
   tar_target(testing_model_names, c("COVIDhub-baseline", "COVIDhub-4_week_ensemble", testing_models)),
   tar_target(
     testing_model_colors, 
-    c("black", "darkgrey", "red", "orange", "yellow", "green", "cyan", "blue", "purple", "magenta")
+    c("black", "darkgrey", "red", "orange", "yellow", "green", "blue", "magenta", "purple")
   ),
   
   # ADD FILEPATHS TO DATA
@@ -151,7 +151,10 @@ list(
         forecast_date = mon_fc_date,
       ) %>%
       select(-mon_fc_date) %>%
-      filter(horizon_wk %in% 1:4)
+      filter(
+        horizon_wk %in% 1:4,
+        model != "THieF_12wk-noTransform"
+      )
   ),
   tar_target(
     full_hosp_truth, 
@@ -174,7 +177,7 @@ tar_target(
     geom_vline(xintercept = as.Date("2021-07-05"), linetype="dashed") +
     geom_vline(xintercept = as.Date("2021-11-01"), linetype="solid") +
     geom_vline(xintercept = as.Date("2022-04-06"), linetype="dashed") +
-    geom_vline(xintercept = as.Date("2022-10-02"), linetype="dashed") +
+    geom_vline(xintercept = as.Date("2022-10-02"), linetype="solid") +
     annotate(geom = "text", x = as.Date("2020-07-17"), y = 2500, 
              label = "Validation Start", size = 4, angle = 90) + 
     annotate(geom = "text", x = as.Date("2020-11-27"), y = 2500, # 2020-12-19
