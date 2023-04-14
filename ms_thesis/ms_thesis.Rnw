@@ -116,7 +116,7 @@
 
 \begin{document}
 \SweaveOpts{concordance=TRUE}
-\setkeys{Gin}{width=0.95\textwidth}
+\setkeys{Gin}{width=1.00\textwidth}
 
 <<include=FALSE, echo=FALSE, message=FALSE, warning=FALSE, results=hide>>=
 library(knitr)
@@ -328,7 +328,7 @@ The first day of the period of analysis (July 27, 2020) was selected as the firs
 
 \begin{figure}%[h]
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
-<<evaluation_period_plot, echo=FALSE, fig=TRUE>>=
+<<evaluation_period_plot, echo=FALSE, fig=TRUE, height=9, width=15>>=
 tar_read(evaluation_period_plot, store="../_targets")
 @
 \caption{A plot of the period of analysis, superimposed over COVID-19 incident hospitalizations for the entire United States. Vertical solid lines indicate divisions between phases while dashed lines indicate divisions between variant waves.}
@@ -497,9 +497,9 @@ The by--pandemic wave and by--forecast date evaluations allow investigation into
 \section{Validation phase} \label{validation_results}
 Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us} show the overall model ranking and evaluation metrics during the validation phase for the averaged states and U.S. national geographic scales, in order of ascending WIS. We can see that for the averaged location scale the THieF ensembles generally perform the best, followed by the original THieF models, then the ARIMA/SARIMA models. This pattern is not as strictly followed for the U.S. national location scale, in which the two original THieF models with a 6-week top aggregation level have lower WIS than at least half of the THieF ensembles.
 
-For averaged states, we pass on THieF\_6wk-4root, THieF\_ensemble-train3, and sarima\_s7-noTransform as the best models of each class during the validation phase overall. While THieF\_ensemble-train3 is not strictly the highest ranked THieF ensemble for this location scale, we pass it along based on the selection rule from cross-validation in which the simplest model should be chosen if it does not perform substantially worse than more complex models. For U.S. national, we pass along THieF\_6wk-noTransform, THieF\_ensemble-train3, and sarima\_s1-noTransform as the best representative of each class for the overall validation phase of evaluation. The best original THieF models during the last 17 weeks of the validation phase are THieF\_6wk-4root and THieF\_12wk-4root for averaged states and U.S.national, respectively, with the full evaluation results shown in Supplemental Tables \ref{tab:table_last17_states} and \ref{tab:table_last17_us}. The untrained THieF ensemble, while not a top performer for either location scale in the overall analysis, is also passed on to serve as a reference model. % something is wrong with the supplemental table references
+For averaged states, we pass on THieF\_6wk-4root, THieF\_ensemble-train3, and sarima\_s7-noTransform as the best models of each class during the validation phase overall. While THieF\_ensemble-train3 is not strictly the highest ranked THieF ensemble for this location scale, we pass it along based on the selection rule from cross-validation in which the simplest model should be chosen if it does not perform substantially worse than more complex models. For U.S. national, we pass along THieF\_6wk-noTransform, THieF\_ensemble-train3, and sarima\_s1-noTransform as the best representative of each class for the overall validation phase of evaluation. The best original THieF models during the last 17 weeks of the validation phase are THieF\_6wk-4root and THieF\_12wk-4root for averaged states and U.S.national, respectively, with the full evaluation results shown in Supplemental Tables \ref{tab:table_last17_states} and \ref{tab:table_last17_us}. The untrained THieF ensemble, while not a top performer for either location scale in the overall analysis, is also passed on to serve as a reference model.
 
-Hence, the best subset that passes onto the testing phase consists of the following six (6) models: THieF\_6wk-4root, THieF\_6wk-noTransform, THieF\_ensemble-train3, sarima\_s7-noTransform, THieF\_12wk-noTransform, and THieF\_ensemble-mean.
+Hence, the best subset that passes onto the testing phase consists of the following seven (7) models: THieF\_6wk-4root, THieF\_6wk-noTransform, THieF\_ensemble-train3, sarima\_s7-noTransform, sarima\_s1-noTransform, THieF\_12wk-4root, and THieF\_ensemble-mean.
 
 \begin{table}%[h]
 \begin{center}
@@ -583,7 +583,7 @@ For U.S. national (see Figure \ref{fig:figure_horizon_plot}) WIS and MAE, THieF\
 
 \begin{figure}%[h]
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
-<<horizon_plot, echo=FALSE, fig=TRUE>>=
+<<horizon_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
 tar_read(combined_wis_plot, store="../_targets")
 @
 \caption{Average WIS plotted by horizon week during the testing phase for each model at both geographic scales}
@@ -599,7 +599,7 @@ For the BA.4/BA.5 variant wave, model rankings by WIS are more distinct and tend
 
 \begin{figure}%[h]
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
-<<wave_plot, echo=FALSE, fig=TRUE>>=
+<<wave_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
 tar_read(combined_wis_wave_plot, store="../_targets")
 @
 \caption{Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both geographic scales}
@@ -615,7 +615,7 @@ The by--forecast week break down of THieF\_6wk-noTransform is particularly inter
 
 \begin{figure}%[h]
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
-<<states_date_plot, echo=FALSE, fig=TRUE>>=
+<<states_date_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
 tar_read(combined_wis_cov95_plot_states, store="../_targets")
 @
 \caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}
@@ -624,7 +624,7 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 
 \begin{figure}%[h]
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
-<<us_date_plot, echo=FALSE, fig=TRUE>>=
+<<us_date_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
 tar_read(combined_wis_cov95_plot_us, store="../_targets")
 @
 \caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for U.S. national}
@@ -636,7 +636,7 @@ Figure \ref{fig:figure_location_plot} summarizes the by-location evaluation, wit
 
 \begin{figure}%[h]
 % \includegraphics[width=0.5\textwidth, inner]{overleaf-logo}
-<<location_plot, echo=FALSE, fig=TRUE>>=
+<<location_plot, echo=FALSE, fig=TRUE, height=18, width=15>>=
 tar_read(wis_location_plot, store="../_targets")
 @
 \caption{Relative WIS plotted by location during the testing phase for each model across all horizons}
@@ -680,7 +680,7 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 %% \chapter{THE FIRST APPENDIX TITLE}
 
 \begin{figure}[h]
-\includegraphics[width=0.8\textwidth]{../inst/thief_all}
+\includegraphics[width=0.9\textwidth]{../inst/thief_all}
 \caption{Illustration of three hierarchy schemes used to create six of the fourteen total original THieF models}
 \label{fig:figure_thief_hierarchy}
 \end{figure}
