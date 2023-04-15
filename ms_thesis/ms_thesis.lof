@@ -3,13 +3,13 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {2.1}{\ignorespaces A plot of the period of analysis, superimposed over COVID-19 incident hospitalizations for the entire United States. Vertical solid lines indicate divisions between phases while dashed lines indicate divisions between variant waves.}}{10}{figure.2.1}%
+\contentsline {figure}{\numberline {2.1}{\ignorespaces A plot of the period of analysis, superimposed over COVID-19 incident hospitalizations for the entire United States. Vertical solid lines indicate divisions between phases while dashed lines indicate divisions between variant waves.}}{9}{figure.2.1}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces U.S. national incident hospitalization forecasts during the testing phase, faceted by model}}{33}{figure.3.1}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Average WIS plotted by horizon week during the testing phase for each model at both location scales}}{37}{figure.3.2}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both location scales}}{39}{figure.3.3}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}}{42}{figure.3.4}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for U.S. national}}{43}{figure.3.5}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces U.S. national incident hospitalization forecasts during the testing phase from select models}}{32}{figure.3.1}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Average WIS plotted by horizon week during the testing phase for each model at both geographic scales}}{36}{figure.3.2}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both geographic scales}}{39}{figure.3.3}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}}{41}{figure.3.4}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for U.S. national}}{42}{figure.3.5}%
 \contentsline {figure}{\numberline {3.6}{\ignorespaces Relative WIS plotted by location during the testing phase for each model across all horizons}}{44}{figure.3.6}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {1}{\ignorespaces Illustration of three hierarchy schemes used to create six of the fourteen total original THieF models}}{50}{figure.Alph0.1}%
+\contentsline {figure}{\numberline {1}{\ignorespaces Illustration of three hierarchy schemes used to create six of the fourteen total original THieF models}}{51}{figure.Alph0.1}%
