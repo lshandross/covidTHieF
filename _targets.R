@@ -220,29 +220,12 @@ tar_target(
   tar_target(plot_models_1, 
     plot_models_one_location(
       forecasts=testing_forecasts_to_plot, 
+      models=testing_model_names[c(1:3,5)],
       truth=full_hosp_truth, 
       fips=ordered_testing_locations[1], 
       fc_dates=testing_dates_to_plot, 
-      facet_nrow = 6, 
-      date_limits = c(as.Date("2020-10-01"), testing_forecast_range[2]))
-  ),
-  tar_target(plot_models_2, 
-    plot_models_one_location(
-      forecasts=testing_forecasts_to_plot, 
-      truth=full_hosp_truth, 
-      fips=ordered_testing_locations[2], 
-      fc_dates=testing_dates_to_plot, 
-      facet_nrow = 6, 
-      date_limits = c(as.Date("2020-10-01"), testing_forecast_range[2]))
-  ),
-  tar_target(plot_models_53, 
-    plot_models_one_location(
-      forecasts=testing_forecasts_to_plot, 
-      truth=full_hosp_truth, 
-      fips=ordered_testing_locations[53], 
-      fc_dates=testing_dates_to_plot, 
-      facet_nrow = 6, 
-      date_limits = c(as.Date("2020-10-01"), testing_forecast_range[2]))
+      facet_nrow = 4, 
+      date_limits = c(as.Date("2021-07-05"), testing_forecast_range[2]))
   ),
 
   tar_target(
