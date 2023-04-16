@@ -207,6 +207,18 @@ tar_target(
          x = "Date", y = "Incident Hospitalizations (Daily)")
 ),
 
+  tar_target(thief_concept_plot, 
+    plot_thief_full(
+      truth=full_hosp_truth, 
+      start_date = "2020-07-27", 
+      end_date="2021-06-06", 
+      fips = "US", 
+      frequency=14, 
+      aggregation_list = list(14, 7, 1), 
+      aggregation_names = c("1-daily", "1-weekly", "2-weekly")
+    )
+  ),
+  
   tar_target(ordered_testing_locations, 
     full_hosp_truth %>%
       filter(target_end_date %in% testing_forecast_range[1]:testing_forecast_range[2]) %>%
