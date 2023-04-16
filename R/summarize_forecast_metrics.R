@@ -20,21 +20,22 @@ summarize_overall_metrics <- function(scores, baseline_name, us_only=FALSE) {
   summarized_metrics <- scores %>%
     filter(!(location %in% c("22", "US") & forecast_date <= as.Date("2021-01-04"))) %>% # < 1/11/2021 to match code in score_forecasts
   group_by(model) %>%
-  summarize(wis = mean(wis), mae = mean(abs_error), cov_50 = mean(coverage_50), cov_95 = mean(coverage_95))
+  summarize(WIS = mean(wis), MAE = mean(abs_error), Cov50 = mean(coverage_50), Cov95 = mean(coverage_95))
 
   # add relative metrics
   summarized_metrics <- summarized_metrics %>%
     mutate(
-      rwis = wis/pull(filter(summarized_metrics, model == baseline_name), 2),
-      rmae = mae/pull(filter(summarized_metrics, model == baseline_name), 3),
-      #cov_50 = cov_50/abs(pull(filter(summarized_metrics, model == baseline_name), 4)-0.5),
-      #rcov_95 = cov_95/abs(pull(filter(summarized_metrics, model == baseline_name), 5)-0.95),
+      rWIS = WIS/pull(filter(summarized_metrics, model == baseline_name), 2),
+      rMAE = MAE/pull(filter(summarized_metrics, model == baseline_name), 3) #,
+      #Cov50 = Cov50/abs(pull(filter(summarized_metrics, model == baseline_name), 4)-0.5),
+      #rCov95 = Cov95/abs(pull(filter(summarized_metrics, model == baseline_name), 5)-0.95)
     ) %>%
+    rename(Model = model) %>%
     mutate(across(where(is.numeric), round, digits=3)) %>%
-    arrange(wis)
+    arrange(WIS)
 
   if (us_only) {
-    mutate(summarized_metrics, across(wis:mae, round, digits=1))
+    mutate(summarized_metrics, across(WIS:MAE, round, digits=1))
   } else {
     summarized_metrics
   }
@@ -63,30 +64,31 @@ summarize_horizon_metrics <- function(scores, baseline_name, us_only=FALSE) {
   summarized_metrics <- scores %>%
     filter(!(location %in% c("22", "US") & forecast_date <= as.Date("2021-01-04"))) %>% # < 1/11/2021 to match code in score_forecasts
   group_by(model, horizon_wk) %>%
-  summarize(wis = mean(wis), mae = mean(abs_error), cov_50 = mean(coverage_50), cov_95 = mean(coverage_95))
+  summarize(WIS = mean(wis), MAE = mean(abs_error), Cov50 = mean(coverage_50), Cov95 = mean(coverage_95))
 
   # add relative metrics
   summarized_metrics <- summarized_metrics %>%
     mutate(
-      rwis = case_when(
-        horizon_wk == 1 ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 3),
-        horizon_wk == 2 ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 3),
-        horizon_wk == 3 ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 3),
-        horizon_wk == 4 ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 3),
+      rWIS = case_when(
+        horizon_wk == 1 ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 3),
+        horizon_wk == 2 ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 3),
+        horizon_wk == 3 ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 3),
+        horizon_wk == 4 ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 3),
       ),
-      rmae = case_when(
-        horizon_wk == 1 ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
-        horizon_wk == 2 ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
-        horizon_wk == 3 ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
-        horizon_wk == 4 ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4) #,
-      # rcov_50, rcov_95
+      rMAE = case_when(
+        horizon_wk == 1 ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
+        horizon_wk == 2 ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
+        horizon_wk == 3 ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
+        horizon_wk == 4 ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
+      # rCov50, rCov95
       )
     ) %>%
+    rename(Model = model) %>%
     mutate(across(where(is.numeric), round, digits=3)) %>%
-    arrange(horizon_wk, wis)
+    arrange(horizon_wk, WIS)
 
   if (us_only) {
-    mutate(summarized_metrics, across(wis:mae, round, digits=1))
+    mutate(summarized_metrics, across(WIS:MAE, round, digits=1))
   } else {
     summarized_metrics
   }
@@ -123,61 +125,62 @@ summarize_wave_metrics <- function(scores, baseline_name, us_only=FALSE) {
       )
     ) %>%
     group_by(model, horizon_wk, wave) %>%
-    summarize(wis = mean(wis), mae = mean(abs_error), cov_50 = mean(coverage_50), cov_95 = mean(coverage_95))
+    summarize(WIS = mean(wis), MAE = mean(abs_error), Cov50 = mean(coverage_50), Cov95 = mean(coverage_95))
 
   # add relative metrics
   summarized_metrics <- summarized_metrics %>%
     mutate(
-      rwis = case_when(
-        horizon_wk == 1 & wave == "winter21" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
-        horizon_wk == 2 & wave == "winter21" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
-        horizon_wk == 3 & wave == "winter21" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
-        horizon_wk == 4 & wave == "winter21" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
-        horizon_wk == 1 & wave == "alpha" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
-        horizon_wk == 2 & wave == "alpha" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
-        horizon_wk == 3 & wave == "alpha" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
-        horizon_wk == 4 & wave == "alpha" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
-        horizon_wk == 1 & wave == "delta" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
-        horizon_wk == 2 & wave == "delta" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
-        horizon_wk == 3 & wave == "delta" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
-        horizon_wk == 4 & wave == "delta" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
-        horizon_wk == 1 & wave == "omicron" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
-        horizon_wk == 2 & wave == "omicron" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
-        horizon_wk == 3 & wave == "omicron" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
-        horizon_wk == 4 & wave == "omicron" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
-        horizon_wk == 1 & wave == "ba4_ba5" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
-        horizon_wk == 2 & wave == "ba4_ba5" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
-        horizon_wk == 3 & wave == "ba4_ba5" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
-        horizon_wk == 4 & wave == "ba4_ba5" ~ wis/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
+      rWIS = case_when(
+        horizon_wk == 1 & wave == "winter21" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
+        horizon_wk == 2 & wave == "winter21" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
+        horizon_wk == 3 & wave == "winter21" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
+        horizon_wk == 4 & wave == "winter21" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
+        horizon_wk == 1 & wave == "alpha" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
+        horizon_wk == 2 & wave == "alpha" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
+        horizon_wk == 3 & wave == "alpha" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
+        horizon_wk == 4 & wave == "alpha" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
+        horizon_wk == 1 & wave == "delta" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
+        horizon_wk == 2 & wave == "delta" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
+        horizon_wk == 3 & wave == "delta" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
+        horizon_wk == 4 & wave == "delta" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
+        horizon_wk == 1 & wave == "omicron" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
+        horizon_wk == 2 & wave == "omicron" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
+        horizon_wk == 3 & wave == "omicron" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
+        horizon_wk == 4 & wave == "omicron" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
+        horizon_wk == 1 & wave == "ba4_ba5" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
+        horizon_wk == 2 & wave == "ba4_ba5" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 4),
+        horizon_wk == 3 & wave == "ba4_ba5" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 4),
+        horizon_wk == 4 & wave == "ba4_ba5" ~ WIS/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 4),
       ),
-      rmae = case_when(
-        horizon_wk == 1 & wave == "winter21" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
-        horizon_wk == 2 & wave == "winter21" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
-        horizon_wk == 3 & wave == "winter21" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
-        horizon_wk == 4 & wave == "winter21" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
-        horizon_wk == 1 & wave == "alpha" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
-        horizon_wk == 2 & wave == "alpha" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
-        horizon_wk == 3 & wave == "alpha" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
-        horizon_wk == 4 & wave == "alpha" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
-        horizon_wk == 1 & wave == "delta" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
-        horizon_wk == 2 & wave == "delta" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
-        horizon_wk == 3 & wave == "delta" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
-        horizon_wk == 4 & wave == "delta" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
-        horizon_wk == 1 & wave == "omicron" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
-        horizon_wk == 2 & wave == "omicron" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
-        horizon_wk == 3 & wave == "omicron" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
-        horizon_wk == 4 & wave == "omicron" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
-        horizon_wk == 1 & wave == "ba4_ba5" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
-        horizon_wk == 2 & wave == "ba4_ba5" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
-        horizon_wk == 3 & wave == "ba4_ba5" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
-        horizon_wk == 4 & wave == "ba4_ba5" ~ mae/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
+      rMAE = case_when(
+        horizon_wk == 1 & wave == "winter21" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
+        horizon_wk == 2 & wave == "winter21" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
+        horizon_wk == 3 & wave == "winter21" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
+        horizon_wk == 4 & wave == "winter21" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
+        horizon_wk == 1 & wave == "alpha" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
+        horizon_wk == 2 & wave == "alpha" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
+        horizon_wk == 3 & wave == "alpha" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
+        horizon_wk == 4 & wave == "alpha" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
+        horizon_wk == 1 & wave == "delta" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
+        horizon_wk == 2 & wave == "delta" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
+        horizon_wk == 3 & wave == "delta" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
+        horizon_wk == 4 & wave == "delta" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
+        horizon_wk == 1 & wave == "omicron" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
+        horizon_wk == 2 & wave == "omicron" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
+        horizon_wk == 3 & wave == "omicron" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
+        horizon_wk == 4 & wave == "omicron" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
+        horizon_wk == 1 & wave == "ba4_ba5" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 5),
+        horizon_wk == 2 & wave == "ba4_ba5" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 2), 5),
+        horizon_wk == 3 & wave == "ba4_ba5" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 3), 5),
+        horizon_wk == 4 & wave == "ba4_ba5" ~ MAE/pull(filter(summarized_metrics, model == baseline_name, horizon_wk == 4), 5),
       )
     ) %>%
+    rename(Model = model) %>%
     mutate(across(where(is.numeric), round, digits=3)) %>%
-    arrange(wave, horizon_wk, wis)
+    arrange(wave, horizon_wk, WIS)
 
     if (us_only) {
-      mutate(summarized_metrics, across(wis:mae, round, digits=1))
+      mutate(summarized_metrics, across(WIS:MAE, round, digits=1))
     } else {
       summarized_metrics
     }
@@ -210,10 +213,11 @@ summarize_forecast_date_metrics <- function(scores, us_only) {
           true_value, abs_error, wis, coverage_50, coverage_95) %>%
     group_by(mon_fc_date, model, horizon_wk) %>%
     summarize(
-      wis = mean(wis), mae=mean(abs_error),
-      cov_50 = mean(coverage_50),
-      cov_95 = mean(coverage_95)
-    )
+      WIS = mean(wis), MAE=mean(abs_error),
+      Cov50 = mean(coverage_50),
+      Cov95 = mean(coverage_95)
+    ) %>%
+    rename(Model = model)
 }
 
 # summarize_forecast_date_metrics(combined_scores, us_only=TRUE)
