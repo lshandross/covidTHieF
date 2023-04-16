@@ -15,7 +15,7 @@
 #'
 #' @examples
 plot_models_one_location <-
-  function(forecasts, truth, fips="US", fc_dates = NULL, prediction_intervals = c(0.5, 0.95), facet_nrow = 6, date_limits = NULL) {
+  function(forecasts, truth, models=NULL, fips="US", fc_dates = NULL, prediction_intervals = c(0.5, 0.95), facet_nrow = 6, date_limits = NULL) {
     fdat <- forecasts %>%
       filter(
         forecast_date %in% fc_dates, 
@@ -24,20 +24,36 @@ plot_models_one_location <-
         horizon <= 28
       )
 
-    p <- plot_forecasts(
-          fdat,
-  #       models = c(),
-  #       truth_data = filter(truth, target_end_date <= as.Date("2021-05-03")),
-          target_variable = "inc hosp",
-          intervals = prediction_intervals,
-          truth_source = "HealthData",
-          use_median_as_point = TRUE,
-          facet = model ~.,
-          facet_nrow = facet_nrow,
-  #       facet_scales = "free_y",
-          fill_by_model = TRUE,
-          plot=FALSE)
-
+    if (is.null(models)) {
+      p <- plot_forecasts(
+            fdat,
+    #       models = c(),
+    #       truth_data = filter(truth, target_end_date <= as.Date("2021-05-03")),
+            target_variable = "inc hosp",
+            intervals = prediction_intervals,
+            truth_source = "HealthData",
+            use_median_as_point = TRUE,
+            facet = model ~.,
+            facet_nrow = facet_nrow,
+    #       facet_scales = "free_y",
+            fill_by_model = TRUE,
+            plot=FALSE)
+    } else {
+      
+      p <- plot_forecasts(
+            fdat,
+            models = models,
+    #       truth_data = filter(truth, target_end_date <= as.Date("2021-05-03")),
+            target_variable = "inc hosp",
+            intervals = prediction_intervals,
+            truth_source = "HealthData",
+            use_median_as_point = TRUE,
+            facet = model ~.,
+            facet_nrow = facet_nrow,
+    #       facet_scales = "free_y",
+            fill_by_model = TRUE,
+            plot=FALSE)
+    }
     pt <- p +
       scale_x_date(name=NULL, limits = date_limits, date_breaks = "4 months", date_labels = "%b %y") +
       coord_cartesian(ylim = c(0, max(filter(truth, location==fips)$value) * 1.15)) +
