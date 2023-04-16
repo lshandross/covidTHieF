@@ -335,10 +335,16 @@ Forecast combination that integrates forecasts from different, independent model
 
 Surveillance data tends to be quite noisy due to reporting artifacts, especially when considering small time scales. COVID-19 incident hospitalizations suffer a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since not all facilities admit patients on weekends and those that do may not report those hospitalizations until the next week. We may better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we are careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels are included in model schemes to investigate the existence of hidden patterns at higher time scales and if such a pattern could improve model accuracy \cite{ideal_interval}.
 
-The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure. These steps---data aggregation and hierarchy construction, base forecast creation, and reconciliation of base forecasts---are outlined in further detail below \cite{thief}.
+The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure. These steps---data aggregation and hierarchy construction, base forecast creation, and reconciliation of base forecasts---are outlined in further detail below and in Figure \ref{fig:thief_concept_figure}\cite{thief}.
+
+\begin{figure}%[h]
+\includegraphics{ms_thesis-thief_concept_plot}
+\caption{A plot showing the three steps of the THieF methodology for forecasting U.S. national incident hospitalizations for 1 to 28 days ahead on June 7, 2021}
+\label{fig:thief_concept_figure}
+\end{figure}
 
 \subsection{Data Aggregation and Hierarchy} \label{thief_agg_hierarchy}
-Suppose we are interested in constructing a THieF model that combines forecasts from 7-day and 14-day intervals because we believe these time scales each contain important information. Aggregate series for each of these times scales can be constructed from the original daily time series by summing the observed values over a particular time scale\cite{thief}. All of our models define the lowest (and least aggregate) level to be the original daily time scale, so our example model has three total levels: 1-day, 7-day, 14-day. Although each level in this example is a multiple of all the levels below it, any $k$-day time scale can be selected for the hierarchy as long as $k$ is a factor of 14. For example, a 2-day aggregation would also be allowed in this temporal hierarchy. On the other hand, 3- or 5-day aggregations cannot be added to the existing levels since these values are not factors of the topmost 14-day aggregation. The reason for this rule is that non-factor levels result in non-integer seasonality and thus impede computation\cite{thief}.
+Suppose we are interested in constructing a THieF model that combines forecasts from 7-day and 14-day intervals because we believe these time scales each contain important information. Aggregate series for each of these times scales can be constructed from the original daily time series by summing the observed values over a particular time scale\cite{thief}. All of our models define the lowest (and least aggregate) level to be the original daily time scale, so our example model has three total levels: 1-day, 7-day, 14-day (see Figure \ref{fig:thief_concept_figure}). Although each level in this example is a multiple of all the levels below it, any $k$-day time scale can be selected for the hierarchy as long as $k$ is a factor of 14. For example, a 2-day aggregation would also be allowed in this temporal hierarchy. On the other hand, 3- or 5-day aggregations cannot be added to the existing levels since these values are not factors of the topmost 14-day aggregation. The reason for this rule is that non-factor levels result in non-integer seasonality and thus impede computation\cite{thief}.
 
 The hospitalization data for a particular location may be expressed generally as a time series \{$y_t; t = 1, \cdots, T$\} when observed at the daily level. Let $m$ be the number of observations of the smallest timescale (and the highest frequency) that aggregate to create a single data point for the the most-aggregate level. (In our example $m = 14$.) These data are then aggregated to different $k$-day time scales based on the aggregation levels of interest for a particular model (e.g. 7-day, 14-day, 28-day, 42-day, etc.\footnote{see Section \ref{thief_models} for a full list of time scales considered})\cite{thief}. A data point with index $j$ for a $k$-day aggregated series $y_j^{[k]}$ may be obtained using \[y_j^{[k]} = \Sigma_{t = t^* + (j-1)k}^{t^*+jk-1} y_t\] for $j = 1, \cdots, \lfloor T/k \rfloor$ and seasonal period $M_k = m/k$ for that series. Here we can see that the variable $k \in$ \{$k_p,\cdot,k_2,k_1$\} can take on multiple values and indicates the particular aggregation level, where $k_p = m$, $k_1 = 1$, and $p$ is the total number of levels in the hierarchy\cite{thief}. In our example from earlier, $k \in$ \{$14, 7, 1$\}, where $p = 3$.
 
@@ -362,7 +368,7 @@ These column vectors are then stacked into a larger $(\Sigma_{k} M_k \times 1)$ 
 \begin{bmatrix} \boldsymbol{y_{14(i-1)+1}^{[1]}}\\ \boldsymbol {y_{14(i-1)+2}^{[1]}}\\ \cdots\\ \boldsymbol{y_{14i}^{[1]}} \end{bmatrix}\] in which the dimensions of the matrices are $(17 \times 1)$, $(17 \times 14)$, and $(14 \times 1)$, respectively.
 
 \subsection{Base Forecasts} \label{thief_base_forecasts}
-Before we can obtain coherent forecasts, we must begin by making base forecasts at every level of the hierarchy. Each level's base forecasts are independent of the other levels and are created as if each aggregation level is a separate, univariate time series. Theoretically, this means that different types of models could be used to make forecasts at every level prior to reconciliation, although in practice we generally use the same model type but allow the values of the parameters to vary between levels. Since the parameter values may vary, this usually results in incoherent forecasts at this stage. Such disagreement between the forecasts may indicate that important patterns have been detected at different time scales, suggesting the THieF method may be useful.
+Before we can obtain coherent forecasts, we must begin by making base forecasts at every level of the hierarchy, as shown in Figure \ref{fig:thief_concept_figure}. Each level's base forecasts are independent of the other levels and are created as if each aggregation level is a separate, univariate time series. Theoretically, this means that different types of models could be used to make forecasts at every level prior to reconciliation, although in practice we generally use the same model type but allow the values of the parameters to vary between levels. Since the parameter values may vary, this usually results in incoherent forecasts at this stage. Such disagreement between the forecasts may indicate that important patterns have been detected at different time scales, suggesting the THieF method may be useful.
 
 No particular forecasting framework is specified in the original equations for the THieF methodology, but the authors later show that an underlying ARIMA model produces the most accurate forecasts. An ARIMA model is also used in the implementation of THieF in the associated R package\cite{thief}. Hence, we also choose to use ARIMA models to produce our base forecasts.
 
@@ -380,7 +386,7 @@ The series variance estimator is a diagonal $(\Sigma_k M_k \times \Sigma_k M_k)$
 
 While Athanasopoulos, et al. propose two other alternative WLS estimators, they later show that $\boldsymbol{\Lambda}_{SV}$ yields the most accurate reconciled forecasts. All of these WLS estimators are estimators for the sample covariance estimator $\boldsymbol{\Lambda}$ for $\boldsymbol{W}$, the covariance matrix of the base forecast error. In turn, $\boldsymbol{W}$ is an estimator for the unknowable $\boldsymbol{\Sigma}$\cite{thief}. The reason we don't use $\boldsymbol{\Lambda}$ is that its calculation is difficult to implement in practice\footnote{This estimator also cannot be calculated for non-model based forecasts like expert judgements in which in-sample forecast errors may not be available\cite{thief}, though this is not a concern for our work.}. This estimator has $\Sigma_k M_k^2$ elements that must be estimated, and the sample size that can be used for such estimation is limited by the number of observations at the topmost aggregation level $\lfloor T/m \rfloor$. Since $\lfloor T/m \rfloor \ll T$, the accuracy of the estimation is degraded. Hence, we instead choose to rely on $\boldsymbol{\Lambda}_{SV}$\cite{thief}.
 
-Following this final step of reconciliation, the forecasts from every time scale will agree about the number of daily incident hospitalizations for all horizons.
+Following this final step of reconciliation, the forecasts from every time scale will agree about the number of daily incident hospitalizations for all horizons. The reconciled forecasts are shown in Figure \ref{fig:thief_concept_figure}.
 
 \subsection{Making THieF Probabilistic} \label{probabilistic_thief}
 Recall that a defining feature of COVID-19 forecasts is that they are probabilistic. However, the THieF defined above and in \cite{thief} is used for point forecasting. To address this challenge, we calculated prediction intervals for the base forecasts, reconciled the the interval end points using the same weighted least squares procedure described in the previous section, then translated the prediction interval bounds into quantiles from a full probabilistic distribution. The translation is summarized in Table \ref{tab:table_quant_int}. For example, the values for a 0.500 and a 0.950 quantile (see the Quantile row) are obtained by taking the lower and upper bounds of the 95\% prediction interval (see the Interval row, where ``L" and ``U" represent the lower and upper bounds, respectively).
@@ -390,7 +396,7 @@ Although it would be preferable to obtain quantiles from the reconciled forecast
 \begin{table}[h]
 \begin{center}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:30:20 2023
+% Sun Apr 16 15:29:19 2023
 \begin{tabular}{rlllllllllll}
   \hline
  &  \\ 
@@ -485,7 +491,7 @@ Hence, the best subset that passes onto the testing phase consists of the follow
 \begin{table}%[h]
 \begin{center}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:30:21 2023
+% Sun Apr 16 15:29:19 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -526,7 +532,7 @@ Hence, the best subset that passes onto the testing phase consists of the follow
 \begin{table}%[h]
 \begin{center}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:30:21 2023
+% Sun Apr 16 15:29:19 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -586,7 +592,7 @@ The U.S. national results in Table \ref{tab:table_overall_us}, however, show WIS
 \begin{table}%[h]
 \begin{center}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:31:05 2023
+% Sun Apr 16 15:29:33 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -609,7 +615,7 @@ The U.S. national results in Table \ref{tab:table_overall_us}, however, show WIS
 \begin{table}[h]
 \begin{center}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:31:05 2023
+% Sun Apr 16 15:29:33 2023
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -739,7 +745,7 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 \newpage
 
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:31:13 2023
+% Sun Apr 16 15:29:39 2023
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrr}
   \hline
@@ -786,7 +792,7 @@ THieF\_ensemble-train6.5 & 32.656 & 49.713 & 0.517 & 0.921 & 0.763 & 0.772 \\
 \newpage
 
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:31:13 2023
+% Sun Apr 16 15:29:39 2023
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrr}
   \hline
@@ -834,7 +840,7 @@ THieF\_12wk-4root & 1134.2 & 1632.2 & 0.58 & 0.84 & 0.73 & 0.63 \\
 
 
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:31:13 2023
+% Sun Apr 16 15:29:39 2023
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrrr}
   \hline
@@ -890,7 +896,7 @@ COVIDhub-4\_week\_ensemble & 1 & 16.70 & 25.11 & 0.65 & 0.96 & 0.70 & 0.79 \\
 \newpage
 
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:31:13 2023
+% Sun Apr 16 15:29:39 2023
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrrr}
   \hline
@@ -948,7 +954,7 @@ COVIDhub-4\_week\_ensemble & 1 & 659.8 & 966.8 & 0.68 & 0.94 & 0.69 & 0.77 \\
 
 
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:31:13 2023
+% Sun Apr 16 15:29:39 2023
 \begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
 \begin{longtable}{lrlrrrrrr}
   \hline
@@ -1045,7 +1051,7 @@ COVIDhub-4\_week\_ensemble & 1 & ba4\_ba5 & 8.91 & 13.43 & 0.72 & 0.99 & 0.61 & 
 %\setlength{\tabcolsep}{20pt}
 %\renewcommand{\arraystretch}{1.5}
 % latex table generated in R 4.1.3 by xtable 1.8-4 package
-% Sat Apr 15 15:31:13 2023
+% Sun Apr 16 15:29:39 2023
 \begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
 \begin{longtable}{lrlrrrrrr}
   \hline
