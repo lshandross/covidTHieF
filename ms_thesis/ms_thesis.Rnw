@@ -623,7 +623,7 @@ For the by--forecast week evaluation, we make four plots for each geographic sca
 
 Many patterns observed in evaluations described above persisted for this subset of the testing phase analysis. The COVIDhub-4\_week\_ensemble consistently is one of the the top few, if not the top, models for both WIS and 95\% coverage for both geographic scales. The one exception is near the crest of the Omicron wave when this model ranks last or near last for lowest WIS at the 4-week ahead horizon. Here, and in a few other places, the COVIDhub-4\_week\_ensemble loses out to THieF\_6wk-4root and THieF\_12wk-4root at the 4-week ahead horizon. The two THieF ensembles also rarely beat the COVIDhub-4\_week\_ensemble in terms of WIS yet demonstrate incredibly stable performance, never ranking below sixth. In this way, the THieF ensembles are quite similar to the COVIDhub-baseline during times of high incidence and rapid change: their WIS is more stable and consistent from week-to-week than that of other models; however, THieF\_ensemble-mean and THieF\_ensemble-train3 often out-perform the COVIDhub-baseline, which has the worst WIS for several weeks. Generally, though, sarima\_s1-noTransform and sarima\_s7-noTransform alternate for having the worst WIS and 95\% coverage rates. The one notable exception to this is leading up to the Omicron peak, in which the three original THieF models had the highest WIS for a single week at both geographic scales.
 
-The by--forecast week break down of THieF\_6wk-noTransform is particularly interesting. This model tended to fall in the middle of the rankings for the previously described evaluations, yet Figures \ref{fig:figure_date_plot_states} and \ref{fig:figure_date_plot_us} show that this model usually exhibited more extreme performance, either performing rather well or quite badly. Investigating less aggregate scores for THieF\_12wk-4root similarly reveals several instances of good performance, usually at long horizons under settings of rapid change and/or high incidence. In addition, we notice that sarima\_s7-noTransform demonstrated noticeably worse performance for U.S. national WIS at a horizon of 1 week compared to that for averaged states. 
+The by--forecast week break down of THieF\_6wk-noTransform is particularly interesting. This model tended to fall in the middle of the rankings for the previously described evaluations, yet Figures \ref{fig:figure_date_plot_states} and \ref{fig:figure_date_plot_us} show that this model usually exhibited more extreme performance, either performing rather well or quite badly. Investigating less aggregate scores for THieF\_12wk-4root similarly reveals several instances of good performance, usually at long horizons under settings of rapid change and/or high incidence. In addition, we notice that sarima\_s7-noTransform demonstrated noticeably worse performance for U.S. national WIS at a horizon of 1 week compared to that for averaged states.
 
 Further, both fourth root original THieF display strangely low 95\% coverage for averaged states following the decline of the Omicron wave at both plotted horizons, especially since the other seven models experience significantly higher coverage rates during this time. (Comparisons among models for U.S. national 95\% coverage by forecast week are harder to make since this location scale only includes seven 95\% interval forecasts for one location (compared to seven per 52 locations for averaged states), so we simply allow the plots in Figure \ref{fig:figure_date_plot_states} to speak for themselves.)
 
@@ -696,7 +696,7 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 %% \chapter{THE FIRST APPENDIX TITLE}
 
 \begin{figure}[h]
-\includegraphics[width=0.9\textwidth]{../inst/thief_all}
+\includegraphics[width=0.95\textwidth]{../inst/thief_all}
 \caption{Illustration of three hierarchy schemes used to create six of the fourteen total original THieF models}
 \label{fig:figure_thief_hierarchy}
 \end{figure}
@@ -705,43 +705,42 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
-  xtable(auto=TRUE)
-print(table_last17_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
-      include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
+  xtable(digits=c(rep(0, 1), rep(3, 3), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS", label="tab:table_last17_states")
+print(table_last17_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
 
-\begin{table}%[h]
-\begin{center}
+%\begin{table}%[h]
+%\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
-  xtable()
+  xtable(digits=c(rep(0, 1), rep(3, 3), rep(2, 4)), auto=TRUE)
 print(table_last17_states, booktabs=FALSE, floating=FALSE)
 @
-\caption{Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS}
-\label{tab:table_last17_states}
-\end{center}
-\end{table}
+%\caption{Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS}
+%\label{tab:table_last17_states}
+%\end{center}
+%\end{table}
 
 \newpage
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
-  xtable(digits=c(rep(0, 1), rep(1, 3), rep(2, 4)), auto=TRUE)
+  xtable(digits=c(rep(0, 1), rep(1, 3), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS", label="tab:table_last17_us")
 print(table_last17_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
       include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
 
-\begin{table}%[h]
-\begin{center}
+%\begin{table}%[h]
+%\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
   xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_last17_us, booktabs=FALSE, floating=FALSE)
 @
-\caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS}
-\label{tab:table_last17_us}
-\end{center}
-\end{table}
+%\caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS}
+%\label{tab:table_last17_us}
+%\end{center}
+%\end{table}
 
 \newpage
 
@@ -749,51 +748,46 @@ print(table_last17_us, booktabs=FALSE, floating=FALSE)
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 3), rep(2, 2), rep(2, 4)), auto=TRUE)
+  xtable(digits=c(rep(0, 3), rep(2, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS", label="tab:table_horizon_states")
 print(table_horizon_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
       include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
 
-\begin{table}%[h]
-\begin{center}
+%\begin{table}%[h]
+%\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(2, 6)))
 print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 @
-\caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS}
-\label{tab:table_horizon_states}
-\end{center}
-\end{table}
+%\caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS}
+%\label{tab:table_horizon_states}
+%\end{center}
+%\end{table}
 
 \newpage
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)), auto=TRUE)
+  xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS", label="tab:table_horizon_us")
 print(table_horizon_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
       include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
 
-\begin{table}%[h]
-\begin{center}
+%\begin{table}%[h]
+%\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)))
 print(table_horizon_us, booktabs=FALSE, floating=FALSE)
 @
-\caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS}
-\label{tab:table_horizon_us}
-\end{center}
-\end{table}
-
-<<echo=FALSE, eval=FALSE>>=
-knitr::kable(tar_read(horizon_metrics_states, store="../_targets"))
-knitr::kable(tar_read(horizon_metrics_us, store="../_targets"))
-@
+%\caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS}
+%\label{tab:table_horizon_us}
+%\end{center}
+%\end{table}
 
 \newpage
 
@@ -801,13 +795,13 @@ knitr::kable(tar_read(horizon_metrics_us, store="../_targets"))
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)), auto=TRUE)
+  xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS", label="tab:table_wave_states")
 print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
       floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
 @
 
-\begin{table}[h]
-\begin{center}
+%\begin{table}[h]
+%\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
@@ -815,36 +809,36 @@ table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
 print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
       floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
 @
-\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}
-\label{tab:table_wave_states}
-\end{center}
-\end{table}
+%\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}
+%\label{tab:table_wave_states}
+%\end{center}
+%\end{table}
 
 \newpage
 
-%\begin{longtable}
-%\begin{table}%[h]
-%\begin{center}
-%\setlength{\tabcolsep}{20pt}
-%\renewcommand{\arraystretch}{1.5}
+%\captionsetup{width=6cm}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
   rename(`hzn` = horizon_wk) %>%
+  xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS", label="tab:table_wave_us")
+print(table_wave_us, booktabs=FALSE, tabular.environment="longtable", include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
+@
+%\captionsetup{width=default}
+
+%\begin{longtable}
+%\begin{table}%[h]
+%\setlength{\tabcolsep}{20pt}
+%\renewcommand{\arraystretch}{1.5}
+<<echo=FALSE, eval=FALSE, results=tex>>=
+table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
+  rename(`hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)), auto=TRUE)
-print(table_wave_us, booktabs=FALSE, tabular.environment='longtable',
-      floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
+print(table_wave_us, booktabs=FALSE, floating=FALSE, include.rownames=FALSE)
 @
 %\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS}
 %\label{tab:table_wave_us}
-%\end{center}
 %\end{table}
 %\end{longtable}
-
-<<echo=FALSE, eval=FALSE>>=
-knitr::kable(tar_read(wave_metrics_states, store="../_targets"))
-knitr::kable(tar_read(wave_metrics_us, store="../_targets"))
-@
-
 
 %%
 %% Beginning of back matter
