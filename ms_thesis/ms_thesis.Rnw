@@ -149,7 +149,6 @@ cache=TRUE
 \committeechair{Nicholas G. Reich}
 \firstreader{Evan L. Ray}
 \secondreader{Benjamin W. Rogers}
-%% \thirdreader{Bill Shepherd}
 \departmentchair{Lisa Chasan-Taber} % Default uses "Department Chair" as the title. To
 % use an alternate title, such as "Chair", use \departmentchair[Chair]{Pete Shearer}
 % CICS uses "Chair of the Faculty" as of 2019.
@@ -252,7 +251,7 @@ Infectious disease forecasting efforts underwent rapid growth during the COVID-1
 
 In this work, we examined the application of the temporal hierarchical forecasting (THieF) methodology to probabilistic forecasts of COVID-19 incident hospital admissions in the United States. THieF is an innovative forecasting technique that aggregates time-series data into a hierarchy made up of different temporal scales, produces forecasts at each level of the hierarchy, then reconciles those forecasts using optimized weighted forecast combination. While THieF's unique approach has shown substantial accuracy improvements in a diverse range of applications, such as operations management and emergency room admission predictions, this technique had not previously been applied to outbreak forecasting.
 
-We generated candidate models formulated using the THieF methodology, which differred by their hierarchy schemes and data transformations, and ensembles of the THieF models, computed as a mean of predictive quantiles. The models were evaluated using weighted interval score (WIS) as a measure of forecast skill, and the top-performing subset was compared to several benchmark models. These models included simple ARIMA and seasonal ARIMA models, a naive baseline model, and an ensemble of operational incident hospitalization models from the US COVID-19 Forecast Hub. The THieF models and THieF ensembles demonstrated improvements in WIS and MAE, as well as competitive prediction interval coverage, over many benchmark models for both the validation and testing phases. The best THieF model generally ranked second out of nine total models during the testing evaluation. These accuracy improvements suggest the THieF methodology may serve as a useful addition to the infectious disease forecasting toolkit.
+We generated candidate models formulated using the THieF methodology, which differed by their hierarchy schemes and data transformations, and ensembles of the THieF models, computed as a mean of predictive quantiles. The models were evaluated using weighted interval score (WIS) as a measure of forecast skill, and the top-performing subset was compared to several benchmark models. These models included simple ARIMA and seasonal ARIMA models, a naive baseline model, and an ensemble of operational incident hospitalization models from the US COVID-19 Forecast Hub. The THieF models and THieF ensembles demonstrated improvements in WIS and MAE, as well as competitive prediction interval coverage, over many benchmark models for both the validation and testing phases. The best THieF model generally ranked second out of nine total models during the testing evaluation. These accuracy improvements suggest the THieF methodology may serve as a useful addition to the infectious disease forecasting toolkit.
 \end{abstract}
 
 %%
@@ -329,11 +328,11 @@ We focused on the period between Monday, July 27, 2020 and Sunday, October 2, 20
 The first day of the period of analysis (July 27, 2020) was selected as the first day of reliable truth data for all locations of interest. Forecasting for the validation phase began on Monday, December 7, 2020, as this was the first Monday after the HHS Protect confirmed hospitalizations dataset was declared the official ground truth data. The division between the validation and testing phases was chosen to encapsulate three COVID-19 variant-based waves in the validation phase (Winter 2020-21, Alpha, and Delta) and two waves in the testing phase (Omicron and BA.4/BA.5). The separation between pandemic waves was made based on U.S. national level incident hospitalizations, pictured below in Figure \ref{fig:figure_evaluate_period_plot}, and is generally consistent with splits made based on U.S. national incident cases or incident deaths.
 
 \begin{figure}%[h]
+\caption{A plot of the period of analysis, superimposed over COVID-19 incident hospitalizations for the entire United States (U.S. national). Vertical solid lines indicate divisions between phases while dashed lines indicate divisions between variant waves.}
+\label{fig:figure_evaluate_period_plot}
 <<evaluation_period_plot, echo=FALSE, fig=TRUE, height=6, width=9>>=
 tar_read(evaluation_period_plot, store="../_targets")
 @
-\caption{A plot of the period of analysis, superimposed over COVID-19 incident hospitalizations for the entire United States (U.S. national). Vertical solid lines indicate divisions between phases while dashed lines indicate divisions between variant waves.}
-\label{fig:figure_evaluate_period_plot}
 \end{figure}
 
 
@@ -359,11 +358,11 @@ Surveillance data tends to be quite noisy due to reporting artifacts, especially
 The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure. These steps---data aggregation and hierarchy construction, base forecast creation, and reconciliation of base forecasts---are outlined in further detail below and in Figure \ref{fig:thief_concept_figure}\cite{thief}.
 
 \begin{figure}%[h]
+\caption{A plot showing the three steps of the THieF methodology for forecasting U.S. national incident hospitalizations for 1 to 28 days ahead on June 7, 2021}
+\label{fig:thief_concept_figure}
 <<thief_concept_plot, echo=FALSE, fig=TRUE, height=12, width=11>>=
 tar_read(thief_concept_plot, store="../_targets")
 @
-\caption{A plot showing the three steps of the THieF methodology for forecasting U.S. national incident hospitalizations for 1 to 28 days ahead on June 7, 2021}
-\label{fig:thief_concept_figure}
 \end{figure}
 
 \subsection{Data Aggregation and Hierarchy} \label{thief_agg_hierarchy}
@@ -417,6 +416,8 @@ Although it would be preferable to obtain quantiles from the reconciled forecast
 
 \begin{table}[h]
 \begin{center}
+\caption{Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}
+\label{tab:table_quant_int}
 <<quant_int_table, message=FALSE, warning=FALSE, echo=FALSE, results=tex>>=
 Quantile <- c(".010", ".025", ".050", "0.100", "...", "0.500", "...", "0.900", "0.950", ".975", ".990")
 Interval <- c("98L", "95L", "90L", "80L", "...", "Median", "...", "80U", "90U", "95U", "98U")
@@ -425,8 +426,6 @@ quant_int_table <- rbind(Quantile, Interval) %>%
 colnames(quant_int_table) <- NULL
 print(quant_int_table, booktabs=FALSE, floating=FALSE)
 @
-\caption{Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}
-\label{tab:table_quant_int}
 \end{center}
 \end{table}
 
@@ -511,25 +510,25 @@ Hence, the best subset that passed onto the testing phase consisted of the follo
 
 \begin{table}%[h]
 \begin{center}
+\caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}
+\label{tab:table_validation_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_validation_states <- tar_read(overall_validation_states, store="../_targets") %>%
   xtable()
 print(table_validation_states, booktabs=FALSE, floating=FALSE)
 @
-\caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}
-\label{tab:table_validation_states}
 \end{center}
 \end{table}
 
 \begin{table}%[h]
 \begin{center}
+\caption{Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}
+\label{tab:table_validation_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_validation_us <- tar_read(overall_validation_us, store="../_targets") %>%
   xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_validation_us, booktabs=FALSE, floating=FALSE)
 @
-\caption{Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}
-\label{tab:table_validation_us}
 \end{center}
 \end{table}
 
@@ -539,12 +538,36 @@ The seven models from the best subset were joined by the two Forecast Hub compar
 We illustrated the forecasts made during the testing phase through plotting 1- to 28-day ahead incident hospitalization point, 50\% interval, and 95\% interval forecasts for the U.S. national location Figure \ref{fig:figure_forecasts_plot1} from four models of interest: the COVIDhub-4\_week\_ensemble, the COVIDhub-baseline, a poor performing model (sarima\_s7- noTransform), and a top performing model (THieF\_6wk-4root). From this figure, the COVIDhub-4\_week\_ensemble appears to have best followed the true confirmed hospitalizations compared to the other three models, especially during the Omicron wave's period most rapid increase. Note also that for most forecast weeks the COVIDhub-baseline had the widest 95\% interval forecasts of any of the displayed models (recall that narrower intervals tend to be more desirable, as long as they capture the true value). The results shown by Figure \ref{fig:figure_forecasts_plot1} were mirrored (and perhaps further explained) by the following stratified evaluations.
 
 \begin{figure}%[h]
+\caption{U.S. national incident hospitalization forecasts during the testing phase from select models}
+\label{fig:figure_forecasts_plot1}
 <<forecast_models_plot, echo=FALSE, fig=TRUE, height=12, width=10>>=
 tar_read(plot_models_1, store="../_targets") + theme_bw()
 @
-\caption{U.S. national incident hospitalization forecasts during the testing phase from select models}
-\label{fig:figure_forecasts_plot1}
 \end{figure}
+
+\begin{table}%[h]
+\begin{center}
+\caption{Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}
+\label{tab:table_overall_states}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_overall_states <- tar_read(overall_metrics_states, store="../_targets") %>%
+  xtable()
+print(table_overall_states, booktabs=FALSE, floating=FALSE)
+@
+\end{center}
+\end{table}
+
+\begin{table}[h]
+\begin{center}
+\caption{Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}
+\label{tab:table_overall_us}
+<<echo=FALSE, eval=TRUE, results=tex>>=
+table_overall_us <- tar_read(overall_metrics_us, store="../_targets") %>%
+  xtable(digits=c(0, rep(1, 3), rep(2, 4)))
+print(table_overall_us, booktabs=FALSE, floating=FALSE)
+@
+\end{center}
+\end{table}
 
 \subsection{Overall model performance} \label{testing_overall}
 Tables \ref{tab:table_overall_states} and \ref{tab:table_overall_us} summarize model performance during the entire testing phase for the averaged states scale and U.S. national scale, respectively. Both geographic scales showed very similar model rankings for the overall testing phase evaluation, with the top six models outperforming the COVIDhub-baseline. The COVIDhub-4\_week\_ensemble has the lowest WIS and MAE by a substantial margin. THieF\_6wk-4root displayed the second lowest WIS and MAE, followed closely by THieF\_12wk-4root, THieF\_ensemble-train3, THieF\_ensemble-mean, which all have relative WIS and relative MAE values within 0.02 of each other. The two worst-performing models---arima\_s1-noTransform and sarima\_s7-noTransform---were consistent between geographic scales. However, there are some notable differences between performance for averaged states versus U.S. national.
@@ -552,30 +575,6 @@ Tables \ref{tab:table_overall_states} and \ref{tab:table_overall_us} summarize m
 The averaged states results in Table \ref{tab:table_overall_states} displayed smaller and more closely-clustered WIS and MAE values. Every best subset model was well-calibrated, with near-nominal coverage rates at both uncertainty levels. In fact, our models had better 50\% coverage rates than those of the Forecast Hub models. Additionally, the models in the lower half of the ranking, including the COVIDhub-baseline, all showed very similar relative WIS and relative MAE values for this geographic scale.
 
 The U.S. national results in Table \ref{tab:table_overall_us}, however, showed WIS and MAE values that tend to be more spread out, partially a result of their larger exporter magnitude. At this geographic scale, our models had below-nominal coverage rates for both uncertainty levels. The Forecast Hub models had above-nominal coverage rates at the 50\% level but also fell short of nominal coverage at the 95\% level. While the THieF ensembles ranked higher than the THieF\_12wk-4root model for U.S. national, there was not a substantial difference in terms of relative WIS and relative MAE value. Further, THieF\_6wk-noTransform showed more similar performance to the top four ranked models compared to that of the COVIDhub-baseline, unlike for averaged states. The sarima\_s7-noTransform model, which had the highest WIS and MAE, was substantially worse than the COVIDhub-baseline and the model ranked just above it, arima\_s1-noTransform.
-
-\begin{table}%[h]
-\begin{center}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_overall_states <- tar_read(overall_metrics_states, store="../_targets") %>%
-  xtable()
-print(table_overall_states, booktabs=FALSE, floating=FALSE)
-@
-\caption{Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}
-\label{tab:table_overall_states}
-\end{center}
-\end{table}
-
-\begin{table}[h]
-\begin{center}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_overall_us <- tar_read(overall_metrics_us, store="../_targets") %>%
-  xtable(digits=c(0, rep(1, 3), rep(2, 4)))
-print(table_overall_us, booktabs=FALSE, floating=FALSE)
-@
-\caption{Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}
-\label{tab:table_overall_us}
-\end{center}
-\end{table}
 
 \subsection{Model performance by horizon week} \label{testing_horizon}
 We display the results graphically from this stratified evaluation forward for improved readability, with the full tables of results displayed in the Appendix. Only WIS plots are shown because it is our principle evaluation metric and the MAE plots show very similar results. The by-horizon evaluation (see Figure \ref{fig:figure_horizon_plot} and Supplemental Tables \ref{tab:table_horizon_states} and \ref{tab:table_horizon_us}) showed similar model rankings to those of the overall evaluation. The COVIDhub-4\_week\_ensemble has much lower WIS for all horizons and geographic scales compared to the other eight models while THieF\_6wk-4root tended to have the second-lowest WIS for most horizons, beating the corresponding THieF\_6wk-noTransform model at every horizon. Additionally, for all but the 1-week ahead horizon, the top six models beat the COVIDhub-baseline in terms of lowest WIS for both geographic scales. The COVIDhub-4\_week\_ensemble also substantially outperforms all other seven models.  However, aggregating the forecasts by horizon illustrates some important differences in accuracy between horizon weeks.
@@ -585,11 +584,11 @@ Figure \ref{fig:figure_horizon_plot} shows that for both geographic scales the T
 Coverage rates for the averaged states geographic scale (see Supplemental Table \ref{tab:table_horizon_states}) remained high across horizons for all models, with most 95\% coverage rates falling no more than 9\% below the nominal rate at any horizon. Meanwhile, coverage rates were lower for the U.S. national scale (shown in Supplemental Table \ref{tab:table_horizon_us}), falling to up to 19\% below the nominal rate (though most were no lower than 15\%).
 
 \begin{figure}%[h]
+\caption{Average WIS plotted by horizon week during the testing phase for each model at both geographic scales}
+\label{fig:figure_horizon_plot}
 <<horizon_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
 tar_read(combined_wis_plot, store="../_targets")
 @
-\caption{Average WIS plotted by horizon week during the testing phase for each model at both geographic scales}
-\label{fig:figure_horizon_plot}
 \end{figure}
 
 \subsection{Model performance by pandemic wave} \label{testing_wave}
@@ -602,11 +601,11 @@ For the BA.4/BA.5 variant wave, model rankings by WIS were more distinct and ten
 Supplemental Tables \ref{tab:table_wave_states} and \ref{tab:table_wave_us} show that for the BA.4/BA.5 wave, coverage rates were exceedingly high for the averaged states level and close to nominal for all but THieF\_12wk-4root for the 4-week ahead horizon at the U.S. national geographic scale. On the other hand, the Omicron wave coverage rates were substantially lower, all nine models failing to reach the nominal level for the 95\% prediction interval. Such performance is not unusual given the high magnitude and rapid change seen during this wave.
 
 \begin{figure}%[h]
+\caption{Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both geographic scales}
+\label{fig:figure_wave_plot}
 <<wave_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
 tar_read(combined_wis_wave_plot, store="../_targets")
 @
-\caption{Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both geographic scales}
-\label{fig:figure_wave_plot}
 \end{figure}
 
 \subsection{Model performance by forecast week} \label{testing_forecast_week}
@@ -619,19 +618,19 @@ The by--forecast week break down of THieF\_6wk-noTransform was particularly inte
 Further, both fourth root original THieF displayed strangely low 95\% coverage for averaged states following the decline of the Omicron wave at both plotted horizons, especially since the other seven models experienced significantly higher coverage rates during this time. (Comparisons among models for U.S. national 95\% coverage by forecast week were harder to make since this location scale only included seven 95\% interval forecasts for one location (compared to seven per 52 locations for averaged states), so we simply allow the plots in Figure \ref{fig:figure_date_plot_states} to speak for themselves.)
 
 \begin{figure}%[h]
+\caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}
+\label{fig:figure_date_plot_states}
 <<states_date_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
 tar_read(combined_wis_cov95_plot_states, store="../_targets")
 @
-\caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}
-\label{fig:figure_date_plot_states}
 \end{figure}
 
 \begin{figure}%[h]
+\caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for U.S. national}
+\label{fig:figure_date_plot_us}
 <<us_date_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
 tar_read(combined_wis_cov95_plot_us, store="../_targets")
 @
-\caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for U.S. national}
-\label{fig:figure_date_plot_us}
 \end{figure}
 
 \subsection{Model performance by location} \label{testing_location}
@@ -640,11 +639,11 @@ Figure \ref{fig:figure_location_plot} summarizes the by-location evaluation, wit
 The worst two models included some shades of red which represent performance worse than the COVIDhub-baseline. However, these models performed better than the baseline for many locations. In addition, most of the worst performance relative to the baseline occurred in the locations with the highest cumulative hospitalizations during the testing phase, except for the THieF\_12wk-4root model with low count locations New Hampshire and Vermont. The general trend, though, was perhaps unsurprising since we know that high-count settings tend to be more difficult to forecast accurately.
 
 \begin{figure}%[h]
+\caption{Relative WIS plotted by location during the testing phase for each model across all horizons}
+\label{fig:figure_location_plot}
 <<location_plot, echo=FALSE, fig=TRUE, height=18, width=15>>=
 tar_read(wis_location_plot, store="../_targets")
 @
-\caption{Relative WIS plotted by location during the testing phase for each model across all horizons}
-\label{fig:figure_location_plot}
 \end{figure}
 
 
@@ -682,9 +681,9 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 %% \chapter{THE FIRST APPENDIX TITLE}
 
 \begin{figure}[h]
-\includegraphics[width=0.95\textwidth]{../inst/thief_all}
 \caption{Illustration of three hierarchy schemes used to create six of the fourteen total original THieF models}
 \label{fig:figure_thief_hierarchy}
+\includegraphics[width=0.95\textwidth]{../inst/thief_all}
 \end{figure}
 
 \newpage
@@ -692,7 +691,7 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
   xtable(digits=c(rep(0, 1), rep(3, 3), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS", label="tab:table_last17_states")
-print(table_last17_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
+print(table_last17_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
 
 %\begin{table}%[h]
@@ -712,8 +711,7 @@ print(table_last17_states, booktabs=FALSE, floating=FALSE)
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
   xtable(digits=c(rep(0, 1), rep(1, 3), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS", label="tab:table_last17_us")
-print(table_last17_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
-      include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
+print(table_last17_us, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
 
 %\begin{table}%[h]
@@ -733,17 +731,16 @@ print(table_last17_us, booktabs=FALSE, floating=FALSE)
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
-  rename(`hzn` = horizon_wk) %>%
+  rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(2, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS", label="tab:table_horizon_states")
-print(table_horizon_states, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
-      include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
+print(table_horizon_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
 
 %\begin{table}%[h]
 %\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
-  rename(`hzn` = horizon_wk) %>%
+  rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(2, 6)))
 print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 @
@@ -756,17 +753,16 @@ print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
-  rename(`hzn` = horizon_wk) %>%
+  rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS", label="tab:table_horizon_us")
-print(table_horizon_us, booktabs=FALSE, tabular.environment='longtable', floating=FALSE,
-      include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
+print(table_horizon_us, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
 
 %\begin{table}%[h]
 %\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
-  rename(`hzn` = horizon_wk) %>%
+  rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)))
 print(table_horizon_us, booktabs=FALSE, floating=FALSE)
 @
@@ -780,20 +776,26 @@ print(table_horizon_us, booktabs=FALSE, floating=FALSE)
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
-  rename(`hzn` = horizon_wk) %>%
+  mutate(
+    wave = replace(wave, wave == "ba4_ba5", "BA.4/BA.5"),
+    wave = replace(wave, wave == "omicron", "Omicron")
+  ) %>%
+  rename(`Hzn` = horizon_wk, `Wave` = wave) %>%
   xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS", label="tab:table_wave_states")
-print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
-      floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
+print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
 @
 
 %\begin{table}[h]
 %\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
-  rename(`hzn` = horizon_wk) %>%
+  mutate(
+    wave = replace(wave, wave == "ba4_ba5", "BA.4/BA.5"),
+    wave = replace(wave, wave == "omicron", "Omicron")
+  ) %>%
+  rename(`Hzn` = horizon_wk, `Wave` = wave) %>%
   xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)))
-print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
-      floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
+print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
 @
 %\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}
 %\label{tab:table_wave_states}
@@ -805,9 +807,13 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable',
 %\captionsetup{width=6cm}
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
-  rename(`hzn` = horizon_wk) %>%
+  mutate(
+    wave = replace(wave, wave == "ba4_ba5", "BA.4/BA.5"),
+    wave = replace(wave, wave == "omicron", "Omicron")
+  ) %>%
+  rename(`Hzn` = horizon_wk, `Wave` = wave) %>%
   xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS", label="tab:table_wave_us")
-print(table_wave_us, booktabs=FALSE, tabular.environment="longtable", include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
+print(table_wave_us, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
 @
 %\captionsetup{width=default}
 
@@ -817,7 +823,7 @@ print(table_wave_us, booktabs=FALSE, tabular.environment="longtable", include.ro
 %\renewcommand{\arraystretch}{1.5}
 <<echo=FALSE, eval=FALSE, results=tex>>=
 table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
-  rename(`hzn` = horizon_wk) %>%
+  rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)), auto=TRUE)
 print(table_wave_us, booktabs=FALSE, floating=FALSE, include.rownames=FALSE)
 @
