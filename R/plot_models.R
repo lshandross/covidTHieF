@@ -52,14 +52,15 @@ plot_models_one_location <-
             facet_nrow = facet_nrow,
     #       facet_scales = "free_y",
             fill_by_model = TRUE,
-            plot=FALSE)
+            plot=FALSE) +
+            theme_bw()
     }
     pt <- p +
-      scale_x_date(name=NULL, limits = date_limits, date_breaks = "4 months", date_labels = "%b %y") +
+      scale_x_date(name=NULL, limits = date_limits, date_breaks = "4 months", date_labels = "%b '%y") +
       coord_cartesian(ylim = c(0, max(filter(truth, location==fips)$value) * 1.15)) +
       theme(axis.ticks.length.x = unit(0.5, "cm"),
             axis.text.x = element_text(vjust = 7, hjust = -0.2),
-            legend.position = "none")
+            legend.position = "none") 
 
     print(pt)
   }

@@ -48,7 +48,8 @@ plot_summarized_metrics <-
       scale_color_manual(breaks = model_names, values = model_colors) +
 #      scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
       labs(title=main, x="horizon week", y=paste("average", y_var)) +
-      guides(col=guide_legend(nrow=ceiling(length(model_names)/3), byrow=TRUE))
+      guides(col=guide_legend(nrow=ceiling(length(model_names)/3), byrow=FALSE)) +
+      theme_bw()
 }
 
 # wis_US <- plot_summarized_metrics(horizon_test_US, model_names, model_colors, y_var = "WIS", main="US")
@@ -107,7 +108,7 @@ plot_forecast_date_metrics <-
     gg +
       geom_point(mapping=aes(col=Model), alpha = 0.8) +
       geom_line(mapping=aes(col=Model), alpha = 0.8) +
-      scale_x_date(name=NULL, date_breaks = "1 month", date_labels = "%b") +
+      scale_x_date(name=NULL, date_breaks = "3 months", date_labels = "%b '%y") +
       scale_color_manual(breaks = model_names, values = model_colors) +
 #      scale_linetype_manual(breaks=c("noTransform", "4root"), values=c("solid", "dashed")) +
       labs(title=main, x="forecast date", y=paste("average", y_var)) +
@@ -116,7 +117,8 @@ plot_forecast_date_metrics <-
         axis.text.x = element_text(vjust = 2, hjust = -0.2),
         legend.position = 'bottom'
       ) +
-      guides(col=guide_legend(nrow=ceiling(length(model_names)/3), byrow=TRUE))
+      guides(col=guide_legend(nrow=ceiling(length(model_names)/3), byrow=FALSE)) +
+      theme_bw()
   }
 
 # plot_forecast_date_metrics(forecast_date_test_US, model_names, model_colors, y_var="WIS", horizon_week=1, main="WIS (1-week)") 
