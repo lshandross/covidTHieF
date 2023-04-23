@@ -43,7 +43,7 @@ list(
   tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))),
   tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 7), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")),
   tar_target(validation_models, c(all_thief, sarima_models, thief_ensembles)),
-  tar_target(testing_models, c("sarima_s7-noTransform", "sarima_s1-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_ensemble-train3", "THieF_ensemble-mean")),
+  tar_target(testing_models, c("sarima_s7-noTransform", "arima_s1-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_ensemble-train3", "THieF_ensemble-mean")),
 
   tar_target(validation_model_names, c("COVIDhub-baseline", validation_models)),
   tar_target(
@@ -133,6 +133,8 @@ list(
           ) + weeks(1),
         horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
         forecast_date = mon_fc_date,
+        model = replace(model, model == "sarima_s1-4root", "arima_s1-4root"), 
+        model = replace(model, model == "sarima_s1-noTransform", "arima_s1-noTransform")
       ) %>%
       select(-mon_fc_date) %>%
       filter(horizon_wk %in% 1:4)
@@ -149,6 +151,8 @@ list(
           ) + weeks(1),
         horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
         forecast_date = mon_fc_date,
+        model = replace(model, model == "sarima_s1-4root", "arima_s1-4root"), 
+        model = replace(model, model == "sarima_s1-noTransform", "arima_s1-noTransform")
       ) %>%
       select(-mon_fc_date) %>%
       filter(
@@ -178,28 +182,28 @@ tar_target(
     geom_vline(xintercept = as.Date("2021-11-01"), linetype="solid") +
     geom_vline(xintercept = as.Date("2022-04-06"), linetype="dashed") +
     geom_vline(xintercept = as.Date("2022-10-02"), linetype="solid") +
-    annotate(geom = "text", x = as.Date("2020-07-17"), y = 2500, 
-             label = "Validation Start", size = 4, angle = 90) + 
-    annotate(geom = "text", x = as.Date("2020-11-27"), y = 2500, # 2020-12-19
-             label = "Forecasts Start", size = 4, angle = 90) +
-    annotate(geom = "text", x = as.Date("2021-10-20"), y = 2500, 
-             label = "Testing Start", size = 4, angle = 90) + 
-    annotate(geom = "text", x = as.Date("2022-09-22"), y = 2500, 
-             label = "Testing End", size = 4, angle = 90) + 
-    annotate(geom = "text", x = as.Date("2021-01-03"), y = 25000, 
-             label = "Winter 2020-21", size = 4, angle = 0) + 
+    annotate(geom = "text", x = as.Date("2020-07-13"), y = 2400, 
+             label = "Validation Start", size = 5, angle = 90) + 
+    annotate(geom = "text", x = as.Date("2020-11-22"), y = 2500, # 2020-12-19
+             label = "Forecasts Start", size = 5, angle = 90) +
+    annotate(geom = "text", x = as.Date("2021-10-19"), y = 1800, 
+             label = "Testing Start", size = 5, angle = 90) + 
+    annotate(geom = "text", x = as.Date("2022-10-15"), y = 1600, 
+             label = "Testing End", size = 5, angle = 90) + 
+    annotate(geom = "text", x = as.Date("2021-01-01"), y = 25000, 
+             label = "Winter 2020-21", size = 5, angle = 0) + 
     annotate(geom = "text", x = as.Date("2021-05-11"), y = 25000, 
-             label = "Alpha", size = 4, angle = 0) + 
-    annotate(geom = "text", x = as.Date("2021-09-03"), y = 25000, 
-             label = "Delta", size = 4, angle = 0) + 
+             label = "Alpha", size = 5, angle = 0) + 
+    annotate(geom = "text", x = as.Date("2021-09-02"), y = 25000, 
+             label = "Delta", size = 5, angle = 0) + 
     annotate(geom = "text", x = as.Date("2022-01-19"), y = 25000, 
-             label = "Omicron", size = 4, angle = 0) + 
+             label = "Omicron", size = 5, angle = 0) + 
     annotate(geom = "text", x = as.Date("2022-07-05"), y = 25000, 
-             label = "BA.4/BA.5", size = 4, angle = 0) + 
+             label = "BA.4/BA.5", size = 5, angle = 0) + 
     scale_x_date(name=NULL, date_breaks = "4 month", minor_breaks = "2 month",
                  date_labels = "%b '%y") + 
     ylim(c(0, NA)) +
-    theme(axis.ticks.length.x = unit(0.25, "cm"),  
+    theme(axis.ticks.length.x = unit(0.75, "cm"),  
           axis.text.x = element_text(vjust = 1, hjust = 0.5),
           legend.position = "none") + 
     theme_bw() +
@@ -298,7 +302,7 @@ tar_target(
   ),
   tar_target(
     combined_wis_plot,
-      wis_plot_us + wis_plot_states +
+      wis_plot_states + wis_plot_us +
       plot_layout(ncol = 2, guides='collect') &
       theme(legend.position='bottom')
   ),
@@ -355,7 +359,7 @@ tar_target(
   ),
   tar_target(
     combined_wis_wave_plot,
-    wis_plot_omicron_us + wis_plot_omicron_states + wis_plot_ba4ba5_us + wis_plot_ba4ba5_states +
+    wis_plot_omicron_states + wis_plot_omicron_us + wis_plot_ba4ba5_states + wis_plot_ba4ba5_us +
       plot_layout(ncol = 2, guides='collect') &
       theme(legend.position='bottom')
   ),
