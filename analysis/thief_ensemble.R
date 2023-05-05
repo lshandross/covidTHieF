@@ -210,7 +210,7 @@ build_composite_ensemble <- function(forecast_df = NULL, composite_models, score
     mutate(model = ensemble_name, .before = forecast_date) %>%
     left_join(hub_locations, by = c("location" = "fips"))
 
-  ensemble_forecasts
+  (ensemble_forecasts)
 }
 
 # Testing

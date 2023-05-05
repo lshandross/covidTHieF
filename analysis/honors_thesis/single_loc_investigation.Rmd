@@ -16,14 +16,14 @@ library(covidHubUtils)
 ```
 
 ```{r load in data, echo=FALSE, message=FALSE, warning=FALSE, fig.width=15, fig.height=8}
-func_list <- list.files(path = "../R", pattern=".R", full.names=TRUE)
+func_list <- list.files(path = "../../R", pattern=".R", full.names=TRUE)
 lapply(func_list, source)
 
 models <- c("THieF_4wk-4root", "THieF_4wk-noTrans",
             "THieF_8wk-4root", "THieF_8wk-noTrans",
             "THieF_12wk-4root", "THieF_12wk-noTrans")
 for (i in 1:6) {
-  load(file=paste("../data/", models[i], "/", models[i], ".RData", sep=""))
+  load(file=paste("../../data/", models[i], "/", models[i], ".RData", sep=""))
 }
 
 mon_fc_dates <- c(as.Date("2020-12-07") + weeks(0:29))
@@ -33,7 +33,7 @@ full_hosp_truth <- load_truth("HealthData",
                          temporal_resolution="daily",
                          data_location = "remote_hub_repo") %>%
                    arrange(location, target_end_date)
-load(file="../data/versioned_truth_training.RData")
+load(file="../../data/versioned_truth_training.RData")
 
 start_date = as.Date("2020-07-27"); end_date_ = as.Date("2021-01-03")
 pi_levels = c(10 * (1:9), 95, 98)
@@ -139,7 +139,7 @@ temp_rec_df2 <- transform_to_hub_df(temp_reconciled2, end_date-2, "04", pi_level
 temp_rec_df1 <- thd(temp_reconciled, end_date-2, "04", pi_levels, TRUE)
 
   
-thief_wrapper(NULL, ts_col = "value", 
+hub_test <- thief_wrapper(NULL, ts_col = "value", 
   start_date, end_date, fips_code = "US",
   aggregate_levels = list(14, 7, 1), frequency = 14,
   pi_levels = pi_levels,
@@ -150,7 +150,7 @@ thief_wrapper(NULL, ts_col = "value",
 plot_thief(base_fc_no_04_210104, rec_fc_no_04_210104, dates_test)
 rec_fc_no_04_210104 %>% transform_to_hub_df(end_date-1, "04", pi_levels, FALSE)
 
-load(paste("../data/", models[3], "/", models[3], "2.RData", sep=""))
+load(paste("../../data/", models[3], "/", models[3], "2.RData", sep=""))
 sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:29))
 fips_vec <- filter(hub_locations, geo_type == "state", population >= 500000) %>% pull(fips)
 
@@ -167,7 +167,7 @@ thief_df <- map_dfr(
   }
 )
 
-write_csv(thief_df, file=paste("../data/", models[3], "/", mon_fc_dates[27], "-", models[3], ".csv", sep=""))
+write_csv(thief_df, file=paste("../../data/", models[3], "/", mon_fc_dates[27], "-", models[3], ".csv", sep=""))
 ```
 
 ```{r sarima covid fc}

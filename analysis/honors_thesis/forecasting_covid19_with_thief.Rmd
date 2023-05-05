@@ -176,8 +176,8 @@ No statistical tests are performed to assess the significance of differences in 
 For every evaluation following the overall model performance, I evaluate performance at each horizon week separately, as important differences in accuracy arise at different horizons. Further, I also evaluate the US national level separately from the state/territory level given the significant differences in scale between values and due to the fact that the former is a sum of the latter. The performance for the state/territory level is averaged across all locations.   
 
 ```{r}
-load("../data/loadedfc_scores_df.RData")
-load("../data/baseline_fc_scores.RData")
+load("../../data/loadedfc_scores_df.RData")
+load("../../data/baseline_fc_scores.RData")
 
 # Rename models
 forecasts_df <-forecasts_df %>%
