@@ -1,3 +1,5 @@
+ \documentclass[thesis]{umassthesis}  % for Master's thesis
+
 \usepackage[hidelinks]{hyperref} % to hide links as per grad school requirements
 \usepackage{graphicx}
 \usepackage{amsmath}
@@ -23,7 +25,7 @@ library(xtable) # For pretty tables
 library(ggthemes) # plot themes?
 library(DiagrammeR)
 
-func_list <- list.files(path = "../R", pattern=".R", full.names=TRUE)
+func_list <- list.files(path = "../../R", pattern=".R", full.names=TRUE)
 lapply(func_list, source)
 
 opts_chunk$set(
@@ -43,7 +45,7 @@ cache=TRUE
 \committeechair{Nicholas G. Reich}
 \firstreader{Evan L. Ray}
 \secondreader{Benjamin W. Rogers}
-\departmentchair{Lisa Chasan-Taber} 
+\departmentchair{Lisa Chasan-Taber}
 \departmentname{Biostatistics and Epidemiology}
 
 
@@ -138,7 +140,7 @@ The first day of the period of analysis (July 27, 2020) was selected as the firs
 \caption{A plot of the period of analysis, superimposed over COVID-19 incident hospitalizations for the entire United States (U.S. national). Vertical solid lines indicate divisions between phases while dashed lines indicate divisions between variant waves.}
 \label{fig:figure_evaluate_period_plot}
 <<evaluation_period_plot, echo=FALSE, fig=TRUE, height=6, width=9>>=
-tar_read(evaluation_period_plot, store="../_targets")
+tar_read(evaluation_period_plot, store="../../_targets")
 @
 \end{figure}
 
@@ -168,7 +170,7 @@ The THieF methodology consists of three steps to produce forecasts from time-ser
 \caption{A plot showing the three steps of the THieF methodology for forecasting U.S. national incident hospitalizations for 1 to 28 days ahead on June 7, 2021}
 \label{fig:thief_concept_figure}
 <<thief_concept_plot, echo=FALSE, fig=TRUE, height=12, width=11>>=
-tar_read(thief_concept_plot, store="../_targets")
+tar_read(thief_concept_plot, store="../../_targets")
 @
 \end{figure}
 
@@ -320,7 +322,7 @@ Hence, the best subset that passed onto the testing phase consisted of the follo
 \caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}
 \label{tab:table_validation_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_validation_states <- tar_read(overall_validation_states, store="../_targets") %>%
+table_validation_states <- tar_read(overall_validation_states, store="../../_targets") %>%
   xtable()
 print(table_validation_states, booktabs=FALSE, floating=FALSE)
 @
@@ -332,7 +334,7 @@ print(table_validation_states, booktabs=FALSE, floating=FALSE)
 \caption{Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}
 \label{tab:table_validation_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_validation_us <- tar_read(overall_validation_us, store="../_targets") %>%
+table_validation_us <- tar_read(overall_validation_us, store="../../_targets") %>%
   xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_validation_us, booktabs=FALSE, floating=FALSE)
 @
@@ -348,7 +350,7 @@ We illustrated the forecasts made during the testing phase through plotting 1- t
 \caption{U.S. national incident hospitalization forecasts during the testing phase from select models}
 \label{fig:figure_forecasts_plot1}
 <<forecast_models_plot, echo=FALSE, fig=TRUE, height=12, width=10>>=
-tar_read(plot_models_1, store="../_targets") + theme_bw()
+tar_read(plot_models_1, store="../../_targets") + theme_bw()
 @
 \end{figure}
 
@@ -357,7 +359,7 @@ tar_read(plot_models_1, store="../_targets") + theme_bw()
 \caption{Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}
 \label{tab:table_overall_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_overall_states <- tar_read(overall_metrics_states, store="../_targets") %>%
+table_overall_states <- tar_read(overall_metrics_states, store="../../_targets") %>%
   xtable()
 print(table_overall_states, booktabs=FALSE, floating=FALSE)
 @
@@ -369,7 +371,7 @@ print(table_overall_states, booktabs=FALSE, floating=FALSE)
 \caption{Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}
 \label{tab:table_overall_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_overall_us <- tar_read(overall_metrics_us, store="../_targets") %>%
+table_overall_us <- tar_read(overall_metrics_us, store="../../_targets") %>%
   xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_overall_us, booktabs=FALSE, floating=FALSE)
 @
@@ -394,7 +396,7 @@ Coverage rates for the averaged states geographic scale (see Supplemental Table 
 \caption{Average WIS plotted by horizon week during the testing phase for each model at both geographic scales}
 \label{fig:figure_horizon_plot}
 <<horizon_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
-tar_read(combined_wis_plot, store="../_targets")
+tar_read(combined_wis_plot, store="../../_targets")
 @
 \end{figure}
 
@@ -411,7 +413,7 @@ Supplemental Tables \ref{tab:table_wave_states} and \ref{tab:table_wave_us} show
 \caption{Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both geographic scales}
 \label{fig:figure_wave_plot}
 <<wave_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
-tar_read(combined_wis_wave_plot, store="../_targets")
+tar_read(combined_wis_wave_plot, store="../../_targets")
 @
 \end{figure}
 
@@ -428,7 +430,7 @@ Further, both fourth root original THieF displayed strangely low 95\% coverage f
 \caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}
 \label{fig:figure_date_plot_states}
 <<states_date_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
-tar_read(combined_wis_cov95_plot_states, store="../_targets")
+tar_read(combined_wis_cov95_plot_states, store="../../_targets")
 @
 \end{figure}
 
@@ -436,7 +438,7 @@ tar_read(combined_wis_cov95_plot_states, store="../_targets")
 \caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for U.S. national}
 \label{fig:figure_date_plot_us}
 <<us_date_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
-tar_read(combined_wis_cov95_plot_us, store="../_targets")
+tar_read(combined_wis_cov95_plot_us, store="../../_targets")
 @
 \end{figure}
 
@@ -449,7 +451,7 @@ The worst two models included some shades of red which represent performance wor
 \caption{Relative WIS plotted by location during the testing phase for each model across all horizons}
 \label{fig:figure_location_plot}
 <<location_plot, echo=FALSE, fig=TRUE, height=18, width=15>>=
-tar_read(wis_location_plot, store="../_targets")
+tar_read(wis_location_plot, store="../../_targets")
 @
 \end{figure}
 
@@ -489,13 +491,13 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 \begin{figure}[h]
 \caption{Illustration of three hierarchy schemes used to create six of the fourteen total original THieF models}
 \label{fig:figure_thief_hierarchy}
-\includegraphics[width=0.95\textwidth]{../inst/thief_all}
+\includegraphics[width=0.95\textwidth]{../honors_thesis/thief_all}
 \end{figure}
 
 \newpage
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
+table_last17_states <- tar_read(last17_validation_states, store="../../_targets") %>%
   xtable(digits=c(rep(0, 1), rep(3, 3), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS", label="tab:table_last17_states")
 print(table_last17_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
@@ -503,7 +505,7 @@ print(table_last17_states, booktabs=FALSE, tabular.environment='longtable', capt
 %\begin{table}%[h]
 %\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
-table_last17_states <- tar_read(last17_validation_states, store="../_targets") %>%
+table_last17_states <- tar_read(last17_validation_states, store="../../_targets") %>%
   xtable(digits=c(rep(0, 1), rep(3, 3), rep(2, 4)), auto=TRUE)
 print(table_last17_states, booktabs=FALSE, floating=FALSE)
 @
@@ -515,7 +517,7 @@ print(table_last17_states, booktabs=FALSE, floating=FALSE)
 \newpage
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
+table_last17_us <- tar_read(last17_validation_us, store="../../_targets") %>%
   xtable(digits=c(rep(0, 1), rep(1, 3), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS", label="tab:table_last17_us")
 print(table_last17_us, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
 @
@@ -523,7 +525,7 @@ print(table_last17_us, booktabs=FALSE, tabular.environment='longtable', caption.
 %\begin{table}%[h]
 %\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
-table_last17_us <- tar_read(last17_validation_us, store="../_targets") %>%
+table_last17_us <- tar_read(last17_validation_us, store="../../_targets") %>%
   xtable(digits=c(0, rep(1, 3), rep(2, 4)))
 print(table_last17_us, booktabs=FALSE, floating=FALSE)
 @
@@ -536,7 +538,7 @@ print(table_last17_us, booktabs=FALSE, floating=FALSE)
 
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
+table_horizon_states <- tar_read(horizon_metrics_states, store="../../_targets") %>%
   rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(2, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS", label="tab:table_horizon_states")
 print(table_horizon_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
@@ -545,7 +547,7 @@ print(table_horizon_states, booktabs=FALSE, tabular.environment='longtable', cap
 %\begin{table}%[h]
 %\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
-table_horizon_states <- tar_read(horizon_metrics_states, store="../_targets") %>%
+table_horizon_states <- tar_read(horizon_metrics_states, store="../../_targets") %>%
   rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(2, 6)))
 print(table_horizon_states, booktabs=FALSE, floating=FALSE)
@@ -558,7 +560,7 @@ print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 \newpage
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
+table_horizon_us <- tar_read(horizon_metrics_us, store="../../_targets") %>%
   rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS", label="tab:table_horizon_us")
 print(table_horizon_us, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
@@ -567,7 +569,7 @@ print(table_horizon_us, booktabs=FALSE, tabular.environment='longtable', caption
 %\begin{table}%[h]
 %\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
-table_horizon_us <- tar_read(horizon_metrics_us, store="../_targets") %>%
+table_horizon_us <- tar_read(horizon_metrics_us, store="../../_targets") %>%
   rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)))
 print(table_horizon_us, booktabs=FALSE, floating=FALSE)
@@ -581,7 +583,7 @@ print(table_horizon_us, booktabs=FALSE, floating=FALSE)
 
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
+table_wave_states <- tar_read(wave_metrics_states, store="../../_targets") %>%
   mutate(
     wave = replace(wave, wave == "ba4_ba5", "BA.4/BA.5"),
     wave = replace(wave, wave == "omicron", "Omicron")
@@ -594,7 +596,7 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', captio
 %\begin{table}[h]
 %\begin{center}
 <<echo=FALSE, eval=FALSE, results=tex>>=
-table_wave_states <- tar_read(wave_metrics_states, store="../_targets") %>%
+table_wave_states <- tar_read(wave_metrics_states, store="../../_targets") %>%
   mutate(
     wave = replace(wave, wave == "ba4_ba5", "BA.4/BA.5"),
     wave = replace(wave, wave == "omicron", "Omicron")
@@ -612,7 +614,7 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', captio
 
 %\captionsetup{width=6cm}
 <<echo=FALSE, eval=TRUE, results=tex>>=
-table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
+table_wave_us <- tar_read(wave_metrics_us, store="../../_targets") %>%
   mutate(
     wave = replace(wave, wave == "ba4_ba5", "BA.4/BA.5"),
     wave = replace(wave, wave == "omicron", "Omicron")
@@ -628,7 +630,7 @@ print(table_wave_us, booktabs=FALSE, tabular.environment='longtable', caption.pl
 %\setlength{\tabcolsep}{20pt}
 %\renewcommand{\arraystretch}{1.5}
 <<echo=FALSE, eval=FALSE, results=tex>>=
-table_wave_us <- tar_read(wave_metrics_us, store="../_targets") %>%
+table_wave_us <- tar_read(wave_metrics_us, store="../../_targets") %>%
   rename(`Hzn` = horizon_wk) %>%
   xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)), auto=TRUE)
 print(table_wave_us, booktabs=FALSE, floating=FALSE, include.rownames=FALSE)
