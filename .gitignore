@@ -2,3 +2,12 @@
 .Rhistory
 .RData
 .Ruserdata
+*.RData
+analysis/ms_thesis/attempts at table formatting.sty
+*.aux
+analysis/ms_thesis/ms_thesis.aux
+analysis/ms_thesis/ms_thesis.lof
+*.log
+*.lot
+*.out
+analysis/ms_thesis/presentation figures code.r
