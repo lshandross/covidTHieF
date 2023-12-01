@@ -12,29 +12,11 @@
 \usepackage{longtable}
 \usepackage{tabularx}
 
+\usepackage{Sweave}
 \begin{document}
-\SweaveOpts{concordance=TRUE} % necessary for formatting
+\input{covid_thief-concordance} % necessary for formatting
 \setkeys{Gin}{width=1.00\textwidth} % increase figure with from default 0.8\textwidth
 
-<<include=FALSE, echo=FALSE, message=FALSE, warning=FALSE, results=hide>>=
-library(knitr)
-library(tidyverse)
-library(tables)
-library(patchwork)
-library(targets)
-library(GGally) # For pairplots, disable if it causes ggplot errors
-library(xtable) # For pretty tables
-library(ggthemes) # plot themes?
-library(DiagrammeR)
-
-func_list <- list.files(path = "../../R", pattern=".R", full.names=TRUE)
-lapply(func_list, source)
-
-opts_chunk$set(
-concordance=TRUE,
-cache=TRUE
-)
-@
 
 %%
 %% You must fill in all of these appropriately
@@ -133,9 +115,7 @@ The first day of the period of analysis (July 27, 2020) was selected as the firs
 \begin{figure}%[h]
 \caption{A plot of the period of analysis, superimposed over COVID-19 incident hospitalizations for the entire United States (U.S. national). Vertical solid lines indicate divisions between phases while dashed lines indicate divisions between variant waves.}
 \label{fig:figure_evaluate_period_plot}
-<<evaluation_period_plot, echo=FALSE, fig=TRUE, height=6, width=9>>=
-tar_read(evaluation_period_plot, store="../../_targets")
-@
+\includegraphics{covid_thief-evaluation_period_plot}
 \end{figure}
 
 
@@ -159,9 +139,7 @@ The THieF methodology consists of three steps to produce forecasts from time-ser
 \begin{figure}%[h]
 \caption{A plot showing the three steps of the THieF methodology for forecasting U.S. national incident hospitalizations for 1 to 28 days ahead on June 7, 2021}
 \label{fig:thief_concept_figure}
-<<thief_concept_plot, echo=FALSE, fig=TRUE, height=12, width=11>>=
-tar_read(thief_concept_plot, store="../../_targets")
-@
+\includegraphics{covid_thief-thief_concept_plot}
 \end{figure}
 
 \subsection{Data Aggregation and Hierarchy} \label{thief_agg_hierarchy}
@@ -217,15 +195,16 @@ Although it would be preferable to obtain quantiles from the reconciled forecast
 \begin{center}
 \caption{Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}
 \label{tab:table_quant_int}
-<<quant_int_table, message=FALSE, warning=FALSE, echo=FALSE, results=tex>>=
-Quantile <- c(".010", ".025", ".050", "0.100", "...", "0.500", "...", "0.900", "0.950", ".975", ".990")
-Interval <- c("98L", "95L", "90L", "80L", "...", "Median", "...", "80U", "90U", "95U", "98U")
-quant_int_table <- rbind(Quantile, Interval) %>%
-  xtable()
-colnames(quant_int_table) <- NULL
-print(quant_int_table, booktabs=FALSE, floating=FALSE)
-@
-\end{center}
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:11 2023
+\begin{tabular}{rlllllllllll}
+  \hline
+ &  \\ 
+  \hline
+Quantile & .010 & .025 & .050 & 0.100 & ... & 0.500 & ... & 0.900 & 0.950 & .975 & .990 \\ 
+  Interval & 98L & 95L & 90L & 80L & ... & Median & ... & 80U & 90U & 95U & 98U \\ 
+   \hline
+\end{tabular}\end{center}
 \end{table}
 
 \section{Model specifications} \label{model_specifications}
@@ -314,24 +293,82 @@ Hence, the best subset that passed onto the testing phase consisted of the follo
 \begin{center}
 \caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}
 \label{tab:table_validation_states}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_validation_states <- tar_read(overall_validation_states, store="../../_targets") %>%
-  xtable()
-print(table_validation_states, booktabs=FALSE, floating=FALSE)
-@
-\end{center}
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:11 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+1 & THieF\_ensemble-train10 & 30.73 & 47.22 & 0.53 & 0.93 & 0.86 & 0.94 \\ 
+  2 & THieF\_ensemble-train15 & 30.74 & 47.28 & 0.52 & 0.93 & 0.86 & 0.95 \\ 
+  3 & THieF\_ensemble-train6.5 & 30.77 & 47.20 & 0.53 & 0.94 & 0.86 & 0.94 \\ 
+  4 & THieF\_ensemble-train20 & 30.77 & 47.33 & 0.52 & 0.93 & 0.86 & 0.95 \\ 
+  5 & THieF\_ensemble-train25 & 30.81 & 47.37 & 0.51 & 0.93 & 0.86 & 0.95 \\ 
+  6 & THieF\_ensemble-train3 & 30.90 & 47.25 & 0.54 & 0.94 & 0.86 & 0.95 \\ 
+  7 & THieF\_ensemble-train1 & 31.33 & 47.44 & 0.53 & 0.94 & 0.87 & 0.95 \\ 
+  8 & THieF\_6wk-4root & 31.65 & 48.11 & 0.46 & 0.91 & 0.88 & 0.96 \\ 
+  9 & THieF\_6wk-noTransform & 32.26 & 48.67 & 0.54 & 0.92 & 0.90 & 0.97 \\ 
+  10 & THieF\_1wk-4root & 32.68 & 50.06 & 0.48 & 0.91 & 0.91 & 1.00 \\ 
+  11 & THieF\_2wk-4root & 32.94 & 50.26 & 0.47 & 0.91 & 0.92 & 1.01 \\ 
+  12 & THieF\_2wk-noTransform & 33.26 & 48.03 & 0.57 & 0.90 & 0.93 & 0.96 \\ 
+  13 & THieF\_1wk-noTransform & 33.74 & 49.21 & 0.58 & 0.90 & 0.94 & 0.98 \\ 
+  14 & THieF\_8wk-4root & 33.84 & 51.14 & 0.43 & 0.89 & 0.94 & 1.02 \\ 
+  15 & THieF\_4wk-4root & 34.10 & 51.50 & 0.46 & 0.90 & 0.95 & 1.03 \\ 
+  16 & THieF\_ensemble-mean & 34.29 & 47.65 & 0.53 & 0.94 & 0.96 & 0.95 \\ 
+  17 & THieF\_3wk-4root & 34.62 & 52.71 & 0.46 & 0.90 & 0.96 & 1.05 \\ 
+  18 & THieF\_8wk-noTransform & 34.76 & 52.06 & 0.51 & 0.90 & 0.97 & 1.04 \\ 
+  19 & THieF\_3wk-noTransform & 34.96 & 52.08 & 0.54 & 0.90 & 0.97 & 1.04 \\ 
+  20 & THieF\_4wk-noTransform & 35.63 & 52.82 & 0.53 & 0.89 & 0.99 & 1.06 \\ 
+  21 & COVIDhub-baseline & 35.88 & 49.98 & 0.83 & 0.98 & 1.00 & 1.00 \\ 
+  22 & sarima\_s7-noTransform & 36.29 & 51.91 & 0.57 & 0.89 & 1.01 & 1.04 \\ 
+  23 & sarima\_s7-4root & 36.35 & 54.55 & 0.46 & 0.90 & 1.01 & 1.09 \\ 
+  24 & arima\_s1-4root & 36.91 & 55.43 & 0.46 & 0.89 & 1.03 & 1.11 \\ 
+  25 & THieF\_12wk-noTransform & 39.14 & 59.06 & 0.42 & 0.89 & 1.09 & 1.18 \\ 
+  26 & arima\_s1-noTransform & 39.41 & 56.38 & 0.54 & 0.88 & 1.10 & 1.13 \\ 
+  27 & THieF\_12wk-4root & 84.32 & 54.49 & 0.41 & 0.86 & 2.35 & 1.09 \\ 
+   \hline
+\end{tabular}\end{center}
 \end{table}
 
 \begin{table}%[h]
 \begin{center}
 \caption{Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}
 \label{tab:table_validation_us}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_validation_us <- tar_read(overall_validation_us, store="../../_targets") %>%
-  xtable(digits=c(0, rep(1, 3), rep(2, 4)))
-print(table_validation_us, booktabs=FALSE, floating=FALSE)
-@
-\end{center}
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:11 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+1 & THieF\_6wk-noTransform & 1116.4 & 1756.0 & 0.36 & 0.91 & 0.88 & 0.88 \\ 
+  2 & THieF\_ensemble-train3 & 1139.8 & 1808.6 & 0.34 & 0.91 & 0.89 & 0.91 \\ 
+  3 & THieF\_ensemble-train1 & 1144.9 & 1814.9 & 0.35 & 0.90 & 0.90 & 0.91 \\ 
+  4 & THieF\_ensemble-train6.5 & 1146.6 & 1817.4 & 0.34 & 0.91 & 0.90 & 0.91 \\ 
+  5 & THieF\_6wk-4root & 1152.4 & 1765.8 & 0.33 & 0.76 & 0.90 & 0.88 \\ 
+  6 & THieF\_ensemble-train10 & 1159.2 & 1834.0 & 0.33 & 0.91 & 0.91 & 0.92 \\ 
+  7 & THieF\_ensemble-train15 & 1180.2 & 1866.3 & 0.33 & 0.90 & 0.92 & 0.94 \\ 
+  8 & THieF\_ensemble-train20 & 1199.4 & 1897.5 & 0.32 & 0.90 & 0.94 & 0.95 \\ 
+  9 & THieF\_ensemble-mean & 1212.7 & 1822.3 & 0.35 & 0.90 & 0.95 & 0.91 \\ 
+  10 & THieF\_ensemble-train25 & 1214.3 & 1919.3 & 0.32 & 0.89 & 0.95 & 0.96 \\ 
+  11 & THieF\_1wk-noTransform & 1218.5 & 1856.4 & 0.46 & 0.87 & 0.95 & 0.93 \\ 
+  12 & THieF\_2wk-4root & 1234.7 & 1941.8 & 0.25 & 0.85 & 0.97 & 0.97 \\ 
+  13 & THieF\_1wk-4root & 1252.2 & 1993.1 & 0.30 & 0.85 & 0.98 & 1.00 \\ 
+  14 & COVIDhub-baseline & 1276.5 & 1995.9 & 0.64 & 0.99 & 1.00 & 1.00 \\ 
+  15 & THieF\_8wk-noTransform & 1277.0 & 1968.9 & 0.38 & 0.85 & 1.00 & 0.99 \\ 
+  16 & THieF\_8wk-4root & 1303.6 & 1963.8 & 0.26 & 0.70 & 1.02 & 0.98 \\ 
+  17 & THieF\_2wk-noTransform & 1343.1 & 1985.2 & 0.40 & 0.82 & 1.05 & 0.99 \\ 
+  18 & THieF\_4wk-4root & 1383.4 & 2058.0 & 0.28 & 0.70 & 1.08 & 1.03 \\ 
+  19 & THieF\_3wk-noTransform & 1392.9 & 2008.6 & 0.38 & 0.78 & 1.09 & 1.01 \\ 
+  20 & THieF\_4wk-noTransform & 1397.4 & 2038.4 & 0.35 & 0.77 & 1.09 & 1.02 \\ 
+  21 & THieF\_3wk-4root & 1401.7 & 2164.8 & 0.26 & 0.80 & 1.10 & 1.08 \\ 
+  22 & arima\_s1-noTransform & 1477.9 & 2162.0 & 0.37 & 0.79 & 1.16 & 1.08 \\ 
+  23 & sarima\_s7-noTransform & 1483.2 & 2200.6 & 0.39 & 0.81 & 1.16 & 1.10 \\ 
+  24 & arima\_s1-4root & 1530.2 & 2227.1 & 0.26 & 0.75 & 1.20 & 1.12 \\ 
+  25 & THieF\_12wk-noTransform & 1553.5 & 2357.8 & 0.32 & 0.76 & 1.22 & 1.18 \\ 
+  26 & sarima\_s7-4root & 1601.5 & 2467.2 & 0.22 & 0.76 & 1.25 & 1.24 \\ 
+  27 & THieF\_12wk-4root & 2270.6 & 2039.9 & 0.34 & 0.66 & 1.78 & 1.02 \\ 
+   \hline
+\end{tabular}\end{center}
 \end{table}
 
 \section{Testing phase} \label{testing_results}
@@ -342,33 +379,53 @@ We illustrated the forecasts made during the testing phase through plotting 1- t
 \begin{figure}%[h]
 \caption{U.S. national incident hospitalization forecasts during the testing phase from select models}
 \label{fig:figure_forecasts_plot1}
-<<forecast_models_plot, echo=FALSE, fig=TRUE, height=12, width=10>>=
-tar_read(plot_models_1, store="../../_targets") + theme_bw()
-@
+\includegraphics{covid_thief-forecast_models_plot}
 \end{figure}
 
 \begin{table}%[h]
 \begin{center}
 \caption{Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}
 \label{tab:table_overall_states}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_overall_states <- tar_read(overall_metrics_states, store="../../_targets") %>%
-  xtable()
-print(table_overall_states, booktabs=FALSE, floating=FALSE)
-@
-\end{center}
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:20 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+1 & COVIDhub-4\_week\_ensemble & 30.18 & 44.87 & 0.64 & 0.94 & 0.72 & 0.79 \\ 
+  2 & THieF\_6wk-4root & 34.55 & 50.12 & 0.51 & 0.90 & 0.83 & 0.88 \\ 
+  3 & THieF\_12wk-4root & 35.25 & 51.35 & 0.50 & 0.89 & 0.85 & 0.90 \\ 
+  4 & THieF\_ensemble-train3 & 35.62 & 51.57 & 0.56 & 0.91 & 0.86 & 0.91 \\ 
+  5 & THieF\_ensemble-mean & 35.91 & 51.80 & 0.57 & 0.91 & 0.86 & 0.91 \\ 
+  6 & THieF\_6wk-noTransform & 39.51 & 56.87 & 0.55 & 0.88 & 0.95 & 1.00 \\ 
+  7 & COVIDhub-baseline & 41.63 & 56.77 & 0.79 & 0.96 & 1.00 & 1.00 \\ 
+  8 & arima\_s1-noTransform & 42.92 & 58.04 & 0.60 & 0.86 & 1.03 & 1.02 \\ 
+  9 & sarima\_s7-noTransform & 43.54 & 58.94 & 0.60 & 0.87 & 1.05 & 1.04 \\ 
+   \hline
+\end{tabular}\end{center}
 \end{table}
 
 \begin{table}[h]
 \begin{center}
 \caption{Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}
 \label{tab:table_overall_us}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_overall_us <- tar_read(overall_metrics_us, store="../../_targets") %>%
-  xtable(digits=c(0, rep(1, 3), rep(2, 4)))
-print(table_overall_us, booktabs=FALSE, floating=FALSE)
-@
-\end{center}
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:20 2023
+\begin{tabular}{rlrrrrrr}
+  \hline
+ & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+1 & COVIDhub-4\_week\_ensemble & 1401.3 & 2085.1 & 0.63 & 0.91 & 0.75 & 0.83 \\ 
+  2 & THieF\_6wk-4root & 1642.5 & 2358.8 & 0.40 & 0.82 & 0.88 & 0.94 \\ 
+  3 & THieF\_ensemble-train3 & 1687.4 & 2443.4 & 0.36 & 0.83 & 0.90 & 0.97 \\ 
+  4 & THieF\_ensemble-mean & 1700.5 & 2458.9 & 0.39 & 0.84 & 0.91 & 0.98 \\ 
+  5 & THieF\_12wk-4root & 1723.9 & 2481.7 & 0.31 & 0.81 & 0.92 & 0.99 \\ 
+  6 & THieF\_6wk-noTransform & 1727.7 & 2504.8 & 0.46 & 0.86 & 0.92 & 1.00 \\ 
+  7 & COVIDhub-baseline & 1867.5 & 2514.1 & 0.71 & 0.85 & 1.00 & 1.00 \\ 
+  8 & arima\_s1-noTransform & 1949.6 & 2487.0 & 0.53 & 0.82 & 1.04 & 0.99 \\ 
+  9 & sarima\_s7-noTransform & 2316.8 & 3042.4 & 0.41 & 0.80 & 1.24 & 1.21 \\ 
+   \hline
+\end{tabular}\end{center}
 \end{table}
 
 \subsection{Overall model performance} \label{testing_overall}
@@ -388,9 +445,7 @@ Coverage rates for the averaged states geographic scale (see Supplemental Table 
 \begin{figure}%[h]
 \caption{Average WIS plotted by horizon week during the testing phase for each model at both geographic scales}
 \label{fig:figure_horizon_plot}
-<<horizon_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
-tar_read(combined_wis_plot, store="../../_targets")
-@
+\includegraphics{covid_thief-horizon_plot}
 \end{figure}
 
 \subsection{Model performance by pandemic wave} \label{testing_wave}
@@ -405,9 +460,7 @@ Supplemental Tables \ref{tab:table_wave_states} and \ref{tab:table_wave_us} show
 \begin{figure}%[h]
 \caption{Average WIS plotted by pandemic wave and horizon week during the testing phase for each model at both geographic scales}
 \label{fig:figure_wave_plot}
-<<wave_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
-tar_read(combined_wis_wave_plot, store="../../_targets")
-@
+\includegraphics{covid_thief-wave_plot}
 \end{figure}
 
 \subsection{Model performance by forecast week} \label{testing_forecast_week}
@@ -422,17 +475,13 @@ Further, both fourth root original THieF displayed strangely low 95\% coverage f
 \begin{figure}%[h]
 \caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for averaged states}
 \label{fig:figure_date_plot_states}
-<<states_date_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
-tar_read(combined_wis_cov95_plot_states, store="../../_targets")
-@
+\includegraphics{covid_thief-states_date_plot}
 \end{figure}
 
 \begin{figure}%[h]
 \caption{Average h-week ahead WIS and 95\% PI coverage plotted by forecast week during the testing phase for each model for U.S. national}
 \label{fig:figure_date_plot_us}
-<<us_date_plot, echo=FALSE, fig=TRUE, height=10, width=8>>=
-tar_read(combined_wis_cov95_plot_us, store="../../_targets")
-@
+\includegraphics{covid_thief-us_date_plot}
 \end{figure}
 
 \subsection{Model performance by location} \label{testing_location}
@@ -443,9 +492,7 @@ The worst two models included some shades of red which represent performance wor
 \begin{figure}%[h]
 \caption{Relative WIS plotted by location during the testing phase for each model across all horizons}
 \label{fig:figure_location_plot}
-<<location_plot, echo=FALSE, fig=TRUE, height=18, width=15>>=
-tar_read(wis_location_plot, store="../../_targets")
-@
+\includegraphics{covid_thief-location_plot}
 \end{figure}
 
 
@@ -489,19 +536,48 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 
 \newpage
 
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_last17_states <- tar_read(last17_validation_states, store="../../_targets") %>%
-  xtable(digits=c(rep(0, 1), rep(3, 3), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS", label="tab:table_last17_states")
-print(table_last17_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
-@
-
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:24 2023
+\begingroup\renewcommand{\arraystretch}{0.75}
+\begin{longtable}{llrrrrrr}
+\caption{Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS} \\ 
+  \hline
+ & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+1 & THieF\_ensemble-train6.5 & 32.656 & 49.713 & 0.52 & 0.92 & 0.76 & 0.77 \\ 
+  2 & THieF\_ensemble-train3 & 32.676 & 49.547 & 0.52 & 0.92 & 0.76 & 0.77 \\ 
+  3 & THieF\_ensemble-train10 & 32.699 & 49.867 & 0.51 & 0.92 & 0.76 & 0.77 \\ 
+  4 & THieF\_ensemble-mean & 32.708 & 49.190 & 0.53 & 0.92 & 0.76 & 0.76 \\ 
+  5 & THieF\_ensemble-train1 & 32.734 & 49.462 & 0.52 & 0.92 & 0.76 & 0.77 \\ 
+  6 & THieF\_ensemble-train15 & 32.827 & 50.106 & 0.51 & 0.92 & 0.77 & 0.78 \\ 
+  7 & THieF\_ensemble-train20 & 32.990 & 50.345 & 0.50 & 0.92 & 0.77 & 0.78 \\ 
+  8 & THieF\_ensemble-train25 & 33.148 & 50.564 & 0.50 & 0.91 & 0.78 & 0.78 \\ 
+  9 & THieF\_6wk-4root & 33.361 & 49.308 & 0.49 & 0.91 & 0.78 & 0.77 \\ 
+  10 & THieF\_2wk-4root & 34.171 & 51.407 & 0.49 & 0.90 & 0.80 & 0.80 \\ 
+  11 & THieF\_2wk-noTransform & 34.358 & 50.181 & 0.51 & 0.88 & 0.80 & 0.78 \\ 
+  12 & THieF\_6wk-noTransform & 34.721 & 51.211 & 0.51 & 0.88 & 0.81 & 0.80 \\ 
+  13 & THieF\_12wk-4root & 34.898 & 50.270 & 0.49 & 0.90 & 0.82 & 0.78 \\ 
+  14 & THieF\_8wk-4root & 35.054 & 51.488 & 0.48 & 0.90 & 0.82 & 0.80 \\ 
+  15 & THieF\_1wk-4root & 35.120 & 53.469 & 0.47 & 0.90 & 0.82 & 0.83 \\ 
+  16 & THieF\_8wk-noTransform & 35.334 & 52.163 & 0.50 & 0.88 & 0.83 & 0.81 \\ 
+  17 & THieF\_3wk-4root & 36.397 & 54.575 & 0.48 & 0.89 & 0.85 & 0.85 \\ 
+  18 & THieF\_3wk-noTransform & 36.981 & 53.938 & 0.49 & 0.87 & 0.86 & 0.84 \\ 
+  19 & THieF\_4wk-4root & 36.988 & 54.772 & 0.47 & 0.88 & 0.86 & 0.85 \\ 
+  20 & THieF\_1wk-noTransform & 37.223 & 54.871 & 0.48 & 0.87 & 0.87 & 0.85 \\ 
+  21 & THieF\_4wk-noTransform & 38.179 & 55.999 & 0.48 & 0.86 & 0.89 & 0.87 \\ 
+  22 & THieF\_12wk-noTransform & 38.287 & 53.261 & 0.50 & 0.86 & 0.90 & 0.83 \\ 
+  23 & arima\_s1-4root & 41.743 & 62.340 & 0.43 & 0.87 & 0.98 & 0.97 \\ 
+  24 & COVIDhub-baseline & 42.785 & 64.408 & 0.72 & 0.97 & 1.00 & 1.00 \\ 
+  25 & sarima\_s7-4root & 43.511 & 64.229 & 0.44 & 0.87 & 1.02 & 1.00 \\ 
+  26 & sarima\_s7-noTransform & 43.516 & 62.037 & 0.46 & 0.84 & 1.02 & 0.96 \\ 
+  27 & arima\_s1-noTransform & 46.119 & 66.363 & 0.43 & 0.84 & 1.08 & 1.03 \\ 
+   \hline
+\hline
+\label{tab:table_last17_states}
+\end{longtable}
+\endgroup
 %\begin{table}%[h]
 %\begin{center}
-<<echo=FALSE, eval=FALSE, results=tex>>=
-table_last17_states <- tar_read(last17_validation_states, store="../../_targets") %>%
-  xtable(digits=c(rep(0, 1), rep(3, 3), rep(2, 4)), auto=TRUE)
-print(table_last17_states, booktabs=FALSE, floating=FALSE)
-@
 %\caption{Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS}
 %\label{tab:table_last17_states}
 %\end{center}
@@ -509,19 +585,48 @@ print(table_last17_states, booktabs=FALSE, floating=FALSE)
 
 \newpage
 
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_last17_us <- tar_read(last17_validation_us, store="../../_targets") %>%
-  xtable(digits=c(rep(0, 1), rep(1, 3), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS", label="tab:table_last17_us")
-print(table_last17_us, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
-@
-
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:24 2023
+\begingroup\renewcommand{\arraystretch}{0.75}
+\begin{longtable}{llrrrrrr}
+\caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS} \\ 
+  \hline
+ & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+1 & THieF\_12wk-4root & 1134.2 & 1632.2 & 0.58 & 0.84 & 0.73 & 0.63 \\ 
+  2 & THieF\_ensemble-mean & 1168.8 & 1887.3 & 0.36 & 0.90 & 0.75 & 0.72 \\ 
+  3 & THieF\_ensemble-train1 & 1191.0 & 1932.5 & 0.36 & 0.90 & 0.76 & 0.74 \\ 
+  4 & THieF\_6wk-4root & 1198.9 & 1799.3 & 0.47 & 0.86 & 0.77 & 0.69 \\ 
+  5 & THieF\_ensemble-train3 & 1210.1 & 1970.1 & 0.34 & 0.91 & 0.78 & 0.76 \\ 
+  6 & THieF\_6wk-noTransform & 1216.0 & 1906.2 & 0.34 & 0.86 & 0.78 & 0.73 \\ 
+  7 & THieF\_ensemble-train6.5 & 1249.3 & 2033.2 & 0.33 & 0.92 & 0.80 & 0.78 \\ 
+  8 & THieF\_8wk-noTransform & 1283.1 & 2045.7 & 0.36 & 0.86 & 0.82 & 0.78 \\ 
+  9 & THieF\_ensemble-train10 & 1293.2 & 2097.3 & 0.32 & 0.92 & 0.83 & 0.80 \\ 
+  10 & THieF\_ensemble-train15 & 1356.6 & 2195.9 & 0.31 & 0.91 & 0.87 & 0.84 \\ 
+  11 & THieF\_12wk-noTransform & 1376.6 & 1953.7 & 0.54 & 0.78 & 0.88 & 0.75 \\ 
+  12 & THieF\_1wk-noTransform & 1409.5 & 2240.3 & 0.27 & 0.80 & 0.91 & 0.86 \\ 
+  13 & THieF\_ensemble-train20 & 1411.9 & 2283.5 & 0.31 & 0.90 & 0.91 & 0.88 \\ 
+  14 & THieF\_8wk-4root & 1425.9 & 2111.2 & 0.33 & 0.78 & 0.92 & 0.81 \\ 
+  15 & THieF\_4wk-noTransform & 1450.7 & 2141.7 & 0.34 & 0.67 & 0.93 & 0.82 \\ 
+  16 & THieF\_ensemble-train25 & 1455.3 & 2349.6 & 0.30 & 0.89 & 0.94 & 0.90 \\ 
+  17 & THieF\_2wk-4root & 1456.7 & 2291.5 & 0.26 & 0.83 & 0.94 & 0.88 \\ 
+  18 & THieF\_2wk-noTransform & 1457.8 & 2180.4 & 0.31 & 0.73 & 0.94 & 0.84 \\ 
+  19 & THieF\_3wk-noTransform & 1487.5 & 2163.4 & 0.32 & 0.66 & 0.96 & 0.83 \\ 
+  20 & THieF\_3wk-4root & 1533.0 & 2428.1 & 0.34 & 0.84 & 0.98 & 0.93 \\ 
+  21 & COVIDhub-baseline & 1555.9 & 2606.5 & 0.37 & 0.97 & 1.00 & 1.00 \\ 
+  22 & THieF\_1wk-4root & 1565.4 & 2542.2 & 0.27 & 0.85 & 1.01 & 0.97 \\ 
+  23 & THieF\_4wk-4root & 1614.4 & 2433.5 & 0.30 & 0.71 & 1.04 & 0.93 \\ 
+  24 & arima\_s1-noTransform & 1774.3 & 2639.2 & 0.22 & 0.71 & 1.14 & 1.01 \\ 
+  25 & arima\_s1-4root & 1803.2 & 2614.4 & 0.22 & 0.75 & 1.16 & 1.00 \\ 
+  26 & sarima\_s7-noTransform & 1922.0 & 2884.6 & 0.15 & 0.65 & 1.24 & 1.11 \\ 
+  27 & sarima\_s7-4root & 2155.2 & 3344.1 & 0.17 & 0.73 & 1.38 & 1.28 \\ 
+   \hline
+\hline
+\label{tab:table_last17_us}
+\end{longtable}
+\endgroup
 %\begin{table}%[h]
 %\begin{center}
-<<echo=FALSE, eval=FALSE, results=tex>>=
-table_last17_us <- tar_read(last17_validation_us, store="../../_targets") %>%
-  xtable(digits=c(0, rep(1, 3), rep(2, 4)))
-print(table_last17_us, booktabs=FALSE, floating=FALSE)
-@
 %\caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS}
 %\label{tab:table_last17_us}
 %\end{center}
@@ -530,21 +635,57 @@ print(table_last17_us, booktabs=FALSE, floating=FALSE)
 \newpage
 
 
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_horizon_states <- tar_read(horizon_metrics_states, store="../../_targets") %>%
-  rename(`Hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 3), rep(2, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS", label="tab:table_horizon_states")
-print(table_horizon_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
-@
-
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:24 2023
+\begingroup\renewcommand{\arraystretch}{0.75}
+\begin{longtable}{lrrrrrrr}
+\caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS} \\ 
+  \hline
+Model & Hzn & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+COVIDhub-4\_week\_ensemble & 1 & 16.70 & 25.11 & 0.65 & 0.96 & 0.70 & 0.79 \\ 
+  THieF\_ensemble-train3 & 1 & 20.32 & 30.04 & 0.55 & 0.93 & 0.85 & 0.94 \\ 
+  THieF\_ensemble-mean & 1 & 20.76 & 30.52 & 0.56 & 0.93 & 0.87 & 0.96 \\ 
+  THieF\_6wk-4root & 1 & 22.50 & 32.97 & 0.49 & 0.89 & 0.94 & 1.03 \\ 
+  sarima\_s7-noTransform & 1 & 23.11 & 31.92 & 0.57 & 0.89 & 0.97 & 1.00 \\ 
+  COVIDhub-baseline & 1 & 23.92 & 31.87 & 0.80 & 0.97 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 1 & 23.98 & 32.81 & 0.60 & 0.89 & 1.00 & 1.03 \\ 
+  THieF\_12wk-4root & 1 & 24.28 & 35.21 & 0.48 & 0.89 & 1.01 & 1.10 \\ 
+  THieF\_6wk-noTransform & 1 & 25.17 & 36.41 & 0.52 & 0.89 & 1.05 & 1.14 \\ 
+  COVIDhub-4\_week\_ensemble & 2 & 25.42 & 37.90 & 0.66 & 0.95 & 0.69 & 0.77 \\ 
+  THieF\_6wk-4root & 2 & 30.10 & 43.94 & 0.52 & 0.91 & 0.81 & 0.89 \\ 
+  THieF\_ensemble-train3 & 2 & 30.66 & 44.49 & 0.56 & 0.91 & 0.83 & 0.90 \\ 
+  THieF\_ensemble-mean & 2 & 31.04 & 44.80 & 0.58 & 0.91 & 0.84 & 0.90 \\ 
+  THieF\_12wk-4root & 2 & 31.29 & 45.58 & 0.51 & 0.90 & 0.85 & 0.92 \\ 
+  THieF\_6wk-noTransform & 2 & 34.99 & 50.27 & 0.56 & 0.88 & 0.95 & 1.02 \\ 
+  COVIDhub-baseline & 2 & 36.95 & 49.48 & 0.80 & 0.96 & 1.00 & 1.00 \\ 
+  sarima\_s7-noTransform & 2 & 37.32 & 50.28 & 0.60 & 0.87 & 1.01 & 1.02 \\ 
+  arima\_s1-noTransform & 2 & 37.78 & 50.84 & 0.61 & 0.87 & 1.02 & 1.03 \\ 
+  COVIDhub-4\_week\_ensemble & 3 & 35.22 & 52.52 & 0.64 & 0.94 & 0.73 & 0.79 \\ 
+  THieF\_6wk-4root & 3 & 38.98 & 56.36 & 0.52 & 0.90 & 0.80 & 0.85 \\ 
+  THieF\_12wk-4root & 3 & 39.40 & 57.34 & 0.51 & 0.90 & 0.81 & 0.86 \\ 
+  THieF\_ensemble-train3 & 3 & 41.60 & 59.88 & 0.56 & 0.90 & 0.86 & 0.90 \\ 
+  THieF\_ensemble-mean & 3 & 41.85 & 60.07 & 0.58 & 0.90 & 0.86 & 0.91 \\ 
+  THieF\_6wk-noTransform & 3 & 45.11 & 64.83 & 0.56 & 0.87 & 0.93 & 0.98 \\ 
+  COVIDhub-baseline & 3 & 48.54 & 66.30 & 0.79 & 0.95 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 3 & 50.20 & 67.64 & 0.60 & 0.85 & 1.03 & 1.02 \\ 
+  sarima\_s7-noTransform & 3 & 51.31 & 69.07 & 0.60 & 0.86 & 1.06 & 1.04 \\ 
+  COVIDhub-4\_week\_ensemble & 4 & 44.39 & 65.43 & 0.63 & 0.93 & 0.76 & 0.80 \\ 
+  THieF\_12wk-4root & 4 & 46.84 & 68.49 & 0.50 & 0.89 & 0.80 & 0.84 \\ 
+  THieF\_6wk-4root & 4 & 47.53 & 68.48 & 0.52 & 0.88 & 0.81 & 0.84 \\ 
+  THieF\_ensemble-train3 & 4 & 51.04 & 73.47 & 0.55 & 0.89 & 0.88 & 0.90 \\ 
+  THieF\_ensemble-mean & 4 & 51.11 & 73.39 & 0.56 & 0.88 & 0.88 & 0.90 \\ 
+  THieF\_6wk-noTransform & 4 & 53.80 & 77.46 & 0.55 & 0.86 & 0.92 & 0.95 \\ 
+  COVIDhub-baseline & 4 & 58.35 & 81.23 & 0.77 & 0.95 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 4 & 61.05 & 82.67 & 0.58 & 0.83 & 1.05 & 1.02 \\ 
+  sarima\_s7-noTransform & 4 & 63.89 & 86.44 & 0.60 & 0.85 & 1.09 & 1.06 \\ 
+   \hline
+\hline
+\label{tab:table_horizon_states}
+\end{longtable}
+\endgroup
 %\begin{table}%[h]
 %\begin{center}
-<<echo=FALSE, eval=FALSE, results=tex>>=
-table_horizon_states <- tar_read(horizon_metrics_states, store="../../_targets") %>%
-  rename(`Hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 3), rep(2, 6)))
-print(table_horizon_states, booktabs=FALSE, floating=FALSE)
-@
 %\caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS}
 %\label{tab:table_horizon_states}
 %\end{center}
@@ -552,21 +693,57 @@ print(table_horizon_states, booktabs=FALSE, floating=FALSE)
 
 \newpage
 
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_horizon_us <- tar_read(horizon_metrics_us, store="../../_targets") %>%
-  rename(`Hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS", label="tab:table_horizon_us")
-print(table_horizon_us, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75}")
-@
-
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:24 2023
+\begingroup\renewcommand{\arraystretch}{0.75}
+\begin{longtable}{lrrrrrrr}
+\caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS} \\ 
+  \hline
+Model & Hzn & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+COVIDhub-4\_week\_ensemble & 1 & 659.8 & 966.8 & 0.68 & 0.94 & 0.69 & 0.77 \\ 
+  THieF\_ensemble-train3 & 1 & 909.6 & 1348.8 & 0.37 & 0.86 & 0.95 & 1.07 \\ 
+  THieF\_ensemble-mean & 1 & 930.9 & 1372.9 & 0.38 & 0.86 & 0.98 & 1.09 \\ 
+  COVIDhub-baseline & 1 & 952.2 & 1258.8 & 0.73 & 0.92 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 1 & 995.0 & 1308.1 & 0.59 & 0.87 & 1.04 & 1.04 \\ 
+  THieF\_6wk-4root & 1 & 1007.4 & 1419.1 & 0.45 & 0.79 & 1.06 & 1.13 \\ 
+  THieF\_6wk-noTransform & 1 & 1028.7 & 1467.4 & 0.46 & 0.88 & 1.08 & 1.17 \\ 
+  sarima\_s7-noTransform & 1 & 1143.4 & 1533.9 & 0.32 & 0.81 & 1.20 & 1.22 \\ 
+  THieF\_12wk-4root & 1 & 1178.7 & 1666.8 & 0.33 & 0.83 & 1.24 & 1.32 \\ 
+  COVIDhub-4\_week\_ensemble & 2 & 1156.2 & 1694.7 & 0.66 & 0.92 & 0.72 & 0.80 \\ 
+  THieF\_6wk-4root & 2 & 1413.2 & 2029.0 & 0.42 & 0.85 & 0.88 & 0.96 \\ 
+  THieF\_ensemble-train3 & 2 & 1417.1 & 2046.9 & 0.39 & 0.84 & 0.88 & 0.97 \\ 
+  THieF\_ensemble-mean & 2 & 1436.9 & 2070.8 & 0.40 & 0.85 & 0.90 & 0.98 \\ 
+  THieF\_12wk-4root & 2 & 1523.7 & 2185.5 & 0.37 & 0.82 & 0.95 & 1.03 \\ 
+  THieF\_6wk-noTransform & 2 & 1528.5 & 2177.0 & 0.47 & 0.86 & 0.95 & 1.03 \\ 
+  COVIDhub-baseline & 2 & 1604.9 & 2113.3 & 0.74 & 0.85 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 2 & 1675.2 & 2133.3 & 0.56 & 0.83 & 1.04 & 1.01 \\ 
+  sarima\_s7-noTransform & 2 & 1923.1 & 2536.3 & 0.41 & 0.82 & 1.20 & 1.20 \\ 
+  COVIDhub-4\_week\_ensemble & 3 & 1670.6 & 2528.8 & 0.60 & 0.90 & 0.75 & 0.84 \\ 
+  THieF\_6wk-4root & 3 & 1867.4 & 2715.3 & 0.37 & 0.84 & 0.84 & 0.91 \\ 
+  THieF\_12wk-4root & 3 & 1905.9 & 2766.1 & 0.31 & 0.80 & 0.86 & 0.92 \\ 
+  THieF\_ensemble-train3 & 3 & 1979.6 & 2845.1 & 0.35 & 0.81 & 0.89 & 0.95 \\ 
+  THieF\_6wk-noTransform & 3 & 1989.0 & 2883.6 & 0.46 & 0.85 & 0.90 & 0.96 \\ 
+  THieF\_ensemble-mean & 3 & 1989.0 & 2860.1 & 0.39 & 0.83 & 0.90 & 0.95 \\ 
+  COVIDhub-baseline & 3 & 2217.0 & 2993.7 & 0.71 & 0.83 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 3 & 2314.1 & 2946.7 & 0.49 & 0.81 & 1.04 & 0.98 \\ 
+  sarima\_s7-noTransform & 3 & 2738.4 & 3581.4 & 0.46 & 0.80 & 1.24 & 1.20 \\ 
+  COVIDhub-4\_week\_ensemble & 4 & 2173.4 & 3232.7 & 0.56 & 0.89 & 0.79 & 0.85 \\ 
+  THieF\_12wk-4root & 4 & 2328.9 & 3370.2 & 0.22 & 0.78 & 0.84 & 0.89 \\ 
+  THieF\_6wk-4root & 4 & 2330.0 & 3341.7 & 0.36 & 0.80 & 0.84 & 0.88 \\ 
+  THieF\_6wk-noTransform & 4 & 2414.9 & 3567.4 & 0.43 & 0.85 & 0.88 & 0.94 \\ 
+  THieF\_ensemble-train3 & 4 & 2501.1 & 3615.3 & 0.32 & 0.80 & 0.91 & 0.96 \\ 
+  THieF\_ensemble-mean & 4 & 2502.2 & 3613.6 & 0.38 & 0.80 & 0.91 & 0.95 \\ 
+  COVIDhub-baseline & 4 & 2761.4 & 3782.1 & 0.67 & 0.80 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 4 & 2882.6 & 3644.9 & 0.46 & 0.78 & 1.04 & 0.96 \\ 
+  sarima\_s7-noTransform & 4 & 3549.4 & 4630.4 & 0.45 & 0.76 & 1.28 & 1.22 \\ 
+   \hline
+\hline
+\label{tab:table_horizon_us}
+\end{longtable}
+\endgroup
 %\begin{table}%[h]
 %\begin{center}
-<<echo=FALSE, eval=FALSE, results=tex>>=
-table_horizon_us <- tar_read(horizon_metrics_us, store="../../_targets") %>%
-  rename(`Hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 3), rep(1, 2), rep(2, 4)))
-print(table_horizon_us, booktabs=FALSE, floating=FALSE)
-@
 %\caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS}
 %\label{tab:table_horizon_us}
 %\end{center}
@@ -575,29 +752,93 @@ print(table_horizon_us, booktabs=FALSE, floating=FALSE)
 \newpage
 
 
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_wave_states <- tar_read(wave_metrics_states, store="../../_targets") %>%
-  mutate(
-    wave = replace(wave, wave == "ba4_ba5", "BA.4/BA.5"),
-    wave = replace(wave, wave == "omicron", "Omicron")
-  ) %>%
-  rename(`Hzn` = horizon_wk, `Wave` = wave) %>%
-  xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS", label="tab:table_wave_states")
-print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
-@
-
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:24 2023
+\begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrrrr}
+\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS} \\ 
+  \hline
+Model & Hzn & Wave & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 8.91 & 13.43 & 0.72 & 0.99 & 0.61 & 0.81 \\ 
+  THieF\_6wk-4root & 1 & BA.4/BA.5 & 9.95 & 14.83 & 0.62 & 0.97 & 0.69 & 0.89 \\ 
+  THieF\_ensemble-train3 & 1 & BA.4/BA.5 & 10.48 & 15.62 & 0.67 & 0.99 & 0.72 & 0.94 \\ 
+  THieF\_ensemble-mean & 1 & BA.4/BA.5 & 11.10 & 16.47 & 0.69 & 0.99 & 0.77 & 0.99 \\ 
+  THieF\_12wk-4root & 1 & BA.4/BA.5 & 11.28 & 16.92 & 0.60 & 0.96 & 0.78 & 1.02 \\ 
+  arima\_s1-noTransform & 1 & BA.4/BA.5 & 12.33 & 16.95 & 0.74 & 0.98 & 0.85 & 1.02 \\ 
+  sarima\_s7-noTransform & 1 & BA.4/BA.5 & 12.81 & 19.00 & 0.68 & 0.98 & 0.88 & 1.14 \\ 
+  THieF\_6wk-noTransform & 1 & BA.4/BA.5 & 13.93 & 20.54 & 0.70 & 0.99 & 0.96 & 1.24 \\ 
+  COVIDhub-baseline & 1 & BA.4/BA.5 & 14.49 & 16.59 & 0.92 & 1.00 & 1.00 & 1.00 \\ 
+  COVIDhub-4\_week\_ensemble & 2 & BA.4/BA.5 & 11.85 & 17.64 & 0.76 & 1.00 & 0.60 & 0.81 \\ 
+  THieF\_6wk-4root & 2 & BA.4/BA.5 & 13.28 & 19.07 & 0.69 & 0.99 & 0.68 & 0.88 \\ 
+  THieF\_12wk-4root & 2 & BA.4/BA.5 & 14.03 & 20.32 & 0.68 & 0.98 & 0.71 & 0.94 \\ 
+  THieF\_ensemble-train3 & 2 & BA.4/BA.5 & 14.15 & 20.34 & 0.74 & 0.99 & 0.72 & 0.94 \\ 
+  THieF\_ensemble-mean & 2 & BA.4/BA.5 & 14.86 & 21.20 & 0.75 & 0.99 & 0.76 & 0.98 \\ 
+  arima\_s1-noTransform & 2 & BA.4/BA.5 & 16.37 & 22.05 & 0.79 & 0.99 & 0.83 & 1.02 \\ 
+  sarima\_s7-noTransform & 2 & BA.4/BA.5 & 17.46 & 25.07 & 0.75 & 0.99 & 0.89 & 1.16 \\ 
+  THieF\_6wk-noTransform & 2 & BA.4/BA.5 & 17.92 & 25.69 & 0.77 & 1.00 & 0.91 & 1.19 \\ 
+  COVIDhub-baseline & 2 & BA.4/BA.5 & 19.69 & 21.67 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
+  COVIDhub-4\_week\_ensemble & 3 & BA.4/BA.5 & 15.22 & 22.86 & 0.76 & 0.99 & 0.64 & 0.83 \\ 
+  THieF\_6wk-4root & 3 & BA.4/BA.5 & 16.82 & 23.30 & 0.72 & 0.99 & 0.70 & 0.85 \\ 
+  THieF\_12wk-4root & 3 & BA.4/BA.5 & 17.49 & 25.05 & 0.71 & 0.99 & 0.73 & 0.91 \\ 
+  THieF\_ensemble-train3 & 3 & BA.4/BA.5 & 17.95 & 25.29 & 0.76 & 1.00 & 0.75 & 0.92 \\ 
+  THieF\_ensemble-mean & 3 & BA.4/BA.5 & 18.68 & 26.22 & 0.78 & 1.00 & 0.78 & 0.95 \\ 
+  arima\_s1-noTransform & 3 & BA.4/BA.5 & 19.90 & 27.30 & 0.80 & 0.99 & 0.83 & 0.99 \\ 
+  THieF\_6wk-noTransform & 3 & BA.4/BA.5 & 21.59 & 31.20 & 0.78 & 1.00 & 0.90 & 1.14 \\ 
+  sarima\_s7-noTransform & 3 & BA.4/BA.5 & 22.06 & 31.34 & 0.78 & 0.99 & 0.92 & 1.14 \\ 
+  COVIDhub-baseline & 3 & BA.4/BA.5 & 23.93 & 27.49 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
+  COVIDhub-4\_week\_ensemble & 4 & BA.4/BA.5 & 18.26 & 27.51 & 0.76 & 0.99 & 0.66 & 0.84 \\ 
+  THieF\_6wk-4root & 4 & BA.4/BA.5 & 19.92 & 26.57 & 0.75 & 1.00 & 0.72 & 0.81 \\ 
+  THieF\_12wk-4root & 4 & BA.4/BA.5 & 21.18 & 29.92 & 0.71 & 0.99 & 0.77 & 0.91 \\ 
+  THieF\_ensemble-train3 & 4 & BA.4/BA.5 & 21.50 & 29.63 & 0.78 & 1.00 & 0.78 & 0.90 \\ 
+  THieF\_ensemble-mean & 4 & BA.4/BA.5 & 22.13 & 30.41 & 0.79 & 1.00 & 0.81 & 0.93 \\ 
+  arima\_s1-noTransform & 4 & BA.4/BA.5 & 22.72 & 31.82 & 0.81 & 0.99 & 0.83 & 0.97 \\ 
+  THieF\_6wk-noTransform & 4 & BA.4/BA.5 & 24.17 & 34.33 & 0.80 & 1.00 & 0.88 & 1.05 \\ 
+  sarima\_s7-noTransform & 4 & BA.4/BA.5 & 25.95 & 36.72 & 0.80 & 0.99 & 0.94 & 1.12 \\ 
+  COVIDhub-baseline & 4 & BA.4/BA.5 & 27.46 & 32.80 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
+  COVIDhub-4\_week\_ensemble & 1 & Omicron & 25.02 & 37.57 & 0.57 & 0.92 & 0.74 & 0.78 \\ 
+  THieF\_ensemble-train3 & 1 & Omicron & 30.84 & 45.43 & 0.41 & 0.86 & 0.91 & 0.94 \\ 
+  THieF\_ensemble-mean & 1 & Omicron & 31.09 & 45.53 & 0.42 & 0.86 & 0.91 & 0.94 \\ 
+  COVIDhub-baseline & 1 & Omicron & 34.00 & 48.18 & 0.66 & 0.94 & 1.00 & 1.00 \\ 
+  sarima\_s7-noTransform & 1 & Omicron & 34.12 & 45.73 & 0.46 & 0.79 & 1.00 & 0.95 \\ 
+  THieF\_6wk-4root & 1 & Omicron & 35.91 & 52.36 & 0.35 & 0.81 & 1.06 & 1.09 \\ 
+  arima\_s1-noTransform & 1 & Omicron & 36.43 & 49.76 & 0.46 & 0.79 & 1.07 & 1.03 \\ 
+  THieF\_6wk-noTransform & 1 & Omicron & 37.18 & 53.36 & 0.34 & 0.79 & 1.09 & 1.11 \\ 
+  THieF\_12wk-4root & 1 & Omicron & 38.17 & 54.74 & 0.35 & 0.81 & 1.12 & 1.14 \\ 
+  COVIDhub-4\_week\_ensemble & 2 & Omicron & 39.33 & 58.67 & 0.56 & 0.91 & 0.72 & 0.75 \\ 
+  THieF\_6wk-4root & 2 & Omicron & 47.34 & 69.42 & 0.34 & 0.82 & 0.87 & 0.89 \\ 
+  THieF\_ensemble-train3 & 2 & Omicron & 47.58 & 69.23 & 0.39 & 0.83 & 0.87 & 0.89 \\ 
+  THieF\_ensemble-mean & 2 & Omicron & 47.61 & 68.98 & 0.40 & 0.83 & 0.87 & 0.88 \\ 
+  THieF\_12wk-4root & 2 & Omicron & 48.98 & 71.48 & 0.34 & 0.82 & 0.90 & 0.92 \\ 
+  THieF\_6wk-noTransform & 2 & Omicron & 52.49 & 75.46 & 0.35 & 0.77 & 0.96 & 0.97 \\ 
+  COVIDhub-baseline & 2 & Omicron & 54.64 & 77.98 & 0.64 & 0.92 & 1.00 & 1.00 \\ 
+  sarima\_s7-noTransform & 2 & Omicron & 57.67 & 76.11 & 0.45 & 0.76 & 1.05 & 0.98 \\ 
+  arima\_s1-noTransform & 2 & Omicron & 59.73 & 80.34 & 0.42 & 0.74 & 1.09 & 1.03 \\ 
+  COVIDhub-4\_week\_ensemble & 3 & Omicron & 54.85 & 81.62 & 0.53 & 0.89 & 0.76 & 0.78 \\ 
+  THieF\_6wk-4root & 3 & Omicron & 60.72 & 88.81 & 0.32 & 0.81 & 0.83 & 0.85 \\ 
+  THieF\_12wk-4root & 3 & Omicron & 60.90 & 89.02 & 0.32 & 0.80 & 0.84 & 0.85 \\ 
+  THieF\_ensemble-mean & 3 & Omicron & 64.60 & 93.29 & 0.38 & 0.80 & 0.89 & 0.89 \\ 
+  THieF\_ensemble-train3 & 3 & Omicron & 64.80 & 93.84 & 0.37 & 0.80 & 0.89 & 0.90 \\ 
+  THieF\_6wk-noTransform & 3 & Omicron & 68.19 & 97.82 & 0.33 & 0.75 & 0.94 & 0.94 \\ 
+  COVIDhub-baseline & 3 & Omicron & 72.69 & 104.38 & 0.60 & 0.90 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 3 & Omicron & 79.93 & 107.22 & 0.39 & 0.71 & 1.10 & 1.03 \\ 
+  sarima\_s7-noTransform & 3 & Omicron & 80.02 & 106.10 & 0.43 & 0.73 & 1.10 & 1.02 \\ 
+  COVIDhub-4\_week\_ensemble & 4 & Omicron & 68.91 & 100.99 & 0.50 & 0.87 & 0.79 & 0.80 \\ 
+  THieF\_12wk-4root & 4 & Omicron & 70.92 & 104.68 & 0.29 & 0.79 & 0.81 & 0.83 \\ 
+  THieF\_6wk-4root & 4 & Omicron & 73.43 & 107.79 & 0.30 & 0.78 & 0.84 & 0.85 \\ 
+  THieF\_ensemble-mean & 4 & Omicron & 78.30 & 113.70 & 0.36 & 0.78 & 0.90 & 0.90 \\ 
+  THieF\_ensemble-train3 & 4 & Omicron & 78.74 & 114.59 & 0.34 & 0.78 & 0.90 & 0.90 \\ 
+  THieF\_6wk-noTransform & 4 & Omicron & 81.60 & 117.92 & 0.31 & 0.73 & 0.93 & 0.93 \\ 
+  COVIDhub-baseline & 4 & Omicron & 87.33 & 126.66 & 0.58 & 0.90 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 4 & Omicron & 97.01 & 130.36 & 0.37 & 0.68 & 1.11 & 1.03 \\ 
+  sarima\_s7-noTransform & 4 & Omicron & 99.46 & 133.08 & 0.42 & 0.71 & 1.14 & 1.05 \\ 
+   \hline
+\hline
+\label{tab:table_wave_states}
+\end{longtable}
+\endgroup
 %\begin{table}[h]
 %\begin{center}
-<<echo=FALSE, eval=FALSE, results=tex>>=
-table_wave_states <- tar_read(wave_metrics_states, store="../../_targets") %>%
-  mutate(
-    wave = replace(wave, wave == "ba4_ba5", "BA.4/BA.5"),
-    wave = replace(wave, wave == "omicron", "Omicron")
-  ) %>%
-  rename(`Hzn` = horizon_wk, `Wave` = wave) %>%
-  xtable(digits=c(rep(0, 4), rep(2, 2), rep(2, 4)))
-print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
-@
 %\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS}
 %\label{tab:table_wave_states}
 %\end{center}
@@ -606,28 +847,96 @@ print(table_wave_states, booktabs=FALSE, tabular.environment='longtable', captio
 \newpage
 
 %\captionsetup{width=6cm}
-<<echo=FALSE, eval=TRUE, results=tex>>=
-table_wave_us <- tar_read(wave_metrics_us, store="../../_targets") %>%
-  mutate(
-    wave = replace(wave, wave == "ba4_ba5", "BA.4/BA.5"),
-    wave = replace(wave, wave == "omicron", "Omicron")
-  ) %>%
-  rename(`Hzn` = horizon_wk, `Wave` = wave) %>%
-  xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)), auto=TRUE, caption = "Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS", label="tab:table_wave_us")
-print(table_wave_us, booktabs=FALSE, tabular.environment='longtable', caption.placement = "top", floating=FALSE, include.rownames=FALSE, size="\\renewcommand{\\arraystretch}{0.75} \\setlength{\\tabcolsep}{3pt}")
-@
-%\captionsetup{width=default}
+% latex table generated in R 4.3.1 by xtable 1.8-4 package
+% Fri Dec  1 15:23:24 2023
+\begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
+\begin{longtable}{lrlrrrrrr}
+\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS} \\ 
+  \hline
+Model & Hzn & Wave & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+  \hline
+COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 277.8 & 378.7 & 0.89 & 1.00 & 0.62 & 0.78 \\ 
+  THieF\_6wk-4root & 1 & BA.4/BA.5 & 350.4 & 542.9 & 0.60 & 0.99 & 0.78 & 1.11 \\ 
+  THieF\_ensemble-train3 & 1 & BA.4/BA.5 & 399.1 & 685.3 & 0.46 & 1.00 & 0.88 & 1.41 \\ 
+  THieF\_ensemble-mean & 1 & BA.4/BA.5 & 433.6 & 740.3 & 0.49 & 1.00 & 0.96 & 1.52 \\ 
+  arima\_s1-noTransform & 1 & BA.4/BA.5 & 439.7 & 531.4 & 0.80 & 1.00 & 0.98 & 1.09 \\ 
+  COVIDhub-baseline & 1 & BA.4/BA.5 & 450.8 & 486.9 & 0.92 & 1.00 & 1.00 & 1.00 \\ 
+  THieF\_12wk-4root & 1 & BA.4/BA.5 & 455.6 & 760.8 & 0.42 & 1.00 & 1.01 & 1.56 \\ 
+  THieF\_6wk-noTransform & 1 & BA.4/BA.5 & 516.5 & 822.5 & 0.60 & 1.00 & 1.15 & 1.69 \\ 
+  sarima\_s7-noTransform & 1 & BA.4/BA.5 & 517.8 & 828.6 & 0.41 & 0.99 & 1.15 & 1.70 \\ 
+  COVIDhub-4\_week\_ensemble & 2 & BA.4/BA.5 & 411.4 & 572.5 & 0.85 & 1.00 & 0.63 & 0.77 \\ 
+  THieF\_6wk-4root & 2 & BA.4/BA.5 & 518.8 & 813.0 & 0.61 & 1.00 & 0.79 & 1.10 \\ 
+  THieF\_ensemble-train3 & 2 & BA.4/BA.5 & 578.6 & 966.6 & 0.49 & 1.00 & 0.88 & 1.30 \\ 
+  THieF\_12wk-4root & 2 & BA.4/BA.5 & 597.8 & 988.5 & 0.52 & 1.00 & 0.91 & 1.33 \\ 
+  arima\_s1-noTransform & 2 & BA.4/BA.5 & 599.4 & 685.5 & 0.79 & 1.00 & 0.92 & 0.92 \\ 
+  THieF\_ensemble-mean & 2 & BA.4/BA.5 & 621.8 & 1030.3 & 0.50 & 1.00 & 0.95 & 1.39 \\ 
+  COVIDhub-baseline & 2 & BA.4/BA.5 & 654.2 & 741.0 & 0.98 & 1.00 & 1.00 & 1.00 \\ 
+  THieF\_6wk-noTransform & 2 & BA.4/BA.5 & 727.8 & 1145.9 & 0.59 & 1.00 & 1.11 & 1.55 \\ 
+  sarima\_s7-noTransform & 2 & BA.4/BA.5 & 729.7 & 1169.6 & 0.53 & 1.00 & 1.11 & 1.58 \\ 
+  COVIDhub-4\_week\_ensemble & 3 & BA.4/BA.5 & 563.3 & 824.7 & 0.77 & 1.00 & 0.68 & 0.79 \\ 
+  THieF\_6wk-4root & 3 & BA.4/BA.5 & 683.9 & 1069.1 & 0.59 & 1.00 & 0.83 & 1.03 \\ 
+  arima\_s1-noTransform & 3 & BA.4/BA.5 & 725.7 & 824.4 & 0.73 & 1.00 & 0.88 & 0.79 \\ 
+  THieF\_ensemble-train3 & 3 & BA.4/BA.5 & 784.0 & 1311.5 & 0.45 & 1.00 & 0.95 & 1.26 \\ 
+  THieF\_12wk-4root & 3 & BA.4/BA.5 & 797.1 & 1329.2 & 0.44 & 1.00 & 0.97 & 1.28 \\ 
+  COVIDhub-baseline & 3 & BA.4/BA.5 & 825.0 & 1038.9 & 1.00 & 1.00 & 1.00 & 1.00 \\ 
+  THieF\_ensemble-mean & 3 & BA.4/BA.5 & 825.0 & 1371.3 & 0.50 & 1.00 & 1.00 & 1.32 \\ 
+  THieF\_6wk-noTransform & 3 & BA.4/BA.5 & 911.0 & 1464.4 & 0.59 & 1.00 & 1.10 & 1.41 \\ 
+  sarima\_s7-noTransform & 3 & BA.4/BA.5 & 953.5 & 1514.2 & 0.57 & 1.00 & 1.16 & 1.46 \\ 
+  COVIDhub-4\_week\_ensemble & 4 & BA.4/BA.5 & 698.9 & 1034.3 & 0.77 & 1.00 & 0.72 & 0.78 \\ 
+  THieF\_6wk-4root & 4 & BA.4/BA.5 & 801.9 & 1210.3 & 0.64 & 1.00 & 0.82 & 0.92 \\ 
+  arima\_s1-noTransform & 4 & BA.4/BA.5 & 826.6 & 917.4 & 0.71 & 1.00 & 0.85 & 0.69 \\ 
+  THieF\_ensemble-train3 & 4 & BA.4/BA.5 & 969.8 & 1585.1 & 0.48 & 1.00 & 1.00 & 1.20 \\ 
+  COVIDhub-baseline & 4 & BA.4/BA.5 & 972.0 & 1320.5 & 1.00 & 1.00 & 1.00 & 1.00 \\ 
+  THieF\_ensemble-mean & 4 & BA.4/BA.5 & 1010.8 & 1651.7 & 0.53 & 1.00 & 1.04 & 1.25 \\ 
+  THieF\_6wk-noTransform & 4 & BA.4/BA.5 & 1034.0 & 1631.7 & 0.61 & 1.00 & 1.06 & 1.24 \\ 
+  THieF\_12wk-4root & 4 & BA.4/BA.5 & 1035.3 & 1729.4 & 0.33 & 0.99 & 1.06 & 1.31 \\ 
+  sarima\_s7-noTransform & 4 & BA.4/BA.5 & 1169.6 & 1821.8 & 0.60 & 1.00 & 1.20 & 1.38 \\ 
+  COVIDhub-4\_week\_ensemble & 1 & Omicron & 1067.9 & 1595.1 & 0.46 & 0.87 & 0.72 & 0.77 \\ 
+  THieF\_ensemble-train3 & 1 & Omicron & 1455.0 & 2057.5 & 0.27 & 0.71 & 0.98 & 0.99 \\ 
+  THieF\_ensemble-mean & 1 & Omicron & 1462.3 & 2048.6 & 0.27 & 0.71 & 0.98 & 0.98 \\ 
+  COVIDhub-baseline & 1 & Omicron & 1487.9 & 2083.4 & 0.53 & 0.83 & 1.00 & 1.00 \\ 
+  THieF\_6wk-noTransform & 1 & Omicron & 1576.0 & 2156.3 & 0.32 & 0.74 & 1.06 & 1.03 \\ 
+  arima\_s1-noTransform & 1 & Omicron & 1588.3 & 2137.9 & 0.37 & 0.73 & 1.07 & 1.03 \\ 
+  THieF\_6wk-4root & 1 & Omicron & 1709.3 & 2355.1 & 0.28 & 0.56 & 1.15 & 1.13 \\ 
+  sarima\_s7-noTransform & 1 & Omicron & 1811.9 & 2287.4 & 0.22 & 0.62 & 1.22 & 1.10 \\ 
+  THieF\_12wk-4root & 1 & Omicron & 1951.3 & 2634.7 & 0.23 & 0.65 & 1.31 & 1.26 \\ 
+  COVIDhub-4\_week\_ensemble & 2 & Omicron & 1919.4 & 2844.9 & 0.47 & 0.84 & 0.74 & 0.81 \\ 
+  THieF\_ensemble-mean & 2 & Omicron & 2272.2 & 3137.2 & 0.30 & 0.69 & 0.88 & 0.89 \\ 
+  THieF\_ensemble-train3 & 2 & Omicron & 2276.3 & 3154.0 & 0.29 & 0.68 & 0.88 & 0.90 \\ 
+  THieF\_6wk-4root & 2 & Omicron & 2329.9 & 3275.3 & 0.22 & 0.69 & 0.90 & 0.93 \\ 
+  THieF\_6wk-noTransform & 2 & Omicron & 2349.2 & 3233.6 & 0.34 & 0.73 & 0.91 & 0.92 \\ 
+  THieF\_12wk-4root & 2 & Omicron & 2472.5 & 3412.2 & 0.22 & 0.63 & 0.96 & 0.97 \\ 
+  COVIDhub-baseline & 2 & Omicron & 2579.1 & 3519.7 & 0.50 & 0.70 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 2 & Omicron & 2777.8 & 3617.0 & 0.34 & 0.66 & 1.08 & 1.03 \\ 
+  sarima\_s7-noTransform & 2 & Omicron & 3146.1 & 3936.9 & 0.29 & 0.65 & 1.22 & 1.12 \\ 
+  COVIDhub-4\_week\_ensemble & 3 & Omicron & 2757.2 & 4201.2 & 0.43 & 0.80 & 0.77 & 0.85 \\ 
+  THieF\_12wk-4root & 3 & Omicron & 2994.0 & 4176.2 & 0.18 & 0.60 & 0.84 & 0.85 \\ 
+  THieF\_6wk-4root & 3 & Omicron & 3028.8 & 4330.8 & 0.15 & 0.68 & 0.84 & 0.88 \\ 
+  THieF\_6wk-noTransform & 3 & Omicron & 3046.9 & 4276.4 & 0.33 & 0.71 & 0.85 & 0.87 \\ 
+  THieF\_ensemble-mean & 3 & Omicron & 3131.3 & 4321.1 & 0.28 & 0.67 & 0.87 & 0.88 \\ 
+  THieF\_ensemble-train3 & 3 & Omicron & 3152.9 & 4350.3 & 0.26 & 0.63 & 0.88 & 0.89 \\ 
+  COVIDhub-baseline & 3 & Omicron & 3583.0 & 4912.1 & 0.43 & 0.67 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 3 & Omicron & 3872.9 & 5029.4 & 0.25 & 0.61 & 1.08 & 1.02 \\ 
+  sarima\_s7-noTransform & 3 & Omicron & 4490.1 & 5610.1 & 0.35 & 0.60 & 1.25 & 1.14 \\ 
+  THieF\_12wk-4root & 4 & Omicron & 3542.1 & 4909.0 & 0.12 & 0.58 & 0.80 & 0.81 \\ 
+  COVIDhub-4\_week\_ensemble & 4 & Omicron & 3556.3 & 5294.6 & 0.37 & 0.79 & 0.80 & 0.87 \\ 
+  THieF\_6wk-noTransform & 4 & Omicron & 3709.9 & 5382.9 & 0.27 & 0.71 & 0.84 & 0.88 \\ 
+  THieF\_6wk-4root & 4 & Omicron & 3763.1 & 5340.8 & 0.10 & 0.60 & 0.85 & 0.88 \\ 
+  THieF\_ensemble-mean & 4 & Omicron & 3901.0 & 5453.5 & 0.23 & 0.62 & 0.88 & 0.90 \\ 
+  THieF\_ensemble-train3 & 4 & Omicron & 3937.2 & 5519.3 & 0.17 & 0.60 & 0.89 & 0.91 \\ 
+  COVIDhub-baseline & 4 & Omicron & 4439.6 & 6090.8 & 0.36 & 0.61 & 1.00 & 1.00 \\ 
+  arima\_s1-noTransform & 4 & Omicron & 4810.9 & 6203.0 & 0.23 & 0.58 & 1.08 & 1.02 \\ 
+  sarima\_s7-noTransform & 4 & Omicron & 5781.5 & 7264.5 & 0.31 & 0.53 & 1.30 & 1.19 \\ 
+   \hline
+\hline
+\label{tab:table_wave_us}
+\end{longtable}
+\endgroup%\captionsetup{width=default}
 
 %\begin{longtable}
 %\begin{table}%[h]
 %\setlength{\tabcolsep}{20pt}
 %\renewcommand{\arraystretch}{1.5}
-<<echo=FALSE, eval=FALSE, results=tex>>=
-table_wave_us <- tar_read(wave_metrics_us, store="../../_targets") %>%
-  rename(`Hzn` = horizon_wk) %>%
-  xtable(digits=c(rep(0, 4), rep(1, 2), rep(2, 4)), auto=TRUE)
-print(table_wave_us, booktabs=FALSE, floating=FALSE, include.rownames=FALSE)
-@
 %\caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS}
 %\label{tab:table_wave_us}
 %\end{table}
