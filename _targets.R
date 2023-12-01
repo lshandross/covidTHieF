@@ -225,7 +225,7 @@ tar_target(
   
   tar_target(ordered_testing_locations, 
     full_hosp_truth %>%
-      filter(target_end_date %in% testing_forecast_range[1]:testing_forecast_range[2]) %>%
+      filter(target_end_date %within% interval(testing_forecast_range[1], testing_forecast_range[2])) %>%
       group_by(location) %>%
       summarize(cum_value=sum(value)) %>%
       ungroup() %>%

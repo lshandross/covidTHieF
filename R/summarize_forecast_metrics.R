@@ -118,9 +118,9 @@ summarize_wave_metrics <- function(scores, baseline_name, us_only=FALSE) {
     mutate(
       wave = case_when(
         forecast_date <= as.Date("2021-03-17") ~ "winter21",
-        forecast_date %in% c(as.Date("2021-03-18"):as.Date("2021-07-05")) ~ "alpha",
-        forecast_date %in% c(as.Date("2021-07-06"):as.Date("2021-10-31")) ~ "delta",
-        forecast_date %in% c(as.Date("2021-11-01"):as.Date("2022-04-04")) ~ "omicron",
+        forecast_date %within% interval(as.Date("2021-03-18"),as.Date("2021-07-05")) ~ "alpha",
+        forecast_date %within% interval(as.Date("2021-07-06"),as.Date("2021-10-31")) ~ "delta",
+        forecast_date %within% interval(as.Date("2021-11-01"),as.Date("2022-04-04")) ~ "omicron",
         forecast_date >= as.Date("2022-04-05") ~ "ba4_ba5"
       )
     ) %>%

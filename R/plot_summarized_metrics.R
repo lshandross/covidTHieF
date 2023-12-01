@@ -19,7 +19,7 @@ plot_summarized_metrics <-
           case_when(
             Model == "COVIDhub-baseline" ~ "noTransform",
             str_detect(Model, "ensemble") ~ "noTransform",
-            !(str_detect(Model, "ensemble") && str_detect(Model, "baseline")) ~ sub(".*-", "", Model)
+            .default = sub(".*-", "", Model)
           ),
         type = ifelse(str_detect(Model, "ensemble"), "ensemble", sub("_.*", "", Model))
       )
