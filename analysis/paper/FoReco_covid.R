@@ -21,7 +21,7 @@ full_hosp_truth <- load_truth("HealthData",
                          data_location = "remote_hub_repo")
 
 start_date <- as.Date("2020-07-27") # a monday
-end_date <- as.Date("2021-06-27")
+end_date <- as.Date("2021-07-26")
 
 hosp_truth <- full_hosp_truth |>
   dplyr::filter(target_end_date >= start_date,
@@ -31,12 +31,14 @@ hosp_truth <- full_hosp_truth |>
   dplyr::select(value, epi_week, day)
 
 # Construct aggregates (from daily data)
-hosp_ts <- ts(hosp_truth$value, start = c(4,1), end = c(9, 56), frequency = 56) 
-hosp_agg <- lapply(agg_levels, agg_ts, x = hosp_ts, align = "end", rm_na = FALSE)   # Aggregated time series list
+hosp_ts <- ts(hosp_truth$value, start = c(4,1), end = c(10, 29), frequency = 56)
+
+# Aggregate target data new
+hosp_agg <- lapply(agg_levels, agg_ts, x = hosp_ts, align = "end", rm_na = FALSE)   # Aggregated time series list (from FoReco)
 agg.names <- c("8-weekly", "4-weekly", "2-weekly", "weekly", "daily")
 for(i in seq_along(hosp_agg)) names(hosp_agg)[[i]] <- agg.names[i]
-plot(hosp_agg, main="Covid-19 Inc Hosp")
-
+par(mfrow = c(3, 2))
+for (i in 1:5) plot.ts(hosp_agg[[i]], plot.type="single", main=names(hosp_agg)[i])
 
 # Make forecasts
 fit.arima <- lapply(hosp_agg, function(x) auto.arima(ts(x, frequency = frequency(x)))) # arima model fit
@@ -62,28 +64,54 @@ mres.arima <- residuals_matrix(hres.arima, m = agg_levels)
 base.arima <- MASS::mvrnorm(n = B, mu = unlist(base_mean.arima), Sigma = shrink_estim(mres.arima)$scov)
 reco.arima <- t(apply(base.arima, 1, thfrec, m = agg_levels, comb = "wlsv", res = res.arima, keep = "recf"))
 
-reco_quantiles <- apply(base.arima, 2, quantile, probs = c(0.01, 0.025, seq(0.05, 0.95, 0.05), 0.975, 0.99), na.rm = TRUE)
-reco_subset <- apply(base.arima, 2, quantile, probs = c(0.025, 0.25, 0.5, 0.75, 0.975), na.rm = TRUE)
+reco_quantiles <- apply(reco.arima, 2, quantile, probs = c(0.01, 0.025, seq(0.05, 0.95, 0.05), 0.975, 0.99), na.rm = TRUE)
+reco_subset <- apply(reco.arima, 2, quantile, probs = c(0.025, 0.25, 0.5, 0.75, 0.975), na.rm = TRUE)
+
+# try with more samples
+base.large <- MASS::mvrnorm(n = 10000, mu = unlist(base_mean.arima), Sigma = shrink_estim(mres.arima)$scov)
+reco.large <- t(apply(base.arima, 1, thfrec, m = agg_levels, comb = "wlsv", res = res.arima, keep = "recf"))
+quantiles_large <- apply(reco.large, 2, quantile, probs = c(0.025, 0.25, 0.5, 0.75, 0.975), na.rm = TRUE) #exact same as with fewer samples
 
 
-# Compute base forecasts
+
+# Aggregate target data old
 old_hosp_agg <- tsaggregates(hosp_ts, m = 56, aggregatelist = as.list(agg_levels))
- base_fc_day <- list()
- for(i in seq_along(old_hosp_agg))
-   base_fc_day[[i]] <- forecast(auto.arima(old_hosp_agg[[i]]), h=2*frequency(old_hosp_agg[[i]]), level = c(50, 95)) 
+old.agg.names <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
+for(i in seq_along(old_hosp_agg)) names(old_hosp_agg)[[i]] <- old.agg.names[i]
+plot(old_hosp_agg, main = "Covid-19 Inc Hosp")
+
+# Compute base forecasts old
+base_fc_day <- list()
+for(i in seq_along(old_hosp_agg))
+  base_fc_day[[i]] <- forecast(auto.arima(old_hosp_agg[[i]]), h=frequency(old_hosp_agg[[i]]), level = c(50, 95)) 
  
 # Reconcile forecasts
 reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = as.list(agg_levels))
 
 # Overall, the probabilistic forecasts seem to adhere closer to the recent truth data values and produce wider intervals.
 
+# Extend truth line
+extended_truth <- full_hosp_truth |>
+  dplyr::filter(target_end_date >= end_date, 
+                 target_end_date <= end_date + weeks(8),
+                 location == "US") |>
+  dplyr::mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) |>
+  dplyr::select("value", "epi_week", "day")
+
+long_truth <- rbind(hosp_truth, extended_truth)
+long_ts <- ts(long_truth$value, start=c(4, 1), end=c(11, 29), frequency=56)
+
+long_aggs <- tsaggregates(long_ts, m=56, aggregatelist = as.list(agg_levels))
+for (i in seq_along(long_aggs)) names(long_aggs)[[i]] <- old.agg.names[i]
+
 # Plot forecasts before and after reconcilliation
-par(mfrow=c(3,2))
-for(i in seq_along(base_fc_day))
-{
-  plot(reconciled_fc_day[[i]], main=agg.names[i], 
+par(mfrow=c(3,2), mai=c(0.35, 0.5, 0.35, 0.35))
+for(i in seq_along(base_fc_day)) {
+  plot(reconciled_fc_day[[i]], main=old.agg.names[i], shadecols = c("#C2DDEE", "#00458F"),
        ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper))) 
   lines(base_fc_day[[i]]$mean, col='red') # plots red mean line
+  lines(reconciled_fc_day[[i]]$mean, col='blue', lwd=2) # plots blue rec mean line
+  lines(long_aggs[[i]], col='black', lwd=1.5, lty="dotted") # plots extended truth
 }
+points(base_fc_day[[5]]$mean, col='red')
 
-#It would be a good idea to also plot the truth data here to compare how the base and reconciled forecasts did in terms of their predictions.
