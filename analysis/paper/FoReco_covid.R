@@ -154,3 +154,40 @@ for(i in seq_along(base_fc_day)) {
 }
 points(base_fc_day[[5]]$mean, col='red')
 
+
+
+    # Reconciled forecasts
+    aggregation_list <- as.list(agg_levels); date_list <- list(); frequency <- 56
+    q025 <- NULL; q25 <- NULL; q50 <- NULL; q75 <- NULL; q975 <- NULL
+    level_list <- list(); level <- NULL
+    for (i in 1:length(aggregation_list)) {
+      date_list[[i]] <- (length(old_hosp_agg[[1+length(aggregation_list) - i]]) + (1:(frequency/aggregation_list[[i]])))*aggregation_list[[i]]
+      date <- c(date, date_list[[i]])
+      q025 <- c(q025, reconciled_fc_day[[1+length(aggregation_list) - i]][["lower"]][,2])
+      q25 <- c(q25, reconciled_fc_day[[1+length(aggregation_list) - i]][["lower"]][,1])
+      q50 <- c(q50, reconciled_fc_day[[1+length(aggregation_list) - i]][["mean"]])
+      q75 <- c(q75, reconciled_fc_day[[1+length(aggregation_list) - i]][["upper"]][,1])
+      q975 <- c(q975, reconciled_fc_day[[1+length(aggregation_list) - i]][["upper"]][,2])
+      level_list[[i]] <- rep(old.agg.names[1+length(aggregation_list) - i],  frequency/aggregation_list[[i]])
+      level <- c(level, level_list[[i]])
+    }
+
+    reconcile_df_old <- 
+      tibble::tibble(q025, q25, q50, q75, q975, level) |>
+      cbind(date = c(56, 28, 56, seq(14, 56, 14), seq(7, 56, 7), 1:56)) |>
+      dplyr::mutate(
+#        date=start_date + date-1,
+        level=factor(level, levels=unique(level), ordered=TRUE),
+        across(where(is.numeric), function(x) ifelse(x < 0, 0, x))
+      )
+      
+    ggplot(reconcile_df_old, aes(x = date, group = level)) +
+      geom_ribbon(aes(ymin = q025, ymax = q975, fill = "95% PI"), alpha = .75) + 
+      geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
+      geom_line(aes(y = q50), col = 4) +
+      geom_point(aes(y = q50), col = 4) +
+      facet_grid(rows = vars(level), scales = "free") +
+      scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
+      xlab("Date") + ylab(" ") +
+    #  theme(axis.title.x="Date", axis.title.y="") +
+      ggtitle("Reconcile Forecasts Old")
