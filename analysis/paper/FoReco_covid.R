@@ -8,15 +8,15 @@ library(tidyverse)
 library(zoltr)
 library(covidHubUtils)
 
-# Example with Covid-19 inc hosp data. We adjust the top aggregation level to be 8 weeks, as we can't reasonably predict anything with a longer horizon well-enough. 
+# Example with Covid-19 inc hosp data. We adjust the top aggregation level to be 8 weeks, as we can't reasonably predict anything with a longer horizon well-enough.
 require(FoReco)
 B = 1000
 m = 56
 agg_levels <- c(56, 28, 14, 7, 1)
 
 # get truth data
-full_hosp_truth <- load_truth("HealthData", 
-                         "inc hosp", 
+full_hosp_truth <- load_truth("HealthData",
+                         "inc hosp",
                          temporal_resolution="weekly",
                          data_location = "remote_hub_repo")
 
@@ -73,6 +73,45 @@ reco.large <- t(apply(base.arima, 1, thfrec, m = agg_levels, comb = "wlsv", res 
 quantiles_large <- apply(reco.large, 2, quantile, probs = c(0.025, 0.25, 0.5, 0.75, 0.975), na.rm = TRUE) #exact same as with fewer samples
 
 
+reconciled_df <- reco_subset |>
+  as.table() |>
+  as.data.frame() |>
+  dplyr::mutate(
+    Var1 = paste0("q", stringr::str_remove_all(Var1, "%")),
+    Var2 = as.character(Var2),
+    Freq = ifelse(Freq < 0, 0, Freq)
+  ) |>
+  tidyr::pivot_wider(names_from="Var1", values_from="Freq") |>
+  dplyr::mutate(
+    k = as.numeric(stringr::str_extract(Var2, "\\d*(?=h)")),
+    h = as.numeric(stringr::str_extract(Var2, "(?<=h)\\d*")),
+    level = case_when(k == 56 ~ "8-weekly", k == 28 ~ "4-weekly",
+                      k == 14 ~ "2-weekly", k == 7 ~ "weekly",
+                      k == 1 ~ "daily", .default = NA),
+    level=factor(level, levels=unique(level), ordered=TRUE),
+#    test = time(hosp_agg[[level]])[length(hosp_agg[[level]])],
+    test = case_when(k == 56 ~ time(hosp_agg[["8-weekly"]])[length(hosp_agg[["8-weekly"]])],
+                     k == 28 ~ time(hosp_agg[["4-weekly"]])[length(hosp_agg[["4-weekly"]])],
+                     k == 14 ~ time(hosp_agg[["2-weekly"]])[length(hosp_agg[["2-weekly"]])],
+                     k == 7 ~ time(hosp_agg[["weekly"]])[length(hosp_agg[["weekly"]])],
+                     k == 1 ~ time(hosp_agg[["daily"]])[length(hosp_agg[["daily"]])],
+                     .default = NA),
+    date = k*h
+  )
+
+  ggplot(reconciled_df, aes(x = date, group = level)) +
+    geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% PI"), alpha = .75) + 
+    geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
+    geom_line(aes(y = q50), col = 4) +
+    geom_point(aes(y = q50), col = 4) +
+    facet_grid(rows = vars(level), scales = "free") +
+    scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
+    xlab("Date") + ylab(" ") +
+  #  theme(axis.title.x="Date", axis.title.y="") +
+    ggtitle("Reconcile Forecasts New")
+      
+hosp_agg |> View()
+time(hosp_agg[["4-weekly"]])[length(hosp_agg[["4-weekly"]])]
 
 # Aggregate target data old
 old_hosp_agg <- tsaggregates(hosp_ts, m = 56, aggregatelist = as.list(agg_levels))
@@ -83,8 +122,8 @@ plot(old_hosp_agg, main = "Covid-19 Inc Hosp")
 # Compute base forecasts old
 base_fc_day <- list()
 for(i in seq_along(old_hosp_agg))
-  base_fc_day[[i]] <- forecast(auto.arima(old_hosp_agg[[i]]), h=frequency(old_hosp_agg[[i]]), level = c(50, 95)) 
- 
+  base_fc_day[[i]] <- forecast(auto.arima(old_hosp_agg[[i]]), h=frequency(old_hosp_agg[[i]]), level = c(50, 95))
+
 # Reconcile forecasts
 reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = as.list(agg_levels))
 
@@ -92,7 +131,7 @@ reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = as.list(agg_lev
 
 # Extend truth line
 extended_truth <- full_hosp_truth |>
-  dplyr::filter(target_end_date >= end_date, 
+  dplyr::filter(target_end_date >= end_date,
                  target_end_date <= end_date + weeks(8),
                  location == "US") |>
   dplyr::mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) |>
@@ -108,7 +147,7 @@ for (i in seq_along(long_aggs)) names(long_aggs)[[i]] <- old.agg.names[i]
 par(mfrow=c(3,2), mai=c(0.35, 0.5, 0.35, 0.35))
 for(i in seq_along(base_fc_day)) {
   plot(reconciled_fc_day[[i]], main=old.agg.names[i], shadecols = c("#C2DDEE", "#00458F"),
-       ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper))) 
+       ylim = c(0, max(reconciled_fc_day[[i]]$x, reconciled_fc_day[[i]]$upper)))
   lines(base_fc_day[[i]]$mean, col='red') # plots red mean line
   lines(reconciled_fc_day[[i]]$mean, col='blue', lwd=2) # plots blue rec mean line
   lines(long_aggs[[i]], col='black', lwd=1.5, lty="dotted") # plots extended truth
