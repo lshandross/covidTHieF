@@ -97,20 +97,22 @@ bootstrap_df <- boot_subset |>
                      k == 7 ~ time(hosp_agg[["weekly"]])[length(hosp_agg[["weekly"]])],
                      k == 1 ~ time(hosp_agg[["daily"]])[length(hosp_agg[["daily"]])],
                      .default = NA),
-    date = k*h
+    date = days(k*h) + end_date
   )
 
-  ggplot(bootstrap_df, aes(x = date, group = level)) +
-    geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% PI"), alpha = .75) +
-    geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
-    geom_line(aes(y = q50), col = 4) +
-    geom_point(aes(y = q50), col = 4) +
-    facet_grid(rows = vars(level), scales = "free") +
-    scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
+ggplot(bootstrap_df, aes(x = date, group = level)) +
+  geom_line(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
+  geom_point(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
+  geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% PI"), alpha = .75) +
+  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
+  geom_line(aes(y = q50), col = 4) +
+  geom_point(aes(y = q50), col = 4) +
+  facet_grid(rows = vars(level), scales = "free") +
+  scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
 #    geom_line(aes(y = q50), col = 4) +
-    xlab("Date") + ylab(" ") +
-  #  theme(axis.title.x="Date", axis.title.y="") +
-    ggtitle("Reconcile Forecasts New")
+  xlab("Date") + ylab(" ") +
+#  theme(axis.title.x="Date", axis.title.y="") +
+  ggtitle("Reconcile Bootstrapped Forecasts")
 
 
 # Gaussian approach
@@ -160,20 +162,24 @@ reconciled_df <- reco_subset |>
                      k == 7 ~ time(hosp_agg[["weekly"]])[length(hosp_agg[["weekly"]])],
                      k == 1 ~ time(hosp_agg[["daily"]])[length(hosp_agg[["daily"]])],
                      .default = NA),
-    date = k*h
+    date = days(k*h) + end_date
   )
 
-  ggplot(reconciled_df, aes(x = date, group = level)) +
-    geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% PI"), alpha = .75) +
-    geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
-    geom_line(aes(y = q50), col = 4) +
-    geom_point(aes(y = q50), col = 4) +
-    facet_grid(rows = vars(level), scales = "free") +
-    scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
-    xlab("Date") + ylab(" ") +
-  #  theme(axis.title.x="Date", axis.title.y="") +
-    ggtitle("Reconcile Forecasts New")
+ggplot(reconciled_df, aes(x = date, group = level)) +
+  geom_line(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
+  geom_point(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
+  geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% PI"), alpha = .75) +
+  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
+  geom_line(aes(y = q50), col = 4) +
+  geom_point(aes(y = q50), col = 4) +
+  facet_grid(rows = vars(level), scales = "free") +
+  scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
+  xlab("Date") + ylab(" ") +
+#  theme(axis.title.x="Date", axis.title.y="") +
+  ggtitle("Reconcile Probabilistic Forecasts")
 
+
+# Overall, the probabilistic forecasts seem to adhere closer to the recent truth data values and produce wider intervals.
 
 
 ####################
@@ -194,55 +200,40 @@ for(i in seq_along(old_hosp_agg))
 # Reconcile forecasts
 reconciled_fc_day <- reconcilethief(base_fc_day, aggregatelist = as.list(te_agg))
 
-# Overall, the probabilistic forecasts seem to adhere closer to the recent truth data values and produce wider intervals.
+# Reconciled forecasts
+aggregation_list <- as.list(te_agg); date_list <- list(); frequency <- 56
+q025 <- NULL; q25 <- NULL; q50 <- NULL; q75 <- NULL; q975 <- NULL
+level_list <- list(); level <- NULL
+for (i in 1:length(aggregation_list)) {
+  date_list[[i]] <- (length(old_hosp_agg[[1+length(aggregation_list) - i]]) + (1:(frequency/aggregation_list[[i]])))*aggregation_list[[i]]
+  date <- c(date, date_list[[i]])
+  q025 <- c(q025, reconciled_fc_day[[1+length(aggregation_list) - i]][["lower"]][,2])
+  q25 <- c(q25, reconciled_fc_day[[1+length(aggregation_list) - i]][["lower"]][,1])
+  q50 <- c(q50, reconciled_fc_day[[1+length(aggregation_list) - i]][["mean"]])
+  q75 <- c(q75, reconciled_fc_day[[1+length(aggregation_list) - i]][["upper"]][,1])
+  q975 <- c(q975, reconciled_fc_day[[1+length(aggregation_list) - i]][["upper"]][,2])
+  level_list[[i]] <- rep(agg_names.ascending[1+length(aggregation_list) - i],  frequency/aggregation_list[[i]])
+  level <- c(level, level_list[[i]])
+}
 
-# Extend truth line
-extended_truth <- full_hosp_truth |>
-  dplyr::filter(target_end_date >= end_date,
-                 target_end_date <= end_date + weeks(8),
-                 location == "US") |>
-  dplyr::mutate(day = wday(target_end_date), epi_week = epiweek(target_end_date)) |>
-  dplyr::select("value", "epi_week", "day")
+reconcile_df_old <-
+  tibble::tibble(q025, q25, q50, q75, q975, level) |>
+  cbind(date = c(56, 28, 56, seq(14, 56, 14), seq(7, 56, 7), 1:56)) |>
+  dplyr::mutate(
+    date = days(date) + end_date,
+    level=factor(level, levels=unique(level), ordered=TRUE),
+    across(where(is.numeric), function(x) ifelse(x < 0, 0, x))
+  )
 
-long_truth <- rbind(hosp_truth, extended_truth)
-long_ts <- ts(long_truth$value, start=c(4, 1), end=c(11, 29), frequency=56)
-
-long_aggs <- tsaggregates(long_ts, m=56, aggregatelist = as.list(te_agg))
-for (i in seq_along(long_aggs)) names(long_aggs)[[i]] <- agg_names.ascending[i]
-
-
-  # Reconciled forecasts
-  aggregation_list <- as.list(te_agg); date_list <- list(); frequency <- 56
-  q025 <- NULL; q25 <- NULL; q50 <- NULL; q75 <- NULL; q975 <- NULL
-  level_list <- list(); level <- NULL
-  for (i in 1:length(aggregation_list)) {
-    date_list[[i]] <- (length(old_hosp_agg[[1+length(aggregation_list) - i]]) + (1:(frequency/aggregation_list[[i]])))*aggregation_list[[i]]
-    date <- c(date, date_list[[i]])
-    q025 <- c(q025, reconciled_fc_day[[1+length(aggregation_list) - i]][["lower"]][,2])
-    q25 <- c(q25, reconciled_fc_day[[1+length(aggregation_list) - i]][["lower"]][,1])
-    q50 <- c(q50, reconciled_fc_day[[1+length(aggregation_list) - i]][["mean"]])
-    q75 <- c(q75, reconciled_fc_day[[1+length(aggregation_list) - i]][["upper"]][,1])
-    q975 <- c(q975, reconciled_fc_day[[1+length(aggregation_list) - i]][["upper"]][,2])
-    level_list[[i]] <- rep(agg_names.ascending[1+length(aggregation_list) - i],  frequency/aggregation_list[[i]])
-    level <- c(level, level_list[[i]])
-  }
-
-  reconcile_df_old <-
-    tibble::tibble(q025, q25, q50, q75, q975, level) |>
-    cbind(date = c(56, 28, 56, seq(14, 56, 14), seq(7, 56, 7), 1:56)) |>
-    dplyr::mutate(
-#        date=start_date + date-1,
-      level=factor(level, levels=unique(level), ordered=TRUE),
-      across(where(is.numeric), function(x) ifelse(x < 0, 0, x))
-    )
-
-  ggplot(reconcile_df_old, aes(x = date, group = level)) +
-    geom_ribbon(aes(ymin = q025, ymax = q975, fill = "95% PI"), alpha = .75) +
-    geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
-    geom_line(aes(y = q50), col = 4) +
-    geom_point(aes(y = q50), col = 4) +
-    facet_grid(rows = vars(level), scales = "free") +
-    scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
-    xlab("Date") + ylab(" ") +
-  #  theme(axis.title.x="Date", axis.title.y="") +
-    ggtitle("Reconcile Forecasts Old")
+ggplot(reconcile_df_old, aes(x = date, group = level)) +
+  geom_line(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
+  geom_point(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
+  geom_ribbon(aes(ymin = q025, ymax = q975, fill = "95% PI"), alpha = .75) +
+  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
+  geom_line(aes(y = q50), col = 4) +
+  geom_point(aes(y = q50), col = 4) +
+  facet_grid(rows = vars(level), scales = "free") +
+  scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
+  xlab("Date") + ylab(" ") +
+#  theme(axis.title.x="Date", axis.title.y="") +
+  ggtitle("Reconcile Forecasts Old")
