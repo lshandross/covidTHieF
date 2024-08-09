@@ -130,6 +130,7 @@ ggplot(extended_df, aes(x = date, group = level)) +
 ```
 
 # `FoReco` Method
+Probabilistic forecasts are viewed as mean (point) forecasts, plus sampled residuals?
 
 ## Calculate model fits and base point forecasts
 
@@ -151,7 +152,7 @@ res.arima <- Reduce("c", sapply(forecast_obj.arima, residuals, type='response'))
 ## Non-parametric (joint block bootstrap) reconciliation approach
 
 ```{r}
-B <- 100
+B <- 1000
 base_mean_vec.arima <- unlist(base_mean.arima, use.names = FALSE)
 res_vec.arima <- unlist(res.arima, use.names = FALSE)
 
@@ -298,9 +299,6 @@ extended_df |>
 ```
 
 
-Overall, the probabilistic forecasts seem to adhere closer to the recent truth data values and produce wider intervals.
-
-
 # `thief` Method
 
 ## Aggregate target data
@@ -357,7 +355,8 @@ reconcile_df_old <-
   dplyr::mutate(
     date = days(date) + end_date,
     level=factor(level, levels=unique(level), ordered=TRUE),
-    across(where(is.numeric), function(x) ifelse(x < 0, 0, x))
+#    across(where(is.numeric), function(x) ifelse(x < 0, 0, x)),
+    .before = 1
   )
 ```
 
@@ -382,3 +381,16 @@ extended_df |>
 #  theme(axis.title.x="Date", axis.title.y="") +
   ggtitle("Reconcile Forecasts Old")
 ```
+
+
+# Conclusion
+
+Overall, the Gaussian probabilistic method and THieF method tend to produce fairly similar results, though the intervals are a little narrower for the Gaussian probabilistic forecasts, especially as the number of samples increases. The non-parametric bootstrap method tends to be less accurate, which reflects the findings in the `FoReco` paper, and sometimes will produce strange results, especially when the number of samples is low.
+
+Note that all these methods begin with the same point forecasts and residuals but obtain the finalized probabilistic forecasts in different ways:
+
+1. **Non-parametric Bootstrap (probabilistic):** Bootstrap the original point forecasts using uncertainty estimated by their residuals, perform reconciliation of the samples, then calculate quantiles from the samples.
+2. **Gaussian Probabilistic:** Calculate a normal distribution from which to draw the base forecast samples using the original point forecasts and residuals as the mean and variance estimates respectively. Perform reconciliation of the samples, then calculate quantiles from the samples.
+3. **THieF:** Calculate the desired quantiles from the original base forecasts by assuming a normal distribution sort, likely using the residuals as a variance estimate. Perform reconciliation for each of the quantiles separately by treating them like point forecasts.
+
+Based on these preliminary results, I'm also curious about whether implementing a 7 day rolling average for the daily forecasts may be useful in improving accuracy.
