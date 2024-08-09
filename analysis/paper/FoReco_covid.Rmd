@@ -59,6 +59,8 @@ freq <- max(te_agg)
 Construct aggregates (from daily data) based on 8-week periods of epiweeks
 
 ```{r}
+set.seed(1234)
+
 start_period <- 4
 end_period <- start_period + as.numeric(end_date - start_date + 1) / freq
 hosp_ts <- ts(hosp_truth$value, start = c(start_period, 1), end = c(end_period, 56), frequency = 56)
@@ -355,7 +357,7 @@ reconcile_df_old <-
   dplyr::mutate(
     date = days(date) + end_date,
     level=factor(level, levels=unique(level), ordered=TRUE),
-#    across(where(is.numeric), function(x) ifelse(x < 0, 0, x)),
+    across(where(is.numeric), function(x) ifelse(x < 0, 0, x)),
     .before = 1
   )
 ```
@@ -385,7 +387,7 @@ extended_df |>
 
 # Conclusion
 
-Overall, the Gaussian probabilistic method and THieF method tend to produce fairly similar results, though the intervals are a little narrower for the Gaussian probabilistic forecasts, especially as the number of samples increases. The non-parametric bootstrap method tends to be less accurate, which reflects the findings in the `FoReco` paper, and sometimes will produce strange results, especially when the number of samples is low.
+Overall, the Gaussian probabilistic method and THieF method tend to produce fairly similar results. There is some difference in terms of interval width, with the Gaussian probabilistic forecasts producing wider intervals for lower temporal levels in comparison to the THieF methodology and narrower intervals for higher temporal levels. The non-parametric bootstrap method tends to be less accurate and produces highly variable intervals based on the sampling, which reflects the findings in the `FoReco` paper. This method will sometimes produce strange results, especially when the number of samples is low.
 
 Note that all these methods begin with the same point forecasts and residuals but obtain the finalized probabilistic forecasts in different ways:
 
