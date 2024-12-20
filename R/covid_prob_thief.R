@@ -17,7 +17,8 @@
 #'   United States state or territory, of class \code{char}.
 #' @param aggregate_levels A user-selected list of aggregates to use.
 #' @param frequency Integer seasonal period.
-#' @param n_samples Numeric of requested bootstrap samples. Defaults to 10000.
+#' @param nsim Numeric of bootstrap samples used to generate probabilistic
+#'   forecasts. Defaults to 10000.
 #' @param quantile_levels Numeric vector of quantile levels (probabilities) to
 #'   calculate for the returned forecasts.
 #' @param transform.4root \code{logical} that specifies whether a variance
@@ -36,14 +37,14 @@
 #' @importFrom rlang .data
 covid_prob_thief <-
   function(truth_data = NULL, ts_col = "value", start_date, end_date, fips_vec,
-           target_name, aggregate_levels, frequency, n_samples, quantile_levels,
-           transform.4root = FALSE) {
+           target_name, aggregate_levels, frequency, nsim = 1e5,
+           quantile_levels, transform.4root = FALSE) {
     all_locs_list <- purrr::map(
       .x = fips_vec,
       .f = function(fips_code) {
         prob_thief_wrapper(truth_data = NULL, ts_col, start_date, end_date,
                            fips_code, target_name, aggregate_levels, frequency,
-                           n_samples, quantile_levels, transform.4root)
+                           nsim, quantile_levels, transform.4root)
       }
     )
     all_locs_fc <- purrr::imap(.x = fips_vec, ~ all_locs_list[[.y]][[1]]) |>

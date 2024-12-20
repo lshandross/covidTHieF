@@ -1,7 +1,8 @@
 #' Compute temporal hierarchical probabilistic forecasts
 #'
 #' @param temporal_hierarchy List of (hierarchical) time series.
-#' @param n_samples Numeric of requested bootstrap samples. Defaults to 10000.
+#' @param nsim Numeric of bootstrap samples used to generate probabilistic
+#'   forecasts. Defaults to 10000.
 #' @param forecast_type Character string or vector specifying the types of
 #'    forecasts to return. May be "base", "reconciled", or both.
 #' @param aggregate_levels Numeric vector of aggregation levels, where each
@@ -18,7 +19,7 @@
 #'
 #' @importFrom rlang .data
 compute_prob_forecasts <-
-  function(temporal_hierarchy, n_samples = 10000, 
+  function(temporal_hierarchy, nsim = 10000, 
            forecast_type = c("base", "reconciled"), aggregate_levels, ...) {
 
     # order temporal_hierarchy by frequency (top down)
@@ -62,7 +63,7 @@ compute_prob_forecasts <-
 
     # Calculate probabilistic base forecasts
     base_forecasts <- MASS::mvrnorm(
-      n = n_samples, mu = unlist(base_mean), Sigma = FoReco::shrink_estim(mres)
+      n = nsim, mu = unlist(base_mean), Sigma = FoReco::shrink_estim(mres)
     )
 
     if (identical("base", forecast_type)) {

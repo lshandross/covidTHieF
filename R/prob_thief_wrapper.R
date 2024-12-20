@@ -17,7 +17,8 @@
 #' @param target_name A character string giving the name to use for the target.
 #' @param aggregate_levels A user-selected list of aggregates to use.
 #' @param frequency Integer seasonal period.
-#' @param n_samples Numeric of requested bootstrap samples. Defaults to 10000.
+#' @param nsim Numeric of bootstrap samples used to generate probabilistic
+#'   forecasts. Defaults to 10000.
 #' @param quantile_levels Numeric vector of quantile levels (probabilities) to
 #'   calculate for the returned forecasts.
 #' @param transform.4root \code{logical} that specifies whether a variance
@@ -34,8 +35,8 @@
 #' @importFrom rlang .data
 prob_thief_wrapper <-
   function(truth_data = NULL, ts_col = "value", start_date, end_date, fips_code,
-           target_name = "inc hosp", aggregate_levels, frequency,
-           n_samples = 1e4, quantile_levels = NULL, transform.4root = FALSE) {
+           target_name = "inc hosp", aggregate_levels, frequency, nsim = 1e5,
+           quantile_levels = NULL, transform.4root = FALSE) {
     if (is.null(aggregate_levels)) {
       stop("You haven't provided any aggregate levels")
     }
@@ -72,7 +73,7 @@ prob_thief_wrapper <-
     # if plot aggregates
 
     forecasts_list <- thief_aggregation |>
-      compute_prob_forecasts(n_samples, forecast_type = c("base", "reconciled"),
+      compute_prob_forecasts(nsim, forecast_type = c("base", "reconciled"),
                              aggregate_levels, comb = "wlsv", nn = "sntz",
                              return_forecast_obj = TRUE)
 
