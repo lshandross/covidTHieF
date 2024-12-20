@@ -1,0 +1,55 @@
+#' Temporal hierarchical forecasting for COVID-19 incident hospitalizations for
+#' multiple locations
+#'
+#' @param truth_data A data frame containing truth data used to create forecasts
+#'   Must contain a "target_end_date" column of dates, a "location" column of
+#'   fips codes, and a column of truth data values. Defaults to NULL, in
+#'   which case hospitalization truth data is sourced as of the user-specified
+#'   \code{end_date}.
+#' @param ts_col The name of the column containing the truth data. This column
+#'   is coerced into a time series object of class \code{ts} and thus should
+#'   be a numeric type.
+#' @param start_date A date from which the truth data begins.
+#' @param end_date A date where the truth data ends and the forecasts begin.
+#'   If \code{df = NULL}, also specifies the date from which the hospitalization
+#'   truth data sourced.
+#' @param fips_vec A vector of one or more 2-digit codes specifying a
+#'   United States state or territory, of class \code{char}.
+#' @param aggregate_levels A user-selected list of aggregates to use.
+#' @param frequency Integer seasonal period.
+#' @param n_samples Numeric of requested bootstrap samples. Defaults to 10000.
+#' @param quantile_levels Numeric vector of quantile levels (probabilities) to
+#'   calculate for the returned forecasts.
+#' @param transform.4root \code{logical} that specifies whether a variance
+#'   stabilizing fourth root transformation should be performed on the data.
+#'   (This data transformation is undone after all of the forecasts are
+#'   reconciled and re-formatted into a data frame.)
+#'
+#' @return A list with a number of items equivalent to the length of
+#'   \code{fips_vec}. Each item is also a list that contains the following two
+#'   elements: a data frame containing COVID-19 incident hospitalization
+#'   forecasts with a US COVID-19 Forecast Hub format and a data frame
+#'   containing the base forecast matrix and the reconciled forecast matrix
+#'   with other relevant identifying information.
+#' @export
+#'
+#' @importFrom rlang .data
+covid_prob_thief <-
+  function(truth_data = NULL, ts_col = "value", start_date, end_date, fips_vec,
+           target_name, aggregate_levels, frequency, n_samples, quantile_levels,
+           transform.4root = FALSE) {
+    all_locs_list <- purrr::map(
+      .x = fips_vec,
+      .f = function(fips_code) {
+        prob_thief_wrapper(truth_data = NULL, ts_col, start_date, end_date,
+                           fips_code, target_name, aggregate_levels, frequency,
+                           n_samples, quantile_levels, transform.4root)
+      }
+    )
+    all_locs_fc <- purrr::imap(.x = fips_vec, ~ all_locs_list[[.y]][[1]]) |>
+      purrr::list_rbind()
+    all_locs_mod <- purrr::imap(.x = fips_vec, ~ all_locs_list[[.y]][[2]]) |>
+      purrr::list_rbind()
+
+    return(list(all_locs_fc, all_locs_mod))
+  }
