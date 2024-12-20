@@ -66,7 +66,7 @@ compute_prob_forecasts <-
     )
 
     if (identical("base", forecast_type)) {
-      return (base_forecasts)
+      return(base_forecasts)
     } else if ("reconciled" %in% forecast_type) { # Gaussian reconciliation
       reco_forecasts <- t(apply(
         base_forecasts, 1, FoReco::terec, agg_order = aggregate_levels,
@@ -76,6 +76,7 @@ compute_prob_forecasts <-
       if (identical("reconciled", forecast_type)) {
         return(reco_forecasts)
       } else {
+        colnames(base_forecasts) <- colnames(reco_forecasts)
         return(list(base = base_forecasts, reconciled = reco_forecasts))
       }
     }
