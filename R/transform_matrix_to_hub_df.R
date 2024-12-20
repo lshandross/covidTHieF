@@ -10,6 +10,7 @@
 #'   tends to be the last observed value in the truth data.
 #' @param fips_code A 2-digit code specifying a United States state or territory
 #'   of type \code{char}. Used to set the \code{location} in the new data frame.
+#' @param target_name A character string giving the name to use for the target.
 #' @param quantile_levels Numeric vector of quantile levels (probabilities) to
 #'   calculate from the input `fc_matrix` sample forecasts. Defaults to
 #'   quartiles.
@@ -27,10 +28,10 @@
 #' @export
 #'
 #' @importFrom rlang .data
-transform_matrix_to_hub_df <- function(fc_matrix, forecast_date, fips_code,
-                                       quantile_levels = c(0.25, 0.5, 0.75),
-                                       h_ahead = 56,
-                                       keep_bottommost_only = TRUE) {
+transform_matrix_to_hub_df <- 
+  function(fc_matrix, forecast_date, fips_code, target_name,
+           quantile_levels = c(0.025, 0.25, 0.5, 0.75, 0.975), h_ahead = 56,
+           keep_bottommost_only = TRUE) {
 
   # extract quantiles - rows become quantile levels
   fc_quantiles <- apply(fc_matrix, 2, stats::quantile, na.rm = TRUE,
@@ -48,7 +49,7 @@ transform_matrix_to_hub_df <- function(fc_matrix, forecast_date, fips_code,
       location = fips_code,
       horizon = as.numeric(.data[["h"]]) * .data[["k"]],
       temporal_resolution = "daily",
-      target = "inc hosp",
+      target = target_name,
       target_end_date = forecast_date + .data[["horizon"]],
       type = "quantile",
       quantile = as.numeric(stringr::str_remove(.data[["Var1"]], "%")) * 0.01,
