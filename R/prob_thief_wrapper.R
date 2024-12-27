@@ -19,6 +19,9 @@
 #' @param frequency Integer seasonal period.
 #' @param nsim Numeric of bootstrap samples used to generate probabilistic
 #'   forecasts. Defaults to 10000.
+#' @param n_samples Numeric giving the number of samples for each unique
+#'   forecast unit to return. Defaults to NULL, in which case no
+#'   sample forecasts are returned.
 #' @param quantile_levels Numeric vector of quantile levels (probabilities) to
 #'   calculate for the returned forecasts.
 #' @param transform.4root \code{logical} that specifies whether a variance
@@ -36,12 +39,12 @@
 prob_thief_wrapper <-
   function(truth_data = NULL, ts_col = "value", start_date, end_date, fips_code,
            target_name = "inc hosp", aggregate_levels, frequency, nsim = 1e5,
-           quantile_levels = NULL, transform.4root = FALSE) {
+           n_samples = NULL, quantile_levels = NULL, transform.4root = FALSE) {
     if (is.null(aggregate_levels)) {
       stop("You haven't provided any aggregate levels")
     }
-    if (is.null(quantile_levels)) {
-      warning("You haven't provided any quantile levels, using default levels")
+    if (is.null(quantile_levels) && is.null(n_samples)) {
+      stop("You haven't requested any forecasts")
     }
 
     if (is.null(truth_data)) {
@@ -82,7 +85,7 @@ prob_thief_wrapper <-
     h_ahead <- min(35, max(aggregate_levels))
     hub_df <- forecasts_list[["reconciled"]] |>
       transform_matrix_to_hub_df(forecast_date = end_date, fips_code, target_name,
-                                 quantile_levels, h_ahead)
+                                 n_samples, quantile_levels, h_ahead)
     if (transform.4root == TRUE) {
       hub_df <- dplyr::mutate(hub_df, value = .data[["value"]]^4)
     }
