@@ -11,9 +11,13 @@
 #' @param fips_code A 2-digit code specifying a United States state or territory
 #'   of type \code{char}. Used to set the \code{location} in the new data frame.
 #' @param target_name A character string giving the name to use for the target.
+#' @param n_samples Numeric giving the number of samples for each unique
+#'   forecast unit to return. Defaults to NULL, in which case no
+#'   sample forecasts are returned.
 #' @param quantile_levels Numeric vector of quantile levels (probabilities) to
-#'   calculate from the input `fc_matrix` sample forecasts. Defaults to
-#'   quartiles.
+#'   calculate from the input `fc_matrix` sample forecasts. NULL means that no
+#'   quantile forecasts are returned. Defaults to quantiles representing
+#'   50% and 95% prediction intervals and a median.
 #' @param h_ahead Numeric specifying the time units ahead of the longest horizon
 #'   being forecast should be. Defaults to 56 with the assumption the unit is
 #'   in days (for a total of 8 weeks ahead).
@@ -28,40 +32,58 @@
 #' @export
 #'
 #' @importFrom rlang .data
-transform_matrix_to_hub_df <- 
-  function(fc_matrix, forecast_date, fips_code, target_name,
+transform_matrix_to_hub_df <-
+  function(fc_matrix, forecast_date, fips_code, target_name, n_samples = NULL,
            quantile_levels = c(0.025, 0.25, 0.5, 0.75, 0.975), h_ahead = 56,
            keep_bottommost_only = TRUE) {
+    if (!is.null(n_samples)) {
+      if (n_samples > nrow(fc_matrix)) {
+        stop("Requested number of samples cannot exceed the number that have been provided")
+      }
+      fc_samples <- fc_matrix[1:n_samples,]
+      rownames(fc_samples) <- 1:n_samples
+    } else {
+      fc_samples <- NULL
+    }
 
-  # extract quantiles - rows become quantile levels
-  fc_quantiles <- apply(fc_matrix, 2, stats::quantile, na.rm = TRUE,
-                        probs = quantile_levels)
+    # extract quantiles - rows become quantile levels
+    if (!is.null(quantile_levels)) {
+      fc_quantiles <- apply(fc_matrix, 2, stats::quantile, na.rm = TRUE,
+                            probs = quantile_levels)
+      rownames(fc_quantiles) <- rownames(fc_quantiles) |>
+        stringr::str_remove("%") |>
+        as.numeric() * 0.01
+    } else {
+      fc_quantiles <- NULL
+    }
 
-  hub_df <- fc_quantiles |>
-    as.table() |>
-    as.data.frame() |>
-    tidyr::separate(
-      .data[["Var2"]], into = c("a", "k", "h"),
-      sep = "\\D+", convert = TRUE
-    ) |>
-    dplyr::mutate(
-      forecast_date = forecast_date,
-      location = fips_code,
-      horizon = as.numeric(.data[["h"]]) * .data[["k"]],
-      temporal_resolution = "daily",
-      target = target_name,
-      target_end_date = forecast_date + .data[["horizon"]],
-      type = "quantile",
-      quantile = as.numeric(stringr::str_remove(.data[["Var1"]], "%")) * 0.01,
-      value = ifelse(.data[["Freq"]] < 0, 0, .data[["Freq"]]),
-    )
+    fc_combined <- rbind(fc_samples, fc_quantiles)
+    hub_df <- fc_combined |>
+      as.table() |>
+      as.data.frame(stringsAsFactors = FALSE) |>
+      tidyr::separate(
+        .data[["Var2"]], into = c("a", "k", "h"),
+        sep = "\\D+", convert = TRUE
+      ) |>
+      dplyr::mutate(
+        forecast_date = forecast_date,
+        location = fips_code,
+        horizon = as.numeric(.data[["h"]]) * .data[["k"]],
+        temporal_resolution = "daily",
+        target = target_name,
+        target_end_date = forecast_date + .data[["horizon"]],
+        type = ifelse(as.numeric(.data[["Var1"]] < 1), "quantile", "sample"),
+        quantile = as.numeric(.data[["Var1"]]),
+        value = ifelse(.data[["Freq"]] < 0, 0, .data[["Freq"]]),
+      )
 
-  if (keep_bottommost_only) {
-    hub_df <- dplyr::filter(hub_df, .data[["k"]] == min(hub_df$k))
+    if (keep_bottommost_only) {
+      hub_df <- dplyr::filter(hub_df, .data[["k"]] == min(hub_df$k))
+    }
+
+    hub_df |>
+      dplyr::filter(.data[["horizon"]] <= h_ahead) |>
+      dplyr::select(c("forecast_date":"value")) |>
+      dplyr::arrange(.data[["horizon"]]) |>
+      dplyr::tibble()
   }
-
-  hub_df |>
-    dplyr::filter(.data[["horizon"]] <= h_ahead) |>
-    dplyr::select(c("forecast_date":"value")) |>
-    dplyr::tibble()
-}
