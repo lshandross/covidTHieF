@@ -29,12 +29,12 @@
 #'   (This data transformation is undone after all of the forecasts are
 #'   reconciled and re-formatted into a data frame.)
 #'
-#' @return A list with a number of items equivalent to the length of
-#'   \code{fips_vec}. Each item is also a list that contains the following two
-#'   elements: a data frame containing COVID-19 incident hospitalization
-#'   forecasts with a US COVID-19 Forecast Hub format and a data frame
-#'   containing the base forecast matrix and the reconciled forecast matrix
-#'   with other relevant identifying information.
+#' @return A list containing two data frames: the first containing COVID-19
+#'   incident hospitalization forecasts for the specified date and locations
+#'   in a US COVID-19 Forecast Hub format and the second containing metadata
+#'   about the forecaster making the predictions for each location, with
+#'   columns "forecast_data", "location", aggregate_levels, "base_matrix",
+#'   "rec_matrix" (the matrices contain the original sample forecasts)
 #' @export
 #'
 #' @importFrom rlang .data
