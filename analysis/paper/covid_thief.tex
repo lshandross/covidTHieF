@@ -120,7 +120,7 @@ The first day of the period of analysis (July 27, 2020) was selected as the firs
 
 
 \section{Benchmark comparison models} \label{comparison_models}
-Two models from the Forecast Hub---the COVIDhub-baseline and COVIDhub-4\_week\_ensemble---were selected to serve as comparisons for the models constructed for this analysis during the testing phase. Many of the metrics used in evaluation for this work are not especially meaningful on their own, the value often dependent on the magnitude of the observed data, requiring a relative comparison among models forecasting the same targets (1- to 28-day ahead incident hospitalizations for COVID-19)\cite{cramer}. Forecasts for these models were queried from the Zoltar forecast archive, a research data repository developed by Reich Lab, through the \textit{covidHubUtils} package\cite{hub_data_research, zoltar}.
+Two models from the Forecast Hub---the COVIDhub-baseline and COVIDhub-4\_week\_ensemble---served as benchmark comparison models during the testing phase. Many of the metrics used in evaluation for this work are not especially meaningful on their own, the value often dependent on the magnitude of the observed data, requiring a relative comparison among models forecasting the same targets (1- to 28-day ahead incident hospitalizations for COVID-19)\cite{cramer}. Forecasts for these models were queried from the Zoltar forecast archive, a research data repository developed by Reich Lab, through the \textit{covidHubUtils} package\cite{hub_data_research, zoltar}.
 
 The COVIDhub-baseline is a naive baseline model created and run by the U.S. COVID-19 Forecast Hub, designed as a simple benchmark for comparison. The baseline makes forecasts using the previous day's incident hospitalization value as the point forecast (and 0.5 quantile for the probabilistic forecast) and uses past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts\cite{cramer}. Beating the baseline was typically seen as one marker of a useful model.
 
@@ -195,8 +195,8 @@ Although it would be preferable to obtain quantiles from the reconciled forecast
 \begin{center}
 \caption{Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}
 \label{tab:table_quant_int}
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:11 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:07 2025
 \begin{tabular}{rlllllllllll}
   \hline
  &  \\ 
@@ -237,8 +237,6 @@ The construction of the ARIMA and SARIMA models intentionally matched that of th
 
 Evaluation of our models was conducted by scoring the forecasts for every unique combination of model, location, horizon, and forecast date using several metrics of interests, then grouping together the scores and taking averages of these metrics over various groupings. We used the same metrics as the Forecast Hub to for both the validation and testing phases: average mean absolute error (average MAE) for point forecasts, and average weighted interval score (average WIS, taken from \cite{int_eval}), average 50\% prediction interval (PI) coverage, and average 95\% PI coverage for probabilistic forecasts. (We refer to these metrics simply as MAE, WIS, and 50\% and 95\% PI coverage going forward for simplicity.) For WIS and MAE, lower values are desirable while coverage levels approximating $1-\alpha$ indicate a well-calibrated forecast. This means that the intervals were narrow enough to provide useful information but not so narrow as to exclude the truth.
 
-We used the same metrics as the Forecast Hub to evaluate model accuracy for both the validation and testing phases. Average mean absolute error (average MAE) was used to score point forecasts, while average weighted interval score (average WIS, taken from \cite{int_eval}), average 50\% prediction interval (PI) coverage, and average 95\% PI coverage were used to score probabilistic forecasts. (We refer to these metrics simply as MAE, WIS, and 50\% and 95\% PI coverage going forward for simplicity.) For WIS and MAE, lower values are desirable while coverage levels approximating $1-\alpha$ indicate a well-calibrated forecast. This means that the intervals were narrow enough to provide useful information but not so narrow as to exclude the truth.
-
 Averages for the four metrics were first calculated for probabilistic forecasts (and point forecasts) for a single forecast date, location, horizon, and quantile combination, then the mean was taken for each model from forecasts aggregated in one of the seven ways mentioned above. These calculations were performed using the following equations, which are adapted from \cite{cramer}:
 \begin{enumerate}
 \item $MAE = \frac{1}{N} \Sigma_{i=1}^N |y_i-\hat{y_i}|$
@@ -251,9 +249,7 @@ Weighted interval score is a proper scoring rule for a set of interval forecasts
 
 Relative versions of MAE and WIS were also used to adjust for truth data magnitude to allow for comparison between forecast values of different scales. These relative metrics were calculated as $MAE_{\textrm{model d}} / MAE_{\textrm{baseline}}$ and $WIS_{\textrm{model d}} /WIS_{\textrm{baseline}}$, respectively\cite{cramer}.
 
-The scores were then aggregated in one of seven ways: by forecast date, by location, by pandemic wave, overall validation/testing phase, and in the last 17 weeks (of the validation phase). For this aggregation we removed the U.S. national location to avoid inflated scores due to a single location. Additionally, the by--forecast date aggregation of scores was performed weekly instead of daily, following conventions set by the Forecast Hub for evaluation reports to condense the amount of scores. These weekly scores were obtained by averaging score values across a single week (Tuesday through Monday)\cite{eval_reports}\footnote{Note that scores for different models had to be re-aligned because teams made forecasts on different days, resulting in a mismatch between horizons for the same target and date. The scores for our models, which predicted on a Sunday, were for 3- to 30-days ahead, rather than 1- to 28 days ahead like those for the two Forecast Hub benchmark models. This may have resulted in a slight disadvantage for our models, though only marginally.}.
-
-Evaluation for each of the seven aggregation categories (except for individual locations) were separated by geographic scale: U.S. national and averaged states. The truth data and resulting forecasts were of different magnitudes for the aggregated U.S. national and average states levels. This meant that the contribution from the U.S. national location would account for an overwhelming proportion of the resulting forecast scores if we did not make such a split.
+The scores were then aggregated in one of seven ways: by forecast date, by location, by pandemic wave, overall validation/testing phase, and in the last 17 weeks (of the validation phase). For this aggregation we removed the U.S. national location to avoid inflated scores that disproportionately represent a single location. (However, separate analysis for this location is provided in the Appendix). Additionally, the by--forecast date aggregation of scores was performed weekly instead of daily, following conventions set by the Forecast Hub for evaluation reports to condense the amount of scores. These weekly scores were obtained by averaging score values across a single week (Tuesday through Monday)\cite{eval_reports}\footnote{Note that scores for different models had to be re-aligned because teams made forecasts on different days, resulting in a mismatch between horizons for the same target and date. The scores for our models, which predicted on a Sunday, were for 3- to 30-days ahead, rather than 1- to 28 days ahead like those for the two Forecast Hub benchmark models. This may have resulted in a slight disadvantage for our models, though only marginally.}.
 
 We performed no statistical tests to assess the significance of performance differences between models, as certain issues arise when making time series forecasts that prevent usage of such tests. Namely, scores tend to be highly correlated across multiple dimensions, like horizons, forecast dates, locations, etc. Assumptions of independent, identically distributed data found in standard inference are invalid in time series forecasting. In practice, numerical comparisons of forecast error between prospective models (without excluding any models that were compared) is sufficient for choosing the best model to inform decision-making, and foregoing formal statistical tests is common practice in infectious disease forecasting. Still, it should be noted that we cannot necessarily make a definitive statement about the predominance of one model over another without formal statistical testing\cite{lauer}.
 
@@ -262,20 +258,18 @@ The validation phase served as a period during which to train the candidate mode
 
 We prespecified a set of criteria to investigate several objectives of interest to help us determine which models to pass along as part of the best subset:
 \begin{itemize}
-\item \textbf{Best (THieF) model overall:} \newline Best original THieF over the entire validation phase (for each geographic scale)
-\item \textbf{Does ensembling THieF improve performance:} \newline Best trained THieF ensemble over the entire validation phase (for each geographic scale)
-\item \textbf{Does THieF improve upon performance compared to its base forecaster:} \newline Best ARIMA/SARIMA over the entire validation phase (for each geographic scale)
-\item \textbf{Do some THieF models improve with more input data:} Best original THieF during the last 17 weeks of the validation phase (for each geographic scale)
+\item \textbf{Best original THieF model} \newline Best original THieF over the entire validation phase
+\item \textbf{Does ensembling THieF improve performance:} \newline Best trained THieF ensemble over the entire validation phase
+\item \textbf{Does THieF improve upon performance compared to its base forecaster:} \newline Best ARIMA/SARIMA over the entire validation phase
 \item \textbf{Can weighted ensembles improve upon performance over unweighted ones:} \newline Untrained THieF ensemble
+\item \textbf{Do some THieF models improve with more input data:} Best original THieF during the last 17 weeks of the validation phase
 \end{itemize}
-where ``best" was defined by lowest WIS. Based on these criteria, a maximum of nine models could make up the best subset to move onto the training phase evaluations, if unique candidates occupied each category. However, if the same model occupied multiple categories, we might pass on as few as five models.
-
-We stratified by geographic scale due to a difference in magnitude, as described above. For each geographic scale, one model was passed on for each of the model classes---original THieF, THieF (trained) ensemble, ARIMA/SARIMA---as the single best candidate during the entire validation phase. We also selected the single best original THieF model during the last 17 weeks of the validation phase, a category designed to account for any models whose performance improved with larger amounts of data on which to train on (since we allowed models to use validation phase data to inform their forecasts, as was the case for operational forecasting). This category was limited to THieF models only, as it was models with large aggregation levels that we suspected might fit this description, and the ARIMA/SARIMA models included only very short seasonality (if any) while the THieF ensemble models incorporated forecasts all the THieF models. The THieF untrained ensemble was passed on regardless of its ranking, as we were interested in comparing the performance of this model to that of the best trained THieF ensemble.
+where ``best" was defined by lowest WIS. These criteria involved passing on a representative from each of the classes of models---original THieF, THieF (trained) ensemble, ARIMA/SARIMA---plus the equally weighted THieF ensemble and an additional original THieF model based on performance during the last 17 weeks of the validation phase. We limited the last category to original THieF models because we suspected such models with large aggregation levels might fit this description, which excluded the other classes of models. Thus, a maximum of five models could make up the best subset to move onto the training phase evaluations, if unique candidates occupied each category. However, if the same model occupied multiple categories, we might pass on only four models.
 
 \subsection{Testing phase} \label{testing_eval}
-Using the subset of best candidate models found during the validation phase, we made new testing phase forecasts and evaluated these models against both each other and the two comparison models from the Forecast Hub, COVIDhub-baseline and COVIDhub-4\_week\_ensemble. Like with the validation phase, all testing phase evaluations were restricted to forecasts with target end dates within the testing phase (November 1, 2021 to October 2, 2022).
+Using the subset of best candidate models found during the validation phase, we made new testing phase forecasts and evaluated these models against each other and against the two comparison models from the Forecast Hub, COVIDhub-baseline and COVIDhub-4\_week\_ensemble. Like with the validation phase, all testing phase evaluations were restricted to forecasts with target end dates within the testing phase (November 1, 2021 to October 2, 2022).
 
-The testing phase analysis was broken down into five smaller evaluations, based on aggregating the testing phase forecasts for the overall period, by horizon week, by pandemic wave, by location, and by forecast date, each split by geographic scale (except for by location, where such a split would be redundant). The smaller evaluations were intended to help pinpoint any potential accuracy gains (or losses) the original THieF or THieF ensembles had over the COVIDhub-baseline (or COVIDhub-4\_week\_ensemble) and allow us to hypothesize the origin of these accuracy differences.
+The testing phase analysis was broken down into five smaller evaluations, based on aggregating the testing phase forecasts for the overall period, by horizon week, by pandemic wave, by location, and by forecast date. The smaller evaluations were intended to help pinpoint any potential accuracy gains (or losses) the original THieF or THieF ensembles had over the COVIDhub-baseline (or COVIDhub-4\_week\_ensemble) and allow us to hypothesize the origin of these accuracy differences.
 
 The overall period evaluation provided a generalized view of the testing phase analysis and was meant to identify a single best model that could be used to inform decision-making. (Though of course we cannot say this definitively given that we do not perform any formal statistical tests\cite{lauer}.) The by-horizon evaluation allowed identification of models that perform well at shorter horizons (typically 1 to 2 week ahead), as the larger WIS and MAE values for longer horizons (3 to 4 week ahead) likely dominated these metrics in the overall period evaluation. This dominance is particularly undesirable given that the Forecast Hub ensemble models, which tend to be some of the most accurate models overall, experience a sharp decline in accuracy beyond two week ahead horizons for incident hospitalizations\cite{short_horizons}.
 
@@ -283,18 +277,14 @@ The by--pandemic wave and by--forecast date evaluations allowed investigation in
 
 \chapter{Results} \label{results}
 \section{Validation phase} \label{validation_results}
-Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us} show the overall model ranking and evaluation metrics during the validation phase for the averaged states and U.S. national geographic scales, in order of ascending WIS. For the averaged location scale the THieF ensembles generally performed the best, followed by the original THieF models, then the ARIMA/SARIMA models. This pattern was not as strictly followed for the U.S. national location scale, in which the two original THieF models with a 6-week top aggregation level had lower WIS than at least half of the THieF ensembles.
-
-For averaged states, we passed on THieF\_6wk-4root, THieF\_ensemble-train3, and sarima\_s7-noTransform as the best models of each class during the validation phase overall. While THieF\_ensemble-train3 was not strictly the highest ranked THieF ensemble for this location scale, we passed it along based on the selection rule from cross-validation in which the simplest model should be chosen if it does not perform substantially worse than more complex models. For U.S. national, we passed along THieF\_6wk-noTransform, THieF\_ensemble-train3, and arima\_s1-noTransform as the best representatives of each class for the overall validation phase of evaluation. The best original THieF models during the last 17 weeks of the validation phase were THieF\_6wk-4root and THieF\_12wk-4root for averaged states and U.S. national, respectively, with the full evaluation results shown in Supplemental Tables \ref{tab:table_last17_states} and \ref{tab:table_last17_us}. The untrained THieF ensemble, while not a top performer for either location scale in the overall analysis, was also passed on to serve as a reference model.
-
-Hence, the best subset that passed onto the testing phase consisted of the following seven (7) models: THieF\_6wk-4root, THieF\_6wk-noTransform, THieF\_ensemble-train3, sarima\_s7-noTransform, arima\_s1-noTransform, THieF\_12wk-4root, and \newline THieF\_ensemble-mean.
+During the validation phase, we found that the THieF ensembles generally made the most accurate predictions of incident COVID-19 hospitalizations of all our constructed models, followed by the original THieF models, then the ARIMA/SARIMA models. These results are summarized in Table \ref{tab:table_validation_states}, which shows the overall model ranking and evaluation metrics ordered by ascending WIS. A complete list of the best subset models passed onto the testing phase is provided in the Appendix in Table \ref {tab:table_best_subset_states}.
 
 \begin{table}%[h]
 \begin{center}
 \caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}
 \label{tab:table_validation_states}
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:11 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:07 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -334,8 +324,8 @@ Hence, the best subset that passed onto the testing phase consisted of the follo
 \begin{center}
 \caption{Summary of overall model performance during the validation phase for U.S. national, ordered by ascending WIS}
 \label{tab:table_validation_us}
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:11 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:07 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -386,8 +376,8 @@ We illustrated the forecasts made during the testing phase through plotting 1- t
 \begin{center}
 \caption{Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}
 \label{tab:table_overall_states}
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:20 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:17 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -409,8 +399,8 @@ We illustrated the forecasts made during the testing phase through plotting 1- t
 \begin{center}
 \caption{Summary of overall model performance during the testing phase for U.S. national, ordered by ascending WIS}
 \label{tab:table_overall_us}
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:20 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:17 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -536,8 +526,28 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 
 \newpage
 
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:24 2023
+\begin{table}%[h]
+\begin{center}
+\caption{Summary of best subset models passed on from the validation phase to the testing phase, including explanation of model choice if not strictly based on lowest WIS.}
+\label{tab:table_best_subset_states}
+\begin{tabular}{ p{4.5cm} p{5cm} p{5.5cm} }
+\hline
+Model & Criteria & Notes \\
+\hline
+THieF\_6wk-4root & Best original THieF & - \\
+%THieF\_6wk-noTransform,
+THieF\_ensemble-train3 & Best THieF ensemble & chosen based on cross-validation selection rule of the simplest and not substantially worse model \\
+sarima\_s7-noTransform & Best ARIMA/SARIMA & - \\
+%arima\_s1-noTransform,
+THieF\_ensemble-mean & Untrained THieF ensemble & - \\
+THieF\_12wk-4root & Best original THieF during last 17 weeks & - \\
+  \hline
+\end{tabular}
+\end{center}
+\end{table}
+
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:20 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{llrrrrrr}
 \caption{Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS} \\ 
@@ -585,8 +595,8 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 
 \newpage
 
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:24 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:20 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{llrrrrrr}
 \caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS} \\ 
@@ -635,8 +645,8 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 \newpage
 
 
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:24 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:20 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS} \\ 
@@ -693,8 +703,8 @@ COVIDhub-4\_week\_ensemble & 1 & 16.70 & 25.11 & 0.65 & 0.96 & 0.70 & 0.79 \\
 
 \newpage
 
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:24 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:20 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS} \\ 
@@ -752,8 +762,8 @@ COVIDhub-4\_week\_ensemble & 1 & 659.8 & 966.8 & 0.68 & 0.94 & 0.69 & 0.77 \\
 \newpage
 
 
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:24 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:20 2025
 \begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
 \begin{longtable}{lrlrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS} \\ 
@@ -847,8 +857,8 @@ COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 8.91 & 13.43 & 0.72 & 0.99 & 0.61 &
 \newpage
 
 %\captionsetup{width=6cm}
-% latex table generated in R 4.3.1 by xtable 1.8-4 package
-% Fri Dec  1 15:23:24 2023
+% latex table generated in R 4.4.1 by xtable 1.8-4 package
+% Thu Jan 30 13:04:20 2025
 \begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
 \begin{longtable}{lrlrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS} \\ 
