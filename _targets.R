@@ -170,7 +170,8 @@ tar_target(
   full_hosp_truth %>%
     filter(
       location == "US", 
-      target_end_date %in% c(as.Date("2020-07-27"):as.Date("2022-10-02"))
+      target_end_date >= as.Date("2020-07-27"),
+      target_end_date <= as.Date("2022-10-02")
     ) %>%
   ggplot(aes(x = target_end_date, y = value)) + 
     geom_line() + 
@@ -239,6 +240,26 @@ tar_target(
       models=testing_model_names[c(1:3,5)],
       truth=full_hosp_truth, 
       fips=ordered_testing_locations[1], 
+      fc_dates=testing_dates_to_plot, 
+      facet_nrow = 4, 
+      date_limits = c(as.Date("2021-07-05"), testing_forecast_range[2]))
+  ),
+  tar_target(plot_models_2, 
+    plot_models_one_location(
+      forecasts=testing_forecasts_to_plot, 
+      models=testing_model_names[c(1:3,5)],
+      truth=full_hosp_truth, 
+      fips=ordered_testing_locations[2], 
+      fc_dates=testing_dates_to_plot, 
+      facet_nrow = 4, 
+      date_limits = c(as.Date("2021-07-05"), testing_forecast_range[2]))
+  ),
+  tar_target(plot_models_53, 
+    plot_models_one_location(
+      forecasts=testing_forecasts_to_plot, 
+      models=testing_model_names[c(1:3,5)],
+      truth=full_hosp_truth, 
+      fips=ordered_testing_locations[53], 
       fc_dates=testing_dates_to_plot, 
       facet_nrow = 4, 
       date_limits = c(as.Date("2021-07-05"), testing_forecast_range[2]))
