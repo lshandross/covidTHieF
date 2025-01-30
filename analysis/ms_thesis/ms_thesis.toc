@@ -1,8 +1,8 @@
-\contentsline {FrontMatter}{\MakeUppercase []{\uppercase {Abstract}}}{iii}{chapter*.1}%
-\contentsline {FrontMatter}{\MakeUppercase []{List of Tables}}{vii}{chapter*.3}%
-\contentsline {FrontMatter}{\MakeUppercase []{List of Figures}}{viii}{chapter*.4}%
-\contentsline {Chapter}{\numberline {1.}\MakeUppercase []{Introduction}}{1}{chapter.1}%
-\contentsline {Chapter}{\numberline {2.}\MakeUppercase []{Methods}}{5}{chapter.2}%
+\contentsline {FrontMatter}{\MakeTextUppercase []{\uppercase {Abstract}}}{iii}{chapter*.1}%
+\contentsline {FrontMatter}{\MakeTextUppercase []{List of Tables}}{vii}{chapter*.3}%
+\contentsline {FrontMatter}{\MakeTextUppercase []{List of Figures}}{viii}{chapter*.4}%
+\contentsline {Chapter}{\numberline {1.}\MakeTextUppercase []{Introduction}}{1}{chapter.1}%
+\contentsline {Chapter}{\numberline {2.}\MakeTextUppercase []{Methods}}{5}{chapter.2}%
 \contentsline {section}{\numberline {2.1}Surveillance data}{5}{section.2.1}%
 \contentsline {section}{\numberline {2.2}Forecasts}{6}{section.2.2}%
 \contentsline {subsection}{\numberline {2.2.1}Forecast horizons}{7}{subsection.2.2.1}%
@@ -22,15 +22,15 @@
 \contentsline {section}{\numberline {2.7}Metrics and Evaluation}{24}{section.2.7}%
 \contentsline {subsection}{\numberline {2.7.1}Validation phase}{26}{subsection.2.7.1}%
 \contentsline {subsection}{\numberline {2.7.2}Testing phase}{28}{subsection.2.7.2}%
-\contentsline {Chapter}{\numberline {3.}\MakeUppercase []{Results}}{30}{chapter.3}%
+\contentsline {Chapter}{\numberline {3.}\MakeTextUppercase []{Results}}{30}{chapter.3}%
 \contentsline {section}{\numberline {3.1}Validation phase}{30}{section.3.1}%
 \contentsline {section}{\numberline {3.2}Testing phase}{31}{section.3.2}%
 \contentsline {subsection}{\numberline {3.2.1}Overall model performance}{35}{subsection.3.2.1}%
 \contentsline {subsection}{\numberline {3.2.2}Model performance by horizon week}{36}{subsection.3.2.2}%
 \contentsline {subsection}{\numberline {3.2.3}Model performance by pandemic wave}{39}{subsection.3.2.3}%
 \contentsline {subsection}{\numberline {3.2.4}Model performance by forecast week}{40}{subsection.3.2.4}%
-\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{42}{subsection.3.2.5}%
-\contentsline {Chapter}{\numberline {4.}\MakeUppercase []{Discussion}}{47}{chapter.4}%
+\contentsline {subsection}{\numberline {3.2.5}Model performance by location}{45}{subsection.3.2.5}%
+\contentsline {Chapter}{\numberline {4.}\MakeTextUppercase []{Discussion}}{47}{chapter.4}%
 \setcounter {tocdepth}{0}
-\contentsline {Appendix}{\MakeUppercase []{Appendix: Supplemental materials}}{53}{appendix*.5}%
-\contentsline {BackMatter}{\MakeUppercase []{Bibliography}}{66}{appendix*.6}%
+\contentsline {Appendix}{\MakeTextUppercase []{Appendix: Supplemental materials}}{53}{appendix*.5}%
+\contentsline {BackMatter}{\MakeTextUppercase []{Bibliography}}{66}{appendix*.6}%

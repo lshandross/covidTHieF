@@ -1,0 +1,109 @@
+\begin{thebibliography}{10}
+
+\bibitem{thief}
+Athanasopoulos, G., Hyndman, R.J., Kourentzes, N., and Petropoulos, F.
+\newblock Forecasting with temporal hierarchies.
+\newblock {\em European Journal of Operational Research 262}, 1 (October 2017), 60--74.
+
+\bibitem{int_eval}
+Bracher, J., Ray, E.L., Gneiting, T., and Reich, N.G.
+\newblock Evaluating epidemic forecasts in an interval format.
+\newblock {\em PLoS Computational Biology 17}, 2 (February 2021), e1008618.
+
+\bibitem{hub_data_research}
+{COVID-19 Forecast Hub}.
+\newblock Data.
+\newblock \url{https://covid19forecasthub.org/data/}.
+\newblock Accessed: 2023-04-13.
+
+\bibitem{ensembles_info}
+{COVID-19 Forecast Hub}.
+\newblock Ensemble model.
+\newblock \url{https://covid19forecasthub.org/doc/ensemble/}.
+\newblock Accessed: 2023-03-15.
+
+\bibitem{eval_reports}
+{COVID-19 Forecast Hub}.
+\newblock Forecast evaluations.
+\newblock \url{https://covid19forecasthub.org/eval-reports/}.
+\newblock Accessed: 2023-03-18.
+
+\bibitem{hub_data_repo}
+Cramer, Estee~Y., Huang, Yuxin, Wang, Yijin, Ray, Evan~L., Cornell, Matthew, Bracher, Johannes, Brennen, Andrea, Castro~Rivadeneira, Alvaro~J., Gerding, Aaron, House, Katie, Jayawardena, Dasuni, Kanji, Abdul~H., Khandelwal, Ayush, Le, Khoa, Niemi, Jarad, Stark, Ariane, Shah, Apurv, Wattanachit, Nutcha, Zorn, Martha~W., Reich, Nicholas~G., and Consortium, US COVID-19 Forecast~Hub.
+\newblock The united states covid-19 forecast hub dataset.
+\newblock {\em medRxiv\/} (2021).
+
+\bibitem{cramer}
+Cramer, Estee~Y., Ray, Evan~L., Lopez, Velma~K., Bracher, Johannes, Brennen, Andrea, Rivadeneira, Alvaro J.~Castro, Gerding, Aaron, Gneiting, Tilmann, House, Katie~H., Huang, Yuxin, Jayawardena, Dasuni, Kanji, Abdul~H., Khandelwal, Ayush, Le, Khoa, Mühlemann, Anja, Niemi, Jarad, Shah, Apurv, Stark, Ariane, Wang, Yijin, Wattanachit, Nutcha, ..., and Reich, Nicholas~G.
+\newblock Evaluation of individual and ensemble probabilistic forecasts of covid-19 mortality in the us.
+\newblock {\em Proceedings of the National Academy of Sciences 119}, 15 (April 2022), e2113561119.
+
+\bibitem{jhu_covid}
+Donovan, Doug.
+\newblock Johns hopkins covid-19 data hub ends after three years.
+\newblock {\em The Hub\/} (March 2023).
+
+\bibitem{mech_bayes}
+Gibson, Graham~C., Reich, Nicholas~G., and Sheldon, Daniel.
+\newblock Real-time mechanistic bayesian forecasts of covid-19 mortality.
+\newblock {\em medRxiv : the preprint server for health sciences\/} (December 2020).
+
+\bibitem{ideal_interval}
+Hiroshi, Nishiura, Gerardo, Chowell, Hans, Heesterbeek, and Jacco, Wallinga.
+\newblock The ideal reporting interval for an epidemic to objectively interpret the epidemiological time course.
+\newblock {\em J. R. Soc. Interface 72}, 43 (February 2010), 297--307.
+
+\bibitem{summing_matrix}
+Hyndman, R.J., Ahmed, R.A., Athanasopoulos, G., and Shang, H.L.
+\newblock Optimal combination forecasts for hierarchical time series.
+\newblock {\em Computational Statistics and Data Analysis 55}, 9 (September 2011), 2579--2589.
+
+\bibitem{hts_talk}
+Kourentzes, Nikos.
+\newblock Improving organizational forecasts and decisions with hierarchical forecasting.
+\newblock \url{https://youtu.be/dpASMg2jzQY}, 2021.
+\newblock Accessed: 2022-04-06.
+
+\bibitem{lauer}
+Lauer, Stephen~A., Brown, Alexandria~C., and Reich, Nicholas~G.
+\newblock Infectious disease forecasting for public health, 2020.
+
+\bibitem{ensemble_methods}
+Ray, Evan~L., Brooks, Logan~C., Bien, Jacob, Biggerstaff, Matthew, Bosse, Nikos~I., Bracher, Johannes, Cramer, Estee~Y., Funk, Sebastian, Gerding, Aaron, Johansson, Michael~A., Rumack, Aaron, Wang, Yijin, Zorn, Martha, Tibshirani, Ryan~J., and Reich, Nicholas~G.
+\newblock Comparing trained and untrained probabilistic ensemble forecasts of covid-19 cases and deaths in the united states.
+\newblock {\em International Journal of Forecasting\/} (July 2022).
+
+\bibitem{ensemble_accuracy}
+Reich, Nicholas~G., McGowan, Craig~J., Yamana, Teresa~K., Tushar, Abhinav, Ray, Evan~L., Osthus, Dave, Kandula, Sasikiran, Brooks, Logan~C., Crawford-Crudell, Willow, Gibson, Graham~Casey, Moore, Evan, Silva, Rebecca, Biggerstaff, Matthew, Johansson, Michael~A., Rosenfeld, Roni, and Shaman, Jeffrey.
+\newblock Accuracy of real-time multi-model ensemble forecasts for seasonal influenza in the u.s.
+\newblock {\em PLoS Computational Biology 15}, 11 (November 2019), e1007486.
+
+\bibitem{short_horizons}
+Reich, Nicholas~G., Tibshirani, Ryan~J., Ray, Evan~L., and Rosenfeld, Roni.
+\newblock On the predictability of covid-19.
+\newblock \url{https://forecasters.org/blog/2021/09/28/on-the-predictability-of-covid-19/}, September 2021.
+\newblock Accessed: 2022-04-06.
+
+\bibitem{4root_transform}
+Reich, Nicholas~G., Wang, Yijin, Burns, Meagan, Ergas, Rosa, Cramer, Estee~Y., and Ray, Evan~L.
+\newblock Assessing the utility of covid-19 case reports as a leading indicator for hospitalization forecasting in the united states.
+\newblock {\em medRxiv\/} (March 2023).
+
+\bibitem{disease_economics}
+Smith, Kristine~M., Machalaba, Catherine~C., Seifman, Richard, Feferholtz, Yasha, and Karesh, William~B.
+\newblock Infectious disease and economics: The case for considering multi-sectoral impacts.
+\newblock {\em One Health 7\/} (2019), 100080.
+
+\bibitem{hhs_data}
+{U.S. Department of Health and Human Services}.
+\newblock Covid-19 reported patient impact and hospital capacity by state timeseries.
+\newblock \url{https://healthdata.gov/Hospital/COVID-19-Reported-Patient-Impact-and-Hospital-Capa/g62h-syeh}.
+\newblock Accessed: 2023-03-15.
+
+\bibitem{zoltar}
+{Zoltar}.
+\newblock About.
+\newblock \url{https://zoltardata.com/about}.
+\newblock Accessed: 2023-03-18.
+
+\end{thebibliography}
