@@ -279,7 +279,7 @@ The validation phase served as a period during which to train the candidate mode
 
 We prespecified a set of criteria to investigate several objectives of interest to help us determine which models to pass along as part of the best subset:
 \begin{itemize}
-\item \textbf{Best (THieF) model overall:} \newline Best original THieF over the entire validation phase
+\item \textbf{Best original THieF model} \newline Best original THieF over the entire validation phase
 \item \textbf{Does ensembling THieF improve performance:} \newline Best trained THieF ensemble over the entire validation phase
 \item \textbf{Does THieF improve upon performance compared to its base forecaster:} \newline Best ARIMA/SARIMA over the entire validation phase
 \item \textbf{Can weighted ensembles improve upon performance over unweighted ones:} \newline Untrained THieF ensemble
@@ -298,11 +298,7 @@ The by--pandemic wave and by--forecast date evaluations allowed investigation in
 
 \chapter{Results} \label{results}
 \section{Validation phase} \label{validation_results}
-Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us} show the overall model ranking and evaluation metrics during the validation phase for the averaged states and U.S. national geographic scales, in order of ascending WIS. For the averaged location scale the THieF ensembles generally performed the best, followed by the original THieF models, then the ARIMA/SARIMA models. This pattern was not as strictly followed for the U.S. national location scale, in which the two original THieF models with a 6-week top aggregation level had lower WIS than at least half of the THieF ensembles.
-
-For averaged states, we passed on THieF\_6wk-4root, THieF\_ensemble-train3, and sarima\_s7-noTransform as the best models of each class during the validation phase overall. While THieF\_ensemble-train3 was not strictly the highest ranked THieF ensemble for this location scale, we passed it along based on the selection rule from cross-validation in which the simplest model should be chosen if it does not perform substantially worse than more complex models. For U.S. national, we passed along THieF\_6wk-noTransform, THieF\_ensemble-train3, and arima\_s1-noTransform as the best representatives of each class for the overall validation phase of evaluation. The best original THieF models during the last 17 weeks of the validation phase were THieF\_6wk-4root and THieF\_12wk-4root for averaged states and U.S. national, respectively, with the full evaluation results shown in Supplemental Tables \ref{tab:table_last17_states} and \ref{tab:table_last17_us}. The untrained THieF ensemble, while not a top performer for either location scale in the overall analysis, was also passed on to serve as a reference model.
-
-Hence, the best subset that passed onto the testing phase consisted of the following seven (7) models: THieF\_6wk-4root, THieF\_6wk-noTransform, THieF\_ensemble-train3, sarima\_s7-noTransform, arima\_s1-noTransform, THieF\_12wk-4root, and \newline THieF\_ensemble-mean.
+During the validation phase, we found that the THieF ensembles generally made the most accurate predictions of incident COVID-19 hospitalizations of all our constructed models, followed by the original THieF models, then the ARIMA/SARIMA models. These results are summarized in Table \ref{tab:table_validation_states}, which shows the overall model ranking and evaluation metrics ordered by ascending WIS. A complete list of the best subset models passed onto the testing phase is provided in the Appendix in Table \ref{tab:table_best_subset_states}.
 
 \begin{table}%[h]
 \begin{center}
@@ -482,6 +478,26 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 \end{figure}
 
 \newpage
+
+\begin{table}%[h]
+\begin{center}
+\caption{Summary of best subset models passed on from the validation phase to the testing phase, including explanation of model choice if not strictly based on lowest WIS.}
+\label{tab:table_best_subset_states}
+\begin{tabular}{ p{4.5cm} p{5cm} p{5.5cm} }
+\hline
+Model & Criteria & Notes \\
+\hline
+THieF\_6wk-4root & Best original THieF & - \\
+%THieF\_6wk-noTransform,
+THieF\_ensemble-train3 & Best THieF ensemble & chosen based on cross-validation selection rule of the simplest and not substantially worse model \\
+sarima\_s7-noTransform & Best ARIMA/SARIMA & - \\
+%arima\_s1-noTransform,
+THieF\_ensemble-mean & Untrained THieF ensemble & - \\
+THieF\_12wk-4root & Best original THieF during last 17 weeks & - \\
+  \hline
+\end{tabular}
+\end{center}
+\end{table}
 
 <<echo=FALSE, eval=TRUE, results=tex>>=
 table_last17_states <- tar_read(last17_validation_states, store="../../_targets") %>%
