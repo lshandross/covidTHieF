@@ -185,7 +185,7 @@ if (system == "linux") {
         actual_fc_dates <- distinct(scores_testing_thief_old, forecast_date) %>% pull(1)
         mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
         scores <- scores_full
-        score_baseline <- rbind(scores_testing_baseline, score_baseline)
+        score_baseline <- rbind(scores_testing_baseline, scores_validation_baseline)
       }
         
       scores_baseline <- score_baseline %>%
@@ -272,7 +272,7 @@ if (system == "linux") {
       for (i in date_indices[1]:date_indices[2]) {
         if (i == date_indices[1]) {message("entered for loop")}
         write.csv(fc_list[[i-date_indices[1]+1]], file=paste("data/", ensemble_name, "/", actual_fc_dates[i], "-", ensemble_name, ".csv", sep=""), row.names=FALSE)
-        message(paste(ensemble_name, "week", i,"csv file written"))
+        message(paste(ensemble_name, phase, "week", i,"csv file written"))
       }
     } else {
       if (model_spec[[1]] == "sarima") {
@@ -295,7 +295,7 @@ if (system == "linux") {
         if (i == date_indices[1]) {message("entered for loop")}
         write.csv(fc_list[[i-date_indices[1]+1]][[1]], file=paste("data/", actual_fc_dates[i], "-", model, ".csv", sep=""), row.names=FALSE)
 #        write.csv(fc_list[[i-date_indices[1]+1]][[1]], file=paste("data/", model, "/", actual_fc_dates[i], "-", model, ".csv", sep=""), row.names=FALSE)
-        message(paste(model, "week", i,"csv file written"))
+        message(paste(model, phase, "week", i,"csv file written"))
         if (i %in% c(1 + 6*(0:ceiling(47/6)))) {model_df <- c()}
         model_df <- rbind(model_df, fc_list[[i-date_indices[1]+1]][[2]])
         if (i %in% c(6*(1:floor(47/6)), length(sun_fc_dates))) {
@@ -353,12 +353,17 @@ if (system == "linux") {
     save(forecast_testing_list, file=paste("data/", forecast_testing_list, ".RData", sep=""))
 
   } else {
-    load(file="data/versioned_truth_training.RData")
-
-    # Generate Forecasts
-    truth_df <- tibble(forecast_date=sun_training_dates, truth_data=sun_training_truth_list)
-    actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
-      pull(target_end_date)
+    if (phase == "training") {
+      load(file="data/versioned_truth_training.RData")
+      truth_df <- tibble(forecast_date=sun_training_dates, truth_data=sun_training_truth_list)
+      actual_fc_dates <- map_dfr(sun_training_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
+        pull(target_end_date)
+    } else {
+      load(file="data/versioned_truth_testing.RData")
+      truth_df <- tibble(forecast_date=sun_testing_dates, truth_data=sun_testing_truth_list)
+      actual_fc_dates <- map_dfr(sun_testing_truth_list, slice_max, order_by = target_end_date, n = 1, with_ties = FALSE) %>%
+        pull(target_end_date)
+    }
 
     # FUNCTIONS
     # Generate THieF Forecasts
@@ -401,6 +406,26 @@ if (system == "linux") {
           pi_levels = c(10 * (1:9), 95, 98), transform.4root = FALSE) # change as needed
       }
 
+    # Generate Ensemble Forecasts
+    generate_ensemble_wk <-
+      function(fc_dates) {
+        library(tidyverse)
+        library(lubridate)
+        library(covidHubUtils)
+        func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+        lapply(func_list, source)
+  
+        results <- 
+          build_composite_ensemble(
+            forecast_df = NULL, composite_models = all_thief, 
+            scores_df = scores_clean, truth_data = NULL, use_median_as_point = TRUE,
+            rolling_period = weeks(12), theta = 0, # change as needed
+            ensemble_name = ensemble_name, # change as needed
+            forecast_date = fc_dates, reference_dates = mon_fc_dates)
+        message(paste("Finished", fc_dates, "forecasts"))
+        return(results)
+      }
+      
     # Export our function on the cluster
     clusterExport(cl, list('generate_thief_wk', 'generate_sarima_wk', 'states53', 'sun_fc_dates', 'truth_df'))
 
