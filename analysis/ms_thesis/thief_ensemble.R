@@ -95,7 +95,7 @@ if (phase == "training") {
     select(-mon_all_dates) %>%
     filter(horizon_wk %in% 1:4)
     
-  score_baseline <- rbind(scores_testing_baseline, score_baseline)
+  score_baseline <- rbind(scores_testing_baseline, scores_validation_baseline)
 }
 
 all_thief <- sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep=""))[c(3:14, 1:2)]
