@@ -23,30 +23,51 @@ library(covidHubUtils)
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 full_hosp_truth <- load_truth("HealthData", 
                          "inc hosp", 
-                         as_of=as.Date("2022-04-06"),
+                         as_of=as.Date("2022-10-01"),
                          temporal_resolution="weekly",
                          data_location = "covidData")
 
 inc_hosp_targets <- paste(0:35, "day ahead inc hosp")
+analysis <- "testing"
 
-#load("../data/loadedfc_scores_df.RData")
-#load("../data/versioned_fc_df.RData")
-load("../data/baseline_fc_scores_extended.RData")
+if (analysis == "original") {
+  load("../data/loadedfc_scores_df.RData")
+} else if (analysis == "versioned") {
+  load("../data/versioned_fc_df.RData")
+} else if (analysis == "extended") {
+  load("../data/baseline_fc_scores_extended.RData")
+  load("../data/extended_fcv_thief_old_small.RData")
+  load("../data/extended_fcv_thief_new_small.RData")
+  load("../data/extended_fcv_thief_ensemble_small.RData")
+  load("../data/extended_fcv_sarima_small.RData")
 
-load("../data/extended_fcv_thief_old_small.RData")
-load("../data/extended_fcv_thief_new_small.RData")
-load("../data/extended_fcv_thief_ensemble_small.RData")
-load("../data/extended_fcv_sarima_small.RData")
-
-fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), pull(distinct(fcv_sarima_small, forecast_date)))
-locs <- distinct(fcv_sarima_small, location) %>% pull()
-locs <- locs
-#locs <- "US"
+  date_limits <- c(as.Date("2020-10-01"), as.Date("2021-11-01"))
+  fc_dates <- c(as.Date("2020-12-07") + weeks(4*(0:11)), pull(distinct(fcv_sarima_small, forecast_date)))
+  locs <- distinct(fcv_sarima_small, location) %>% pull()
 
 fc_ver <- fcv_thief_ensemble_small %>%
   rbind(fcv_sarima_small, fcv_thief_new_small, fcv_thief_old_small) %>% 
-  rbind(filter(forecasts_baseline, forecast_date %in% fc_dates)) %>%
+  rbind(filter(fc_baseline, forecast_date %in% fc_dates)) %>%
   mutate(model = ifelse(model == "COVIDhub-baseline", "zCOVIDhub-baseline", model))
+  
+} else if (analysis == "testing") {
+  load("../data/baseline_fc_scores_testing.RData")
+  load("../data/testing_fcv_thief_old_small.RData")
+  load("../data/testing_fcv_thief_new_small.RData")
+#  load("../data/testing_fcv_thief_ensemble_small.RData")
+
+  date_limits <- c(as.Date("2021-09-01"), as.Date("2022-10-01"))
+  fc_dates <- c(as.Date("2021-11-01") + weeks(4*(0:11)), pull(distinct(fc_testing_thief_old_small, forecast_date)))
+  locs <- distinct(fc_testing_thief_old_small, location) %>% pull()
+  
+  fc_ver <- #fcv_thief_ensemble_small %>%
+    rbind(fc_testing_thief_new_small, fc_testing_thief_old_small) %>% 
+    rbind(filter(forecasts_testing_baseline, forecast_date %in% fc_dates)) %>%
+    mutate(model = ifelse(model == "COVIDhub-baseline", "zCOVIDhub-baseline", model))
+}
+
+#locs <- locs 
+#locs <- "US"
 models <- fc_ver %>% distinct(model) %>% pull(1)
 ```
 
@@ -72,9 +93,8 @@ for (i in 1:length(locs)) {
                       plot=FALSE)
 
   pt <- p +
-    scale_x_date(name=NULL, limits=c(as.Date("2020-10-01"), as.Date("2021-11-01")), 
-              date_breaks = "3 months", date_labels = "%b %y") +
-    coord_cartesian(ylim = c(0, max(filter(full_hosp_truth, location==locs[i], target_end_date <= as.Date("2021-10-31"))$value * 1.15))) +
+    scale_x_date(name=NULL, limits=date_limits, date_breaks = "3 months", date_labels = "%b %y") +
+    coord_cartesian(ylim = c(0, max(filter(full_hosp_truth, location==locs[i], target_end_date <= date_limits[2])$value * 1.15))) +
     theme(axis.ticks.length.x = unit(0.5, "cm"),
           axis.text.x = element_text(vjust = 7, hjust = -0.2),
           legend.position = "none")
