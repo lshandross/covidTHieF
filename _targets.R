@@ -9,7 +9,9 @@ library(tarchetypes) # Load other packages as needed. # nolint
 
 # Set target options:
 tar_option_set(
-  packages = c("tibble", "dplyr", "thief", "forecast", "lubridate", "tidyverse", "zoltr", "covidHubUtils", "patchwork", "surveillance", "tidytext", "stringr"), # packages that your targets need to run
+  packages = c("thief", "forecast", "zoltr", "covidHubUtils", "patchwork", "surveillance",
+               "lubridate", "ggplot2", "dplyr", "readr", "stringr", "tibble", "forcats",
+               "tidytext"), # packages that your targets need to run
   format = "rds" # default storage format
   # Set other options as needed.
 )
@@ -18,7 +20,8 @@ tar_option_set(
 options(clustermq.scheduler = "multiprocess")
 
 # tar_make_future() configuration (okay to leave alone):
-# Install packages {{future}}, {{future.callr}}, and {{future.batchtools}} to allow use_targets() to configure tar_make_future() options.
+# Install packages {{future}}, {{future.callr}}, and {{future.batchtools}}
+# to allow use_targets() to configure tar_make_future() options.
 
 # Run the R scripts in the R/ folder with your custom functions:
 tar_source()
@@ -509,4 +512,3 @@ tar_target(
   )
 
 )
-
