@@ -75,7 +75,8 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
 
     hosp_truth <- df |>
       dplyr::filter(
-        .data[["target_end_date"]] %within% lubridate::interval(start_date, most_recent_date),
+        .data[["target_end_date"]] >= start_date,
+        .data[["target_end_date"]] <= most_recent_date,
         .data[["location"]] == fips_code
       ) |>
       dplyr::arrange(.data[["target_end_date"]])
@@ -95,8 +96,7 @@ aggregate_thief_df <- # aggregate levels list should be in order of smallest to 
                             frequency = freq)
 
     # Construct temporal hierarchy
-    day_agg_ <- ht_day_ts_ |>
-      thief::tsaggregates(m = freq, aggregatelist = agg_list)
+    day_agg_ <- thief::tsaggregates(ht_day_ts_, m = freq, align = "end", aggregatelist = agg_list)
     for(i in seq_along(day_agg_)) {
       names(day_agg_)[[i]] <- agg.names[i]
     }

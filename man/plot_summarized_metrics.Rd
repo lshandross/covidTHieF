@@ -13,11 +13,11 @@ plot_summarized_metrics(
 )
 }
 \arguments{
-\item{summarized_metrics}{A data frame of summarized metrics. Must contain one row per model and horizon week combination plus a `horizon_wk` column}
+\item{summarized_metrics}{A data frame of summarized metrics. Must contain one row per model and horizon week combination plus a \code{horizon_wk} column}
 
 \item{model_names}{An ordered vector of model names}
 
-\item{model_colors}{An ordered vector of model colors. Must match with `model_names` order}
+\item{model_colors}{An ordered vector of model colors. Must match with \code{model_names} order}
 
 \item{y_var}{A string specifying which metric to plot as the y-variable}
 

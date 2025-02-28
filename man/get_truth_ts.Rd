@@ -15,23 +15,37 @@ get_truth_ts(
 )
 }
 \arguments{
-\item{df}{A data frame containing the desired truth data as one of the columns. Defaults to NULL in which hospitalization truth data is sourced as of the user-specified \code{end_date}.}
+\item{df}{A data frame containing the desired truth data as one of the
+columns. Used to create the forecasts. Defaults to NULL in which
+hospitalization truth data is sourced as of the user-specified
+\code{end_date}.}
 
-\item{ts_col}{The name of the column containing the truth data. This column is coerced into a time series object of class \code{ts} and thus should be a numeric type.}
+\item{ts_col}{The name of the column containing the truth data. This column
+is coerced into a time series object of class \code{ts} and thus should
+be a numeric type.}
 
-\item{start_date}{A date from which the data begins.}
+\item{start_date}{A date from which the truth data begins.}
 
-\item{end_date}{A date where the data ends. If \code{df=NULL}, also specifies the date from which the hospitalization truth data sourced.}
+\item{end_date}{A date where the truth data ends and the forecasts begin.
+If \code{df = NULL}, also specifies the date from which the hospitalization
+truth data sourced.}
 
-\item{fips_code}{A 2-digit code specifying a United States state or territory of type \code{char}.}
+\item{fips_code}{A 2-digit code specifying a United States state or territory
+of type \code{char}.}
 
-\item{frequency}{Integer seasonal period. Defaults to a value of 1, indicating no seasonality.}
+\item{frequency}{Integer seasonal period. Defaults to a value of 1,
+indicating no seasonality.}
 
-\item{transform.4root}{\code{logical} that specifies whether a variance stabilizing fourth root transformation should be performed on the data.}
+\item{transform.4root}{\code{logical} that specifies whether a variance
+stabilizing fourth root transformation should be performed on the data.}
+
+\item{pi_levels}{A vector of prediction interval levels to calculate.}
 }
 \value{
-A time series \code{ts} object made by coercing the original truth data into a time series format.
+A time series \code{ts} object made by coercing the original
+truth data into a time series format.
 }
 \description{
-Creation of time series object of COVID-19 truth data stored as a data frame
+Temporal hierarchical forecasting for COVID-19 incident hospitalizations for
+a single location
 }

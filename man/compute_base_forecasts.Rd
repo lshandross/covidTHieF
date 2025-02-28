@@ -9,7 +9,9 @@ compute_base_forecasts(temporal_hierarchy, pi_levels = c(10 * (1:9), 95, 98))
 \arguments{
 \item{temporal_hierarchy}{A list of (hierarchical) time series.}
 
-\item{pi_levels}{A vector of prediction interval levels to calculate. Defaults to the levels that correspond to the 23 US Forecast Hub-specified quantiles.}
+\item{pi_levels}{A vector of prediction interval levels to calculate.
+Defaults to the levels that correspond to the 23 US Forecast Hub-
+specified quantiles.}
 }
 \value{
 An object of class \code{forecast}.

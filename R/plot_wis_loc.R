@@ -1,5 +1,3 @@
-# library(dplyr); library(lubridate); library(covidHubUtils)
-
 ###################################################################################################
 # Helper functions
 
@@ -31,12 +29,11 @@ pairwise_comparison <-
 
   # perform permutation tests:
   if(permutation_test){
-    pval <- permutationTest(sub$wis.x, sub$wis.y,
-                            nPermutation = 999)$pVal.permut
+    pval <- surveillance::permutationTest(sub$wis.x, sub$wis.y, nPermutation = 999)$pVal.permut
 
     # aggregate by forecast date:
-    sub_fcd <- aggregate(cbind(wis.x, wis.y) ~ forecast_date, data = sub, FUN = mean)
-    pval_fcd <- permutationTest(sub_fcd$wis.x, sub_fcd$wis.y, nPermutation = 999)$pVal.permut
+    sub_fcd <- stats::aggregate(cbind(wis.x, wis.y) ~ forecast_date, data = sub, FUN = mean)
+    pval_fcd <- surveillance::permutationTest(sub_fcd$wis.x, sub_fcd$wis.y, nPermutation = 999)$pVal.permut
   } else {
     pval <- NULL
     pval_fcd <- NULL
@@ -62,18 +59,18 @@ pairwise_comparison <-
 #' @examples
 plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potentially add choice of wis, mae, coverage?
   #reorder states, reorder models
-  data("hub_locations")
-
-  inc_scores <- scores %>%
-    filter(!(location %in% c("22", "US") & forecast_date <= as.Date("2021-01-04")))
+  inc_scores <- dplyr::filter(
+    scores,
+    !(.data[["location"]] %in% c("22", "US") & .data[["forecast_date"]] <= as.Date("2021-01-04"))
+  )
 
   # bring all forecast_dates to Monday:
   inc_scores$forecast_date <- next_monday(inc_scores$forecast_date)
 
   # select relevant columns:
   heat_scores <- inc_scores %>%
-    left_join(hub_locations[1:2], by = c("location" = "fips")) %>%
-    select("model", "forecast_date", "location", "location_name", "horizon", "abs_error", "wis", "horizon_wk") %>%
+    dplyr::left_join(covidHubUtils::hub_locations[1:2], by = c("location" = "fips")) %>%
+    dplyr::select("model", "forecast_date", "location", "location_name", "horizon", "abs_error", "wis", "horizon_wk") %>%
     droplevels()
 
   # the included models and locations:
@@ -97,9 +94,10 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
     for(mx in seq_along(models)){
       for(my in 1:mx){
         pwc <- pairwise_comparison(
-          heat_scores = filter(heat_scores, horizon_wk %in% 1:4), mx = models[mx], my = models[my],
+          heat_scores = dplyr::filter(heat_scores, .data[["horizon_wk"]] %in% 1:4), mx = models[mx], my = models[my],
           permutation_test = FALSE, # disable permutation test to speed up things
-          subset = filter(heat_scores, horizon_wk %in% 1:4)$location == loc # this will subset to the respective location inside the function
+          subset = dplyr::filter(heat_scores, .data[["horizon_wk"]] %in% 1:4)$location == loc
+            # this will subset to the respective location inside the function
         )
         results_ratio_temp[mx, my] <- pwc$ratio
         results_ratio_temp[my, mx] <- 1/pwc$ratio
@@ -129,27 +127,31 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
 
   ## plot of true data by state, tiled
   truth_dat <- truth %>%
-    filter(geo_type == "state", population >= 500000) %>%
-    group_by(location, location_name) %>%
-    summarize(cum_value=sum(value)) %>%
-    ungroup() %>%
-    mutate(location_name = reorder(location_name, cum_value)) %>%
-    pull(location_name)
+    dplyr::filter(.data[["geo_type"]] == "state", .data[["population"]] >= 500000) %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(c("location", "location_name")))) %>%
+    dplyr::summarize(cum_value = sum(value)) %>%
+    dplyr::ungroup() %>%
+    dplyr::mutate(location_name = stats::reorder(.data["location_name"[], .data][["cum_value"]])) %>%
+    dplyr::pull(.data[["location_name"]])
 
   average_by_loc_to_plot <- average_by_loc %>%
-    mutate(location_name = fct_relevel(location_name, levels(truth_dat)),
-           relative_wis_text = sprintf("%.2f", round(relative_wis, 2)),
-           log_relative_wis = log2(relative_wis),
-           model = fct_relevel(model, model_levels)) %>%
-    filter(!is.na(relative_wis))
+    dplyr::mutate(
+      location_name = forcats::fct_relevel(.data[["location_name"]], levels(truth_dat)),
+      relative_wis_text = sprintf("%.2f", round(relative_wis, 2)),
+      log_relative_wis = log2(relative_wis),
+      model = forcats::fct_relevel(model, model_levels)
+    ) %>%
+    dplyr::filter(!is.na(relative_wis))
 
   # plot:
   fig_wis_loc <- average_by_loc_to_plot %>%
-    ggplot(aes(x=model, y=location_name,
-               fill= scales::oob_squish(log_relative_wis, range = c(-2, 1.5)))) +
-    geom_tile() +
-    geom_text(aes(label = relative_wis_text), size = 2.5) + # I adapted the rounding
-    scale_fill_gradient2(
+    ggplot2::ggplot(ggplot2::aes(
+      x = model, y = location_name,
+      fill = scales::oob_squish(log_relative_wis, range = c(-2, 1.5))
+    )) +
+    ggplot2::geom_tile() +
+    ggplot2::geom_text(ggplot2::aes(label = relative_wis_text), size = 2.5) + # I adapted the rounding
+    ggplot2::scale_fill_gradient2(
       low = "steelblue",
       high = "red",
       midpoint = 0,
@@ -158,20 +160,20 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
       breaks = c(-2,-1,0,1),
       labels =c("0.25", 0.5, 1, "2+")
     ) +
-    xlab(NULL) + ylab(NULL) +
-    theme(
-      axis.text.x = element_text(angle = 45, hjust = 1, size = 9),
-#     color=
+    ggplot2::xlab(NULL) + ggplot2::ylab(NULL) +
+    ggplot2::theme(
+      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 9),
+#     color =
 #        ifelse(levels(average_by_loc_to_plot$model) %in% models_to_highlight, "red", "black")),
-      axis.title.x = element_text(size = 9),
-      axis.text.y = element_text(size = 9),
-      title = element_text(size = 9)
+      axis.title.x = ggplot2::element_text(size = 9),
+      axis.text.y = ggplot2::element_text(size = 9),
+      title = ggplot2::element_text(size = 9)
     ) +
-    theme_bw()
+    ggplot2::theme_bw()
 
   print(fig_wis_loc)
 }
 
 
-# model_levels <- pull(overall_metrics_states, model)
+# model_levels <- dplyr::pull(overall_metrics_states, model)
 # plot_wis_loc(combined_scores, full_hosp_truth, model_levels, baseline_name = "COVIDhub-baseline")

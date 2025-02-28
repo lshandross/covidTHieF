@@ -9,12 +9,15 @@ summarize_wave_metrics(scores, baseline_name, us_only = FALSE)
 \arguments{
 \item{scores}{A data frame of forecast scores to be summarized}
 
-\item{baseline_name}{String specifying the name of the baseline model to calculate relative metrics against}
+\item{baseline_name}{String specifying the name of the baseline model to
+calculate relative metrics against}
 
-\item{us_only}{Boolean specifying whether to summarize metrics for the us national level only or just states}
+\item{us_only}{Boolean specifying whether to summarize metrics for the
+US national level only or just states}
 }
 \value{
-A data frame of summarized forecast score metrics stratified by pandemic wave and horizon week
+A data frame of summarized forecast score metrics stratified by
+pandemic wave and horizon week
 }
 \description{
 Summarize forecasts by both pandemic wave and horizon week

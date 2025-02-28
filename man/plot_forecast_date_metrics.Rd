@@ -14,11 +14,11 @@ plot_forecast_date_metrics(
 )
 }
 \arguments{
-\item{forecast_date_metrics}{A data frame of forecast_date metrics. Must contain one row per model and horizon week combination plus a `horizon_wk` column}
+\item{forecast_date_metrics}{A data frame of forecast_date metrics. Must contain one row per model and horizon week combination plus a \code{horizon_wk} column}
 
 \item{model_names}{An ordered vector of model names}
 
-\item{model_colors}{An ordered vector of model colors. Must match with `model_names` order}
+\item{model_colors}{An ordered vector of model colors. Must match with \code{model_names} order}
 
 \item{y_var}{A string specifying which metric to plot as the y-variable. Must be one of "WIS", "MAE", "Cov95", "Cov50"}
 

@@ -16,24 +16,38 @@ covid_sarima(
 )
 }
 \arguments{
-\item{df}{A data frame containing the desired truth data as one of the columns. Used to create the forecasts. Defaults to NULL in which hospitalization truth data is sourced as of the user-specified \code{end_date}.}
+\item{df}{A data frame containing the desired truth data as one of the columns.
+Used to create the forecasts. Defaults to NULL in which hospitalization
+truth data is sourced as of the user-specified \code{end_date}.}
 
-\item{ts_col}{The name of the column containing the truth data. This column is coerced into a time series object of class \code{ts} and thus should be a numeric type.}
+\item{ts_col}{The name of the column containing the truth data. This column is
+coerced into a time series object of class \code{ts} and thus should be a
+numeric type.}
 
 \item{start_date}{A date from which the truth data begins.}
 
-\item{end_date}{A date where the truth data ends and the forecasts begin. If \code{df=NULL}, also specifies the date from which the hospitalization truth data sourced.}
+\item{end_date}{A date where the truth data ends and the forecasts begin. If
+\code{df = NULL}, also specifies the date from which the hospitalization
+truth data sourced.}
 
-\item{fips_vec}{A vector of one or more 2-digit codes specifying a United States state or territory, of class \code{char}.}
+\item{fips_vec}{A vector of one or more 2-digit codes specifying a United States
+state or territory, of class \code{char}.}
 
 \item{frequency}{Integer seasonal period. Defaults to a value of 1, indicating no seasonality.}
 
 \item{pi_levels}{A vector of prediction interval levels to calculate.}
 
-\item{transform.4root}{\code{logical} that specifies whether a variance stabilizing fourth root transformation should be performed on the data. (This data transformation is undone after all of the forecasts are reconciled and re-formatted into a data frame.)}
+\item{transform.4root}{\code{logical} that specifies whether a
+variance stabilizing fourth root transformation should be performed on the
+data. (This data transformation is undone after all of the forecasts are
+reconciled and re-formatted into a data frame.)}
 }
 \value{
-A list with a number of items equivalent to the length of \code{fips_vec}. Each item is also a list that contains the following two elements: a data frame containing COVID-19 incident hospitalization forecasts with a US COVID-19 Forecast Hub format and a data frame containing the forecast object with other relevant identifying information.
+A list with a number of items equivalent to the length of
+\code{fips_vec}. Each item is also a list that contains the following two
+elements: a data frame containing COVID-19 incident hospitalization forecasts
+with a US COVID-19 Forecast Hub format and a data frame containing the
+forecast object with other relevant identifying information.
 }
 \description{
 (Seasonal) ARIMA forecasting for COVID-19 incident hospitalizations for multiple locations

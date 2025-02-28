@@ -12,7 +12,8 @@ load_formatted_forecasts(model_vector, date_indices)
 \item{date_indices}{a vector of numerics corresponding to associated forecasts dates}
 }
 \value{
-a data frame containing the forecasts from a single model during the corresponding dates to the specified date indices
+a data frame containing the forecasts from a single model during the
+corresponding dates to the specified date indices
 }
 \description{
 Load available forecasts from local directory (optimized for parallelization)

@@ -15,22 +15,31 @@ extended_truth_data(
 )
 }
 \arguments{
-\item{df}{A data frame containing the desired truth data as one of the columns. Defaults to NULL in which hospitalization truth data is sourced as of the user-specified \code{end_date}.}
+\item{df}{A data frame containing the desired truth data as one columns.
+Defaults to NULL in which hospitalization truth data is sourced as of the
+user-specified \code{end_date}.}
 
-\item{ts_col}{The name of the column containing the truth data. This column is coerced into a time series object of class \code{ts} and thus should be a numeric type.}
+\item{ts_col}{The name of the column containing the truth data. This column
+is coerced into a time series object of class \code{ts} and thus should be
+a numeric type.}
 
 \item{start_date}{A date from which the data begins.}
 
-\item{end_date}{A date where the original data ends. An additional \code{frequency} days are added to the \code{end_date}.}
+\item{end_date}{A date where the original data ends. An additional
+\code{frequency} days are added to the \code{end_date}.}
 
-\item{fips_code}{A 2-digit code specifying a United States state or territory of type \code{char}.}
+\item{fips_code}{A 2-digit code specifying a United States state or territory
+of type \code{char}.}
 
 \item{aggregate_levels}{A user-selected list of aggregates to use.}
 
-\item{frequency}{Integer seasonal period. Specifies the additional number of days worth of truth data to include.}
+\item{frequency}{Integer seasonal period. Specifies the additional number of
+days worth of truth data to include.}
 }
 \value{
-A list of time series of extended truth data. The first element is a \code{ts} object made by coercing the original truth data into a time series format, followed by series with increasing levels of aggregation.
+A list of time series of extended truth data. The first element is a
+\code{ts} object made by coercing the original truth data into a time
+series format, followed by series with increasing levels of aggregation.
 }
 \description{
 Generate extended (aggregated) truth data

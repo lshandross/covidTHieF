@@ -18,28 +18,45 @@ build_composite_ensemble(
 )
 }
 \arguments{
-\item{forecast_df}{A data frame of forecasts to build the ensemble. Defaults to NULL, in which the function looks for .csv files with the proper naming convention and organizational structure are searched for locally to create a data frame of forecasts. Note the implicit assumption that all forecasts have the same horizons}
+\item{forecast_df}{A data frame of forecasts to build the ensemble.
+Defaults to NULL, in which the function looks for .csv files with the proper
+naming convention and organizational structure are searched for locally to
+create a data frame of forecasts. Note the implicit assumption that all
+forecasts have the same horizons}
 
-\item{composite_models}{A character vector of model names. It is assumed that every element has forecasts in `forecast_df`, or will be used to search forward forecasts to construct `forecast_df`.}
+\item{composite_models}{A character vector of model names. It is assumed that
+every element has forecasts in \code{forecast_df}, or will be used to search forward
+forecasts to construct \code{forecast_df}.}
 
-\item{scores_df}{A data frame of scores to determine weights for the ensemble. Defaults to NULL, in which the function scores the forecasts within `forecast_df` using the provided `truth_data` to obtain weights}
+\item{scores_df}{A data frame of scores to determine weights for the ensemble.
+Defaults to NULL, in which the function scores the forecasts within
+\code{forecast_df} using the provided \code{truth_data} to obtain weights}
 
-\item{truth_data}{A data frame of truth data used to score `forecast_df` to obtain ensemble weights, only used if no scores are provided}
+\item{truth_data}{A data frame of truth data used to score \code{forecast_df} to
+obtain ensemble weights, only used if no scores are provided}
 
-\item{use_median_as_point}{A boolean passed as an argument to score `forecast_df`, only used if no scores are provided}
+\item{use_median_as_point}{A boolean passed as an argument to score
+\code{forecast_df}, only used if no scores are provided}
 
-\item{rolling_period}{A `Period` object specifying how long of a time period should be used to create ensemble weights based on past performance (scores)}
+\item{rolling_period}{A \code{Period} object specifying how long of a time period
+should be used to create ensemble weights based on past performance (scores)}
 
-\item{theta}{A numeric used in creating ensemble weights. Defaults to 0, which creates an untrained mean ensemble. Larger values shrink the weights for poor-performing models to zero while increasing weights for well-performing models.}
+\item{theta}{A numeric used in creating ensemble weights.
+Defaults to 0, which creates an untrained mean ensemble. Larger values shrink
+the weights for poor-performing models to zero while increasing weights for
+well-performing models.}
 
 \item{ensemble_name}{A string used to name the ensemble within the resulting data frame}
 
-\item{forecast_date}{A `Date` object specifying the desired forecast at date. Will be coerced to the previous Monday}
+\item{forecast_date}{A \code{Date} object specifying the desired forecast at date.
+Will be coerced to the previous Monday}
 
-\item{reference_dates}{A vector of `Date` objects used to aid in calculations. Should be a list of Mondays}
+\item{reference_dates}{A vector of \code{Date} objects used to aid in calculations.
+Should be a list of Mondays}
 }
 \value{
-a data frame of forecasts for the ensemble in the hub format for the input forecast date
+a data frame of forecasts for the ensemble in the hub format for the
+input forecast date
 }
 \description{
 Create a weighted quantile ensemble of composite models

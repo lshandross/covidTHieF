@@ -2,7 +2,8 @@
 % Please edit documentation in R/thief_wrapper.R
 \name{thief_wrapper}
 \alias{thief_wrapper}
-\title{Temporal hierarchical forecasting for COVID-19 incident hospitalizations for a single location}
+\title{Temporal hierarchical forecasting for COVID-19 incident hospitalizations for
+a single location}
 \usage{
 thief_wrapper(
   df = NULL,
@@ -19,15 +20,23 @@ thief_wrapper(
 )
 }
 \arguments{
-\item{df}{A data frame containing the desired truth data as one of the columns. Used to create the forecasts. Defaults to NULL in which hospitalization truth data is sourced as of the user-specified \code{end_date}.}
+\item{df}{A data frame containing the desired truth data as one of the
+columns. Used to create the forecasts. Defaults to NULL in which
+hospitalization truth data is sourced as of the user-specified
+\code{end_date}.}
 
-\item{ts_col}{The name of the column containing the truth data. This column is coerced into a time series object of class \code{ts} and thus should be a numeric type.}
+\item{ts_col}{The name of the column containing the truth data. This column
+is coerced into a time series object of class \code{ts} and thus should
+be a numeric type.}
 
 \item{start_date}{A date from which the truth data begins.}
 
-\item{end_date}{A date where the truth data ends and the forecasts begin. If \code{df=NULL}, also specifies the date from which the hospitalization truth data sourced.}
+\item{end_date}{A date where the truth data ends and the forecasts begin.
+If \code{df = NULL}, also specifies the date from which the hospitalization
+truth data sourced.}
 
-\item{fips_code}{A 2-digit code specifying a United States state or territory of type \code{char}.}
+\item{fips_code}{A 2-digit code specifying a United States state or territory
+of type \code{char}.}
 
 \item{aggregate_levels}{A user-selected list of aggregates to use.}
 
@@ -35,15 +44,24 @@ thief_wrapper(
 
 \item{pi_levels}{A vector of prediction interval levels to calculate.}
 
-\item{plot.aggregates}{\code{logical} that specifies whether a plot of the aggregated original time series should be generated.}
+\item{plot.aggregates}{\code{logical} that specifies whether a plot of the
+aggregated original time series should be generated.}
 
-\item{plot.forecasts}{\code{logical} that specifies whether a collection of plots of the forecasts should be generated.}
+\item{plot.forecasts}{\code{logical} that specifies whether a collection of
+plots of the forecasts should be generated.}
 
-\item{transform.4root}{\code{logical} that specifies whether a variance stabilizing fourth root transformation should be performed on the data. (This data transformation is undone after all of the forecasts are reconciled and re-formatted into a data frame.)}
+\item{transform.4root}{\code{logical} that specifies whether a variance
+stabilizing fourth root transformation should be performed on the data.
+(This data transformation is undone after all of the forecasts are
+reconciled and re-formatted into a data frame.)}
 }
 \value{
-A list containing two items: a data frame containing COVID-19 incident hospitalization forecasts with a US COVID-19 Forecast Hub format and a data frame containing the base forecast object and the reconciled forecast object with other relevant identifying information.
+A list containing two items: a data frame containing COVID-19
+incident hospitalization forecasts with a US COVID-19 Forecast Hub format
+and a data frame containing the base forecast object and the reconciled
+forecast object with other relevant identifying information.
 }
 \description{
-Temporal hierarchical forecasting for COVID-19 incident hospitalizations for a single location
+Temporal hierarchical forecasting for COVID-19 incident hospitalizations for
+a single location
 }

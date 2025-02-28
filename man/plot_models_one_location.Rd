@@ -22,13 +22,17 @@ plot_models_one_location(
 
 \item{fips}{A string of the fips code for the desired location to plot}
 
-\item{fc_dates}{A vector of the forecast dates to plot. Defaults to NULL where all provided forecasts will be plotted}
+\item{fc_dates}{A vector of the forecast dates to plot. Defaults to NULL where
+all provided forecasts will be plotted}
 
-\item{prediction_intervals}{A vector of (1-alpha)*100% prediction intervals to plot in addition to point forecasts. Defaults to 50% and 95%.}
+\item{prediction_intervals}{A vector of (1-alpha)*100\% prediction intervals to
+plot in addition to point forecasts. Defaults to 50\% and 95\%.}
 
-\item{facet_nrow}{An integer specifying how many rows the grid of forecast plots should have. Defaults to 6}
+\item{facet_nrow}{An integer specifying how many rows the grid of forecast plots
+should have. Defaults to 6}
 
-\item{date_limits}{A vector containing two dates between which to restrict the x-axis (in case of extra long truth data)}
+\item{date_limits}{A vector containing two dates between which to restrict the
+x-axis (in case of extra long truth data)}
 }
 \value{
 A plot of provided forecasts and truth data, faceted by model, for a single location
