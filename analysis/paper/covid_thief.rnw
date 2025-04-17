@@ -18,21 +18,21 @@
 
 <<include=FALSE, echo=FALSE, message=FALSE, warning=FALSE, results=hide>>=
 library(knitr)
-library(tidyverse)
+library(dplyr)
+library(ggplot2)
 library(tables)
 library(patchwork)
 library(targets)
 library(GGally) # For pairplots, disable if it causes ggplot errors
 library(xtable) # For pretty tables
 library(ggthemes) # plot themes?
-library(DiagrammeR)
 
-func_list <- list.files(path = "../../R", pattern=".R", full.names=TRUE)
+func_list <- list.files(path = "../../R", pattern = ".R", full.names = TRUE)
 lapply(func_list, source)
 
 opts_chunk$set(
-concordance=TRUE,
-cache=TRUE
+concordance = TRUE,
+cache = TRUE
 )
 @
 
