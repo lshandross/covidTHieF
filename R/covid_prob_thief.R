@@ -45,7 +45,7 @@ covid_prob_thief <-
     all_locs_list <- purrr::map(
       .x = fips_vec,
       .f = function(fips_code) {
-        prob_thief_wrapper(truth_data = NULL, ts_col, start_date, end_date,
+        prob_thief_wrapper(truth_data, ts_col, start_date, end_date,
                            fips_code, target_name, aggregate_levels, frequency,
                            nsim, n_samples, quantile_levels, transform.4root)
       }

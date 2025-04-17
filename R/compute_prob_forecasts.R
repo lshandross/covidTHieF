@@ -23,18 +23,18 @@ compute_prob_forecasts <-
            forecast_type = c("base", "reconciled"), aggregate_levels, ...) {
 
     # order temporal_hierarchy by frequency (top down)
-    agg_frequency <- sapply(temporal_hierarchy, function(ts) frequency(ts))
+    agg_frequency <- sapply(temporal_hierarchy, function(ts) stats::frequency(ts))
     if (!identical(order(unname(agg_frequency)), seq_along(agg_frequency))) {
       temporal_hierarchy <- temporal_hierarchy[order(agg_frequency)]
     }
 
     fit <- lapply(
       temporal_hierarchy,
-      function(x) forecast::auto.arima(ts(x, frequency = frequency(x)))
+      function(x) forecast::auto.arima(stats::ts(x, frequency = stats::frequency(x)))
     )
     forecast_obj <- lapply( # make into a forecast object
       fit,
-      function(tsfit) forecast::forecast(tsfit, h = frequency(tsfit$x))
+      function(tsfit) forecast::forecast(tsfit, h = stats::frequency(tsfit$x))
     )
 
     base_mean <- sapply(forecast_obj, function(x) x$mean)
@@ -46,8 +46,8 @@ compute_prob_forecasts <-
       fit,
       function(mod) {
         lapply(
-          1:frequency(mod$x), # get frequency of ts at each agg level
-          function(h) residuals(mod, type = "response", h = h)
+          1:stats::frequency(mod$x), # get frequency of ts at each agg level
+          function(h) stats::residuals(mod, type = "response", h = h)
           # note res = y_t - yhat_t, where t < h (aka obs time before pred hzns)
         )
       } # list of residuals separated by aggregation level and time point
