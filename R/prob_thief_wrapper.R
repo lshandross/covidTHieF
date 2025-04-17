@@ -64,10 +64,15 @@ prob_thief_wrapper <-
     if (num_missing_obs >= 1) {
       truth_data <- truth_data |>
         dplyr::add_row(target_end_date = most_recent_date + 1:num_missing_obs) |>
+        tidyr::complete(!!!rlang::syms(c("target_end_date", "location"))) |>
         tidyr::fill(!!!rlang::syms(names(truth_data)))
       warning(paste(num_missing_obs, "missing truth data observations will be imputed using last available value."))
     }
 
+    remainder_observation <- as.numeric(end_date - start_date + 1) %% frequency
+    truth_dates_desc <- sort(unique(truth_data$target_end_date), decreasing = TRUE)
+    temp_res <- as.integer(as.Date(truth_dates_desc[1]) - as.Date(truth_dates_desc[2]))
+    start_date <- start_date + (remainder_observation) * temp_res
     thief_aggregation <- truth_data |>
       aggregate_thief_df(ts_col, start_date, end_date, fips_code,
                          aggregate_levels, NULL, frequency, transform.4root) |>

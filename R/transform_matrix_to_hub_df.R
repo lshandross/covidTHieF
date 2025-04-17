@@ -35,7 +35,7 @@
 transform_matrix_to_hub_df <-
   function(fc_matrix, forecast_date, fips_code, target_name, n_samples = NULL,
            quantile_levels = c(0.025, 0.25, 0.5, 0.75, 0.975), h_ahead = 56,
-           keep_bottommost_only = TRUE) {
+           temp_res = 1, keep_bottommost_only = TRUE) {
     if (!is.null(n_samples)) {
       if (n_samples > nrow(fc_matrix)) {
         stop("Requested number of samples cannot exceed the number that have been provided")
@@ -67,18 +67,27 @@ transform_matrix_to_hub_df <-
       ) |>
       dplyr::mutate(
         forecast_date = forecast_date,
+        level = .data[["k"]],
         location = fips_code,
         horizon = as.numeric(.data[["h"]]) * .data[["k"]],
-        temporal_resolution = "daily",
+        temporal_resolution = dplyr::case_when(
+          temp_res == 1 ~ "daily",
+          temp_res == 7 ~ "weekly",
+          temp_res == 30 ~ "monthly",
+          temp_res == 365 ~ "yearly",
+          .default = as.character(temp_res)
+        ),
         target = target_name,
-        target_end_date = forecast_date + .data[["horizon"]],
+        target_end_date = forecast_date + .data[["horizon"]] * temp_res,
         type = ifelse(as.numeric(.data[["Var1"]] < 1), "quantile", "sample"),
         quantile = as.numeric(.data[["Var1"]]),
         value = ifelse(.data[["Freq"]] < 0, 0, .data[["Freq"]]),
       )
 
     if (keep_bottommost_only) {
-      hub_df <- dplyr::filter(hub_df, .data[["k"]] == min(hub_df$k))
+      hub_df <- hub_df |>
+        dplyr::filter(.data[["k"]] == min(hub_df$k)) |>
+        dplyr::select(-"level")
     }
 
     hub_df |>
