@@ -11,3 +11,8 @@ analysis/ms_thesis/ms_thesis.lof
 *.lot
 *.out
 analysis/ms_thesis/presentation figures code.r
+data/THieF_1wk-noTransform/2021-01-02-THieF_1wk-noTransform.csv
+*.aux
+analysis/paper/*.png
+analysis/paper/*.pdf
+analysis/paper/FoReco_covid_cache
