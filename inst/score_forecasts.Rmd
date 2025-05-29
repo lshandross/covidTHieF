@@ -169,13 +169,13 @@ for (i in 1:3) {
 # US National
 overall_metrics_US <- scores %>%
   rbind(scores_baseline) %>%
-  filter(target_end_date <= train_end_date,
+  filter(#target_end_date <= train_end_date,
          forecast_date >= as.Date("2021-01-11"),
          location == "US") %>%
   group_by(model) %>%
   summarize(
-    wis = round(mean(wis), digits=1), 
-    mae = round(mean(abs_error), digits=1),
+    wis = mean(wis), 
+    mae = mean(abs_error),
     cov_50 = mean(coverage_50),
     cov_95 = mean(coverage_95)
   ) 
@@ -212,12 +212,64 @@ overall_metrics_states <- overall_metrics_states %>%
 knitr::kable(overall_metrics_states)
 ```
 
+
+### Overall metrics (last 17 weeks)
+```{r, warning=FALSE, message=FALSE}
+# US National
+last_metrics_US <- scores %>%
+  rbind(scores_baseline) %>%
+  filter(target_end_date <= train_end_date,
+         forecast_date > train_end_date - weeks(ifelse(analysis == "extended", 17, 12)),
+         forecast_date >= as.Date("2021-01-11"),
+         location == "US") %>%
+  group_by(model) %>%
+  summarize(
+    wis = round(mean(wis), digits=1), 
+    mae = round(mean(abs_error), digits=1),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+last_metrics_US <- last_metrics_US %>%
+  mutate(
+    rwis = wis/pull(filter(last_metrics_US, model == "COVIDhub-baseline"), 2),
+    rmae = mae/pull(filter(last_metrics_US, model == "COVIDhub-baseline"), 3),
+    #cov_50 = cov_50/abs(pull(filter(last_metrics_US, model == "COVIDhub-baseline"), 4)-0.5),
+    #rcov_95 = cov_95/abs(pull(filter(last_metrics_US, model == "COVIDhub-baseline"), 5)-0.95),
+  ) %>% 
+  mutate(across(cov_50:rmae, round, digits=3)) %>%
+  arrange(wis)
+knitr::kable(last_metrics_US)
+
+# States
+last_metrics_states <- scores %>%
+  rbind(scores_baseline) %>%
+  filter(ifelse(location == "22", forecast_date > as.Date("2021-01-04"), location != "US"),
+          forecast_date <= train_end_date,
+         forecast_date > train_end_date - weeks(ifelse(analysis == "extended", 17, 12))) %>%
+  group_by(model) %>%
+  summarize(
+    wis = mean(wis), mae=mean(abs_error),
+    cov_50 = mean(coverage_50),
+    cov_95 = mean(coverage_95)
+  ) 
+last_metrics_states <- last_metrics_states %>%
+  mutate(
+    rwis = wis/pull(filter(last_metrics_states, model == "COVIDhub-baseline"), 2),
+    rmae = mae/pull(filter(last_metrics_states, model == "COVIDhub-baseline"), 3),
+    #cov_50 = cov_50/abs(pull(filter(last_metrics_states, model == "COVIDhub-baseline"), 4)-0.5),
+    #rcov_95 = cov_95/abs(pull(filter(last_metrics_states, model == "COVIDhub-baseline"), 5)-0.95),
+  ) %>% 
+  mutate(across(where(is.numeric), round, digits=3)) %>%
+  arrange(wis)
+knitr::kable(last_metrics_states)
+```
+
 ### Horizon week metrics
 ```{r, warning=FALSE, message=FALSE}
 # US National
 horizon_wk_metrics_US <- scores %>%
   rbind(scores_baseline) %>%
-  filter(target_end_date <= train_end_date,
+  filter(#target_end_date <= train_end_date,
          forecast_date >= as.Date("2021-01-11"),
          location == "US") %>%
   group_by(model, horizon_wk) %>%
@@ -655,10 +707,10 @@ if (analysis == "extended") {
 # US National
 forecast_date_metrics_US <- scores %>%
   left_join(mon_dates_df, by = "forecast_date") %>%
-  filter(target_end_date <= train_end_date,
+  filter(#target_end_date <= train_end_date,
          forecast_date > as.Date("2021-01-04"),
          location == "US") %>%
-  select(model, horizon, horizon_wk, forecast_date, target_end_date, 
+  select(model, horizon, horizon_wk, forecast_date = mon_fc_dates, target_end_date, 
         true_value, abs_error, wis, coverage_50, coverage_95) %>%
   group_by(forecast_date, model, horizon_wk) %>%
   summarize(
