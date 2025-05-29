@@ -62,7 +62,7 @@ Construct aggregates (from daily data) based on 8-week periods of epiweeks
 set.seed(1234)
 
 start_period <- 4
-end_period <- start_period + as.numeric(end_date - start_date + 1) / freq
+end_period <- start_period + as.numeric(end_date - start_date + 1) / freq - 1
 hosp_ts <- ts(hosp_truth$value, start = c(start_period, 1), end = c(end_period, 56), frequency = 56)
 hosp_agg <- aggts(hosp_ts, te_agg, align = "end", rm_na = TRUE)
 agg_names <- c("8-weekly", "4-weekly", "2-weekly", "weekly", "daily")
@@ -92,7 +92,7 @@ extended_truth <- full_hosp_truth |>
   dplyr::select("value", "epi_week", "day")
 
 long_truth <- rbind(hosp_truth, extended_truth)
-long_ts <- ts(long_truth$value, start=c(start_period, 1), end=c(end_period + 2, 56), frequency=56)
+long_ts <- ts(long_truth$value, start=c(start_period, 1), end=c(end_period + 1, 56), frequency=56)
 
 long_aggs <- aggts(long_ts, te_agg, align = "end", rm_na = TRUE)
 agg_names.ascending <- c("daily", "weekly", "2-weekly", "4-weekly", "8-weekly")
@@ -160,6 +160,9 @@ res_vec.arima <- unlist(res.arima, use.names = FALSE)
 
 base_tejb.arima <- teboot(fit.arima, B, te_agg)$sample
 dim(base_tejb.arima)
+base_boot <- apply(base_tejb.arima, 2, quantile, na.rm = TRUE,
+                   probs = c(0.025, 0.25, 0.5, 0.75, 0.975))
+
 reco_tejb.arima <- t(apply(base_tejb.arima, 1, FoReco::terec, agg_order = te_agg,
                            res = res_vec.arima, nn = "sntz", comb = "wlsv", approach = "proj"))
   # we reconcile each member of a sample from the incoherent distribution.
@@ -170,12 +173,33 @@ reco_tejb.arima <- t(apply(base_tejb.arima, 1, FoReco::terec, agg_order = te_agg
 boot_quantiles <- apply(reco_tejb.arima, 2, quantile, na.rm = TRUE,
                         probs = c(0.01, 0.025, seq(0.05, 0.95, 0.05), 0.975, 0.99))
 boot_subset <- apply(reco_tejb.arima, 2, quantile, na.rm = TRUE,
-                     probs = c(0.01, 0.025, seq(0.05, 0.95, 0.05), 0.975, 0.99))
+                     probs = c(0.025, 0.25, 0.5, 0.75, 0.975))
 ```
 
 Prepare bootstrap forecasts for plotting
 
 ```{r}
+colnames(base_boot) <- colnames(boot_subset)
+base_boot_df <- base_boot |>
+  as.table() |>
+  as.data.frame() |>
+  dplyr::mutate(
+    Var1 = paste0("q", stringr::str_remove_all(Var1, "%")),
+    Var2 = as.character(Var2),
+    Freq = ifelse(Freq < 0, 0, Freq)
+  ) |>
+  tidyr::pivot_wider(names_from = "Var1", values_from = "Freq") |>
+  dplyr::mutate(
+    k = as.numeric(stringr::str_extract(Var2, "\\d*(?=\\sh)")), #grab digits before h
+    h = as.numeric(stringr::str_extract(Var2, "(?<=h-)\\d*")), #grab digits after h
+    level = case_when(k == 56 ~ "8-weekly", k == 28 ~ "4-weekly",
+                      k == 14 ~ "2-weekly", k == 7 ~ "weekly",
+                      k == 1 ~ "daily", .default = NA),
+    level = factor(level, levels = unique(level), ordered = TRUE),
+    date = days(k*h) + end_date
+  ) |>
+  dplyr::select("date", "level", "q2.5":"q97.5")
+
 bootstrap_df <- boot_subset |>
   as.table() |>
   as.data.frame() |>
@@ -208,12 +232,16 @@ extended_df |>
   ggplot(aes(x = date, group = level)) +
   geom_line(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
   geom_point(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
-  geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% PI"), alpha = .75) +
-  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
+  geom_ribbon(data = base_boot_df, aes(x = date, ymin = q2.5, ymax = q97.5, fill = "95% Base"), alpha = .6) +
+  geom_ribbon(data = base_boot_df, aes(x = date, ymin = q25, ymax = q75, fill = "50% Base"), alpha = .6) +
+  geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% Reconciled"), alpha = .75) +
+  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% Reconciled"), alpha = .75) +
+  geom_line(data = base_boot_df, aes(x = date, y = q50), col = 2) +
+  geom_point(data = base_boot_df, aes(x = date, y = q50), col = 2) +
   geom_line(aes(y = q50), col = 4) +
-  geom_point(aes(y = q50), col = 4) +
+#  geom_point(aes(y = q50), col = 4) +
   facet_grid(rows = vars(level), scales = "free") +
-  scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
+  scale_fill_manual(name = "", values = c("50% Reconciled" = "#00458F", "95% Reconciled" = "#C2DDEE", "50% Base" = "#900000", "95% Base" = "#EEC2C2")) +
   xlab("Date") + ylab(" ") +
 #  theme(axis.title.x="Date", axis.title.y="") +
   ggtitle("Reconcile Bootstrapped Forecasts")
@@ -244,6 +272,9 @@ Calculate probabilistic forecasts
 
 ```{r}
 base.arima <- MASS::mvrnorm(n = B, mu = unlist(base_mean.arima), Sigma = shrink_estim(mres.arima))
+base_subset <- apply(base.arima, 2, quantile, na.rm = TRUE,
+                     probs = c(0.025, 0.25, 0.5, 0.75, 0.975))
+
 reco.arima <- t(apply(base.arima, 1, terec, agg_order = te_agg, comb = "wlsv",
                       res = unlist(res.arima), nn = "sntz")) # order of aggregates doesn't matter
 
@@ -251,12 +282,33 @@ reco.arima <- t(apply(base.arima, 1, terec, agg_order = te_agg, comb = "wlsv",
 reco_quantiles <- apply(reco.arima, 2, quantile, na.rm = TRUE,
                         probs = c(0.01, 0.025, seq(0.05, 0.95, 0.05), 0.975, 0.99))
 reco_subset <- apply(reco.arima, 2, quantile, na.rm = TRUE,
-                     probs = c(0.01, 0.025, seq(0.05, 0.95, 0.05), 0.975, 0.99))
+                     probs = c(0.025, 0.25, 0.5, 0.75, 0.975))
 ```
 
 Prepare Gaussian forecasts for plotting
 
 ```{r}
+colnames(base_subset) <- colnames(reco_subset)
+base_df <- base_subset |>
+  as.table() |>
+  as.data.frame() |>
+  dplyr::mutate(
+    Var1 = paste0("q", stringr::str_remove_all(Var1, "%")),
+    Var2 = as.character(Var2),
+    Freq = ifelse(Freq < 0, 0, Freq)
+  ) |>
+  tidyr::pivot_wider(names_from = "Var1", values_from = "Freq") |>
+  dplyr::mutate(
+    k = as.numeric(stringr::str_extract(Var2, "\\d*(?=\\sh)")), #grab digits before h
+    h = as.numeric(stringr::str_extract(Var2, "(?<=h-)\\d*")), #grab digits after h
+    level = case_when(k == 56 ~ "8-weekly", k == 28 ~ "4-weekly",
+                      k == 14 ~ "2-weekly", k == 7 ~ "weekly",
+                      k == 1 ~ "daily", .default = NA),
+    level = factor(level, levels = unique(level), ordered = TRUE),
+    date = days(k*h) + end_date
+  ) |>
+  dplyr::select("date", "level", "q2.5":"q97.5")
+
 reconciled_df <- reco_subset |>
   as.table() |>
   as.data.frame() |>
@@ -289,12 +341,16 @@ extended_df |>
   ggplot(aes(x = date, group = level)) +
   geom_line(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
   geom_point(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
-  geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% PI"), alpha = .75) +
-  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
+  geom_ribbon(data = base_df, aes(x = date, ymin = q2.5, ymax = q97.5, fill = "95% Base"), alpha = .6) +
+  geom_ribbon(data = base_df, aes(x = date, ymin = q25, ymax = q75, fill = "50% Base"), alpha = .6) +
+  geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% Reconciled"), alpha = .6) +
+  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% Reconciled"), alpha = .6) +
   geom_line(aes(y = q50), col = 4) +
-  geom_point(aes(y = q50), col = 4) +
+#  geom_point(aes(y = q50), col = 4) +
+  geom_line(data = base_df, aes(x = date, y = q50), col = 2) +
+  geom_point(data = base_df, aes(x = date, y = q50), col = 2) +
   facet_grid(rows = vars(level), scales = "free") +
-  scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
+  scale_fill_manual(name = "", values = c("50% Reconciled" = "#00458F", "95% Reconciled" = "#C2DDEE", "50% Base" = "#900000", "95% Base" = "#EEC2C2")) +
   xlab("Date") + ylab(" ") +
 #  theme(axis.title.x="Date", axis.title.y="") +
   ggtitle("Reconcile Probabilistic Forecasts")
@@ -341,6 +397,33 @@ for (i in 1:length(aggregation_list)) {
   date_list[[i]] <- (length(old_hosp_agg[[1+length(aggregation_list) - i]]) +
     (1:(frequency/aggregation_list[[i]])))*aggregation_list[[i]]
   date <- c(date, date_list[[i]])
+  q2.5 <- c(q2.5, base_fc_day[[1+length(aggregation_list) - i]][["lower"]][,2])
+  q25 <- c(q25, base_fc_day[[1+length(aggregation_list) - i]][["lower"]][,1])
+  q50 <- c(q50, base_fc_day[[1+length(aggregation_list) - i]][["mean"]])
+  q75 <- c(q75, base_fc_day[[1+length(aggregation_list) - i]][["upper"]][,1])
+  q97.5 <- c(q97.5, base_fc_day[[1+length(aggregation_list) - i]][["upper"]][,2])
+  level_list[[i]] <- rep(agg_names.ascending[1+length(aggregation_list) - i],
+                         frequency/aggregation_list[[i]])
+  level <- c(level, level_list[[i]])
+}
+
+base_df_old <-
+  tibble::tibble(q2.5, q25, q50, q75, q97.5, level) |>
+  cbind(date = c(56, 28, 56, seq(14, 56, 14), seq(7, 56, 7), 1:56)) |>
+  dplyr::mutate(
+    date = days(date) + end_date,
+    level=factor(level, levels=unique(level), ordered=TRUE),
+    across(where(is.numeric), function(x) ifelse(x < 0, 0, x)),
+    .before = 1
+)
+  
+aggregation_list <- as.list(te_agg); date_list <- list(); frequency <- 56
+q2.5 <- NULL; q25 <- NULL; q50 <- NULL; q75 <- NULL; q97.5 <- NULL
+level_list <- list(); level <- NULL
+for (i in 1:length(aggregation_list)) {
+  date_list[[i]] <- (length(old_hosp_agg[[1+length(aggregation_list) - i]]) +
+    (1:(frequency/aggregation_list[[i]])))*aggregation_list[[i]]
+  date <- c(date, date_list[[i]])
   q2.5 <- c(q2.5, reconciled_fc_day[[1+length(aggregation_list) - i]][["lower"]][,2])
   q25 <- c(q25, reconciled_fc_day[[1+length(aggregation_list) - i]][["lower"]][,1])
   q50 <- c(q50, reconciled_fc_day[[1+length(aggregation_list) - i]][["mean"]])
@@ -351,7 +434,7 @@ for (i in 1:length(aggregation_list)) {
   level <- c(level, level_list[[i]])
 }
 
-reconcile_df_old <-
+reconciled_df_old <-
   tibble::tibble(q2.5, q25, q50, q75, q97.5, level) |>
   cbind(date = c(56, 28, 56, seq(14, 56, 14), seq(7, 56, 7), 1:56)) |>
   dplyr::mutate(
@@ -369,16 +452,20 @@ extended_df |>
   dplyr::filter(date == end_date) |>
   dplyr::mutate(q2.5 = value, q25 = value, q50 = value, q75 = value, q97.5 = value) |>
   dplyr::select("date", "level", "q2.5": "q97.5") |>
-  dplyr::bind_rows(reconcile_df_old) |>
+  dplyr::bind_rows(reconciled_df_old) |>
   ggplot(aes(x = date, group = level)) +
   geom_line(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
   geom_point(data = extended_df, aes(x = date, y = value, group = level), col = 1) +
-  geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% PI"), alpha = .75) +
-  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% PI"), alpha = .75) +
+  geom_ribbon(data = base_df_old, aes(x = date, ymin = q2.5, ymax = q97.5, fill = "95% Base"), alpha = .6) +
+  geom_ribbon(data = base_df_old, aes(x = date, ymin = q25, ymax = q75, fill = "50% Base"), alpha = .6) +
+  geom_ribbon(aes(ymin = q2.5, ymax = q97.5, fill = "95% Reconciled"), alpha = .75) +
+  geom_ribbon(aes(ymin = q25, ymax = q75, fill = "50% Reconciled"), alpha = .75) +
+  geom_line(data = base_df_old, aes(x = date, y = q50), col = 2) +
+  geom_point(data = base_df_old, aes(x = date, y = q50), col = 2) +
   geom_line(aes(y = q50), col = 4) +
-  geom_point(aes(y = q50), col = 4) +
+#  geom_point(aes(y = q50), col = 4) +
   facet_grid(rows = vars(level), scales = "free") +
-  scale_fill_manual(name = "", values = c("50% PI" = "#00458F", "95% PI" = "#C2DDEE")) +
+  scale_fill_manual(name = "", values = c("50% Reconciled" = "#00458F", "95% Reconciled" = "#C2DDEE", "50% Base" = "#900000", "95% Base" = "#EEC2C2")) +
   xlab("Date") + ylab(" ") +
 #  theme(axis.title.x="Date", axis.title.y="") +
   ggtitle("Reconcile Forecasts Old")
