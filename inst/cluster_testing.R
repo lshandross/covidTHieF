@@ -1,4 +1,4 @@
-library("thief")
+library(thief)
 library(forecast)
 library(lubridate)
 library(tidyverse)
@@ -10,7 +10,7 @@ library(parallel)
 system <- "linux" # c("linux", "windows")
 num_cores <- 32 # NA if system == "windows"
 action <- "generate_forecasts" # c("load_truth", "load_testing_forecasts", "generate_forecasts")
-model_spec <- list("thief", 2, FALSE) # list("THieF" or "sarima", thief_top_num or sarima_agg_num, transform.4root)
+model_spec <- list("thief", 8, FALSE) # list("THieF" or "sarima", thief_top_num or sarima_agg_num, transform.4root)
 date_indices <- c(1, 17)
 
 model_type <- ifelse(model_spec[[1]] == "thief", "THieF", model_spec[[1]])
@@ -20,29 +20,89 @@ transform_type <- ifelse(model_spec[[3]], "4root", "noTransform")
 
 sun_fc_dates <- c(as.Date("2020-12-06") + weeks(0:46))
 
-# <Basic Functions No Errors>
-# start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-02")
-# pi_levels = c(10 * (1:9), 95, 98)
-#
-# test <-
-#   aggregate_thief_df(
-#     sun_training_truth_list[[5]], ts_col = "value",
-#     start_date, end_date, fips_code = "04",
-#     aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = FALSE)
-# #plot_thief_agg(test, start_date)
-# temp <- compute_base_forecasts(test, pi_levels)
-# temp_reconciled <- reconcilethief(temp, aggregatelist = list(56, 28, 14, 7, 1)) # produces a warning
-# #plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, agg.names = agg.names)
-# temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "04", pi_levels, transform.4root = FALSE)
+load(file="data/versioned_truth_training.RData")
 
-# hub_test <- thief_wrapper(sun_training_truth_list[[5]], ts_col = "value",
-#   start_date, end_date, fips_code = "04",
-#   aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
-#   pi_levels = pi_levels,
-#   plot.aggregates = FALSE, plot.forecasts = FALSE)
+func_list <- list.files(path = "R", pattern=".R", full.names=TRUE)
+lapply(func_list, source)
+      
+# <Basic Functions No Errors>
+start_date = as.Date("2020-07-27"); end_date = as.Date("2021-01-02")
+pi_levels = c(10 * (1:9), 95, 98)
+
+test <-
+  aggregate_thief_df(
+    sun_training_truth_list[[5]], ts_col = "value",
+    start_date, end_date, fips_code = "04",
+    aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56, transform.4root = FALSE)
+#plot_thief_agg(test, start_date)
+temp <- compute_base_forecasts(test, pi_levels)
+temp_reconciled <- reconcilethief(temp, aggregatelist = list(56, 28, 14, 7, 1)) # produces a warning
+#plot_thief(base_forecasts= temp, reconciled_forecasts= temp_reconciled, ts_dates = dates_test, agg.names = agg.names)
+temp_rec_df <- transform_to_hub_df(temp_reconciled, end_date, "04", pi_levels, transform.4root = FALSE)
+
+hub_test <- thief_wrapper(sun_training_truth_list[[5]], ts_col = "value",
+  start_date, end_date, fips_code = "04",
+  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
+  pi_levels = pi_levels,
+  plot.aggregates = FALSE, plot.forecasts = FALSE)
 # sarima_test <- sarima_wrapper(df = sun_training_truth_list[[5]], ts_col = "value", start_date, end_date, fips_code = "04", frequency = 1, pi_levels, plot.forecasts = FALSE, transform.4root = FALSE)
 
-load(file="data/versioned_truth_training.RData")
+# alternative covid_thief() function (all dates instead of all locations)
+covid_dates <-
+  function(df_list = NULL, ts_col = "value", start_date, end_dates_vec, fips_code, aggregate_levels, frequency, pi_levels, transform.4root = FALSE) {
+    library(tidyverse)
+    library(lubridate)
+    library(covidHubUtils)
+
+    if (is.list(df_list)) {
+      df_list <- df_list
+      warning("forecasts will be based on static truth data")
+    } else if (is.data.frame(df_list)) {
+      stop("You have provided a data frame, not a list of data frames")
+    } else {
+      df_list <- 
+        map(
+          .x = end_dates_vec, 
+          .f = function(end) {
+              load_truth("HealthData",
+                               "inc hosp",
+                               as_of = end,
+                               temporal_resolution="daily",
+                               data_location = "covidData") %>%
+                filter(target_end_date >= as.Date("2020-07-27"),
+                       geo_type == "state", population >= 500000) %>%
+                arrange(desc(target_end_date), location)
+          }
+        )
+    }
+    
+    all_dates_list <- map(
+      .x = end_dates_vec,
+      .f = function(end_date) {
+        suppressWarnings(thief_wrapper(df=NULL, ts_col, start_date, end_date, fips_code, aggregate_levels, frequency, pi_levels, plot.aggregates = FALSE, plot.forecasts = FALSE, transform.4root))
+      }
+    )
+    n <- length(end_dates_vec)
+    all_dates_fc <- map_dfr(.x = 1:n, .f = function(i) {all_dates_list[[i]][[1]]})
+    all_dates_mod <- map_dfr(.x = 1:n, .f = function(i) {all_dates_list[[i]][[2]]})
+
+    return(list(all_dates_fc, all_dates_mod))
+  }
+
+locations <- filter(hub_locations, geo_type == "state", population >= 500000) %>%
+  pull(fips)
+fips_vec <- c("US", "01")
+
+t5 <- covid_dates(NULL, ts_col = "value", 
+  start_date, end_dates_vec, fips_code,
+  aggregate_levels = list(56, 28, 14, 7, 1), frequency = 56,
+  pi_levels = c(10 * (1:9), 95, 98), FALSE)
+  
+  
+locations <- filter(hub_locations, geo_type == "state", population >= 500000) %>%
+  pull(fips)
+fips_vec <- c("US", "01")
+
 
 # Generate Forecasts
 training_truth_df <- tibble(forecast_date=sun_fc_dates, truth_data=sun_training_truth_list)
