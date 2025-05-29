@@ -3,8 +3,8 @@
 .RData
 .Ruserdata
 *.RData
+*Rplots.pdf
 analysis/ms_thesis/attempts at table formatting.sty
-*.aux
 analysis/ms_thesis/ms_thesis.aux
 analysis/ms_thesis/ms_thesis.lof
 *.log
@@ -13,6 +13,8 @@ analysis/ms_thesis/ms_thesis.lof
 analysis/ms_thesis/presentation figures code.r
 data/THieF_1wk-noTransform/2021-01-02-THieF_1wk-noTransform.csv
 *.aux
+analysis/ms_thesis/extra_plots
 analysis/paper/*.png
 analysis/paper/*.pdf
 analysis/paper/FoReco_covid_cache
+analysis/paper/FoReco_covid_files/figure-latex
