@@ -240,7 +240,7 @@ list(
     plot_models_1,
     plot_models_one_location(
       forecasts = testing_forecasts_to_plot,
-      models = testing_model_names[c(1:3,5)],
+      models = testing_model_names[c(1:3, 5)],
       truth = full_hosp_truth,
       fips = ordered_testing_locations[1],
       fc_dates = testing_dates_to_plot,

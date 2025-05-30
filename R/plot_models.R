@@ -21,6 +21,7 @@
 plot_models_one_location <-
   function(forecasts, truth, models = NULL, fips = "US", fc_dates = NULL, prediction_intervals = c(0.5, 0.95), facet_nrow = 6, date_limits = NULL) {
     fdat <- dplyr::filter(
+      forecasts,
       .data[["forecast_date"]] %in% fc_dates,
       .data[["location"]] == fips, 
       !(.data[["location"]] %in% c("22", "US") & .data[["forecast_date"]] <= as.Date("2021-01-04")),
@@ -58,7 +59,7 @@ plot_models_one_location <-
         plot = FALSE
       ) +
         ggplot2::theme_bw()
-  }
+    }
 
   pt <- p +
     ggplot2::scale_x_date(name = NULL, limits = date_limits, date_breaks = "4 months", date_labels = "%b '%y") +

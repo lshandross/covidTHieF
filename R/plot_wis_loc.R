@@ -131,7 +131,7 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
     dplyr::group_by(dplyr::across(dplyr::all_of(c("location", "location_name")))) %>%
     dplyr::summarize(cum_value = sum(value)) %>%
     dplyr::ungroup() %>%
-    dplyr::mutate(location_name = stats::reorder(.data["location_name"[], .data][["cum_value"]])) %>%
+    dplyr::mutate(location_name = stats::reorder(.data[["location_name"]], .data[["cum_value"]])) %>%
     dplyr::pull(.data[["location_name"]])
 
   average_by_loc_to_plot <- average_by_loc %>%
@@ -139,7 +139,7 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
       location_name = forcats::fct_relevel(.data[["location_name"]], levels(truth_dat)),
       relative_wis_text = sprintf("%.2f", round(relative_wis, 2)),
       log_relative_wis = log2(relative_wis),
-      model = forcats::fct_relevel(model, model_levels)
+      model = forcats::fct_relevel(.data[["model"]], model_levels)
     ) %>%
     dplyr::filter(!is.na(relative_wis))
 
