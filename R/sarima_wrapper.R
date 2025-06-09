@@ -69,9 +69,9 @@ get_truth_ts <-
     remainder <- time_period - (periods * frequency)
 
     if (transform.4root == TRUE) {
-      hosp_values <- dplyr::pull(hosp_truth, .data[["ts_col"]])^0.25
+      hosp_values <- dplyr::pull(hosp_truth, .data[[ts_col]])^0.25
     } else {
-      hosp_values <- dplyr::pull(hosp_truth, .data[["ts_col"]])
+      hosp_values <- dplyr::pull(hosp_truth, .data[[ts_col]])
     }
     ht_day_ts_ <- stats::ts(hosp_values,
                             start = c(1, 1), end = c(periods + 1, remainder),
