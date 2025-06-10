@@ -29,6 +29,7 @@ Suggests:
     here,
     rmarkdown,
     scales,
+    scoringutils (= 1.0.0),
     testthat (>= 3.0.0),
     renv (>= 1.0.7),
     viridisLite (>= 0.4.2),
@@ -40,13 +41,10 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-URL: https://github.com/hubverse-org/hubEnsemblesManuscript
+URL: https://github.com/lshandross/covidTHieF
 Imports:
     dplyr (>= 1.1.2),
     ggplot2 (>= 3.4.4),
-    hubData (>= 0.1.0),
-    hubEnsembles (>= 0.1.0),
-    hubUtils (>= 0.0.2),
     lubridate (>= 1.9.2),
     purrr (>= 1.0.1),
     readr (>= 2.1.4),
@@ -64,8 +62,5 @@ Imports:
     thief,
     utils (>= 4.4.0)
 Remotes:
-    hubverse-org/hubEnsembles,
-    hubverse-org/hubData,
-    hubverse-org/hubUtils,
     reichlab/covidHubUtils,
     reichlab/zoltr
