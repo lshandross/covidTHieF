@@ -41,11 +41,10 @@ transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_level
 
   # Lower Forecasts
   if (!forecast::is.forecast(forecasts)) {
-    low_fc <- dplyr::tibble(forecasts[[index]][["lower"]])
+    low_fc <- as.data.frame(forecasts[[index]][["lower"]], stringsAsFactors = FALSE)
   } else {
-    low_fc <- dplyr::tibble(forecasts[["lower"]])
+    low_fc <- as.data.frame(forecasts[["lower"]], stringsAsFactors = FALSE)
   }
-  low_fc[low_fc < 0] <- 0 # Ensure all negative values are changed to 0
 
   old_col_names <- colnames(low_fc)
   new_col_names <- rep("string", length(old_col_names))
@@ -54,13 +53,12 @@ transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_level
   }
   colnames(low_fc) <- c(new_col_names)
 
-  # Higher Forecasts
+  # High Forecasts
   if (!forecast::is.forecast(forecasts)) {
-    high_fc <- dplyr::tibble(forecasts[[index]][["upper"]])
+    high_fc <- as.data.frame(forecasts[[index]][["upper"]], stringsAsFactors = FALSE)
   } else {
-    high_fc <- dplyr::tibble(forecasts[["upper"]])
+    high_fc <- as.data.frame(forecasts[["upper"]], stringsAsFactors = FALSE)
   }
-  high_fc[high_fc < 0] <- 0 # Ensure all negative values are changed to 0
 
   old_col_names <- colnames(high_fc)
   new_col_names <- rep("string", length(old_col_names))
@@ -72,14 +70,10 @@ transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_level
 
   # Point Forecasts
   if (!forecast::is.forecast(forecasts)) {
-    point_fc <- dplyr::tibble(forecasts[[index]][["mean"]]) |>
-      dplyr::mutate(`0.5` = as.numeric(.data[["x"]]), .keep = FALSE)
+    point_fc <- dplyr::tibble("0.5" = forecasts[[index]][["mean"]])
   } else {
-    point_fc <- dplyr::tibble(forecasts[["mean"]]) |>
-      dplyr::mutate(`0.5`= as.numeric(.data[["x"]]), .keep = FALSE)
+    point_fc <- dplyr::tibble("0.5" = forecasts[["mean"]])
   }
-  point_fc[point_fc < 0] <- 0 # Ensure all negative values are changed to 0
-
 
   # Join forecasts together
   hub_df <- cbind(low_fc, point_fc, high_fc) |>
@@ -96,7 +90,8 @@ transform_to_hub_df <- function(forecasts, most_recent_date, fips_code, pi_level
     dplyr::arrange(.data[["target_end_date"]], .data[["quantile"]]) |>
     dplyr::mutate(location = fips_code,
                   type = "quantile",
-                  quantile = as.numeric(.data[["quantile"]])) |>
+                  quantile = as.numeric(.data[["quantile"]]),
+                  value = ifelse(.data[["value"]] < 0, 0, .data[["value"]])) |>
     dplyr::select("forecast_date", "location", "target", "target_end_date", "type", "quantile", "value")
 
   if (transform.4root == TRUE) hub_df <- dplyr::mutate(hub_df, value = .data[["value"]]^4)
