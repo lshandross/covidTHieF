@@ -40,11 +40,11 @@ list(
   tar_target(testing_forecast_range, c(as.Date("2021-11-01"), as.Date("2022-10-02"))),
 
   # model names
-  tar_target(all_thief, sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep=""))[c(3:14, 1:2)]),
-  tar_target(thief_new, sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep=""))),
-  tar_target(thief_old, sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))),
-  tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))),
-  tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 7), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")),
+  tar_target(all_thief, sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep = ""))[c(3:14, 1:2)]),
+  tar_target(thief_new, sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep = ""))),
+  tar_target(thief_old, sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep = ""))),
+  tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep = ""))),
+  tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 7), c(1, 3, 6.5, 10, 15, 20, 25), sep = "")), sep = "")),
   tar_target(validation_models, c(all_thief, sarima_models, thief_ensembles)),
   tar_target(testing_models, c("sarima_s7-noTransform", "arima_s1-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_ensemble-train3", "THieF_ensemble-mean")),
 
@@ -111,11 +111,11 @@ list(
   ),
 #  tar_target(
 #    validation_dates_to_plot,
-#    c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_validation_dates[1+4*(0:11)])
+#    c(as.Date("2020-12-07") + weeks(4 * (0:11)), actual_validation_dates[1 + 4 * (0:11)])
 # ),
  tar_target(
    testing_dates_to_plot,
-   c(as.Date("2021-11-01") + weeks(4*(0:11)), actual_testing_dates[1+4*(0:11)])
+   c(as.Date("2021-11-01") + weeks(4 * (0:11)), actual_testing_dates[1 + 4 * (0:11)])
  ),
   # mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
   tar_target(
@@ -135,7 +135,7 @@ list(
             unit = "weeks", 
             week_start = getOption("lubricate.week.start", 1)
           ) + weeks(1),
-        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
+        horizon_wk = ceiling(as.numeric(target_end_date-mon_fc_date) / 7),
         forecast_date = mon_fc_date,
         model = replace(model, model == "sarima_s1-4root", "arima_s1-4root"),
         model = replace(model, model == "sarima_s1-noTransform", "arima_s1-noTransform")
@@ -153,7 +153,7 @@ list(
             unit = "weeks", 
             week_start = getOption("lubricate.week.start", 1)
           ) + weeks(1),
-        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
+        horizon_wk = ceiling(as.numeric(target_end_date-mon_fc_date) / 7),
         forecast_date = mon_fc_date,
         model = replace(model, model == "sarima_s1-4root", "arima_s1-4root"),
         model = replace(model, model == "sarima_s1-noTransform","arima_s1-noTransform")
@@ -163,7 +163,7 @@ list(
   ),
   tar_target(
     full_hosp_truth,
-    load_truth("HealthData", "inc hosp", as_of = as.Date("2022-10-01"),
+    covidHubUtils::load_truth("HealthData", "inc hosp", as_of = as.Date("2022-10-01"),
                temporal_resolution = "weekly", data_location = "covidData")
   ),
 
@@ -218,7 +218,7 @@ list(
     plot_thief_full(
       truth = full_hosp_truth,
       start_date = "2020-07-27",
-      end_date="2021-06-06",
+      end_date = "2021-06-06",
       fips = "US",
       frequency = 14,
       aggregation_list = list(14, 7, 1),
@@ -233,7 +233,6 @@ list(
       summarize(cum_value = sum(value)) %>%
       ungroup() %>%
       arrange(desc(cum_value)) %>%
-#      filter(row_number() %in% c(1, 2, 53)) %>% # can change values
       pull(location)
   ),
   tar_target(
