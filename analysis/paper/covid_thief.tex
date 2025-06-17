@@ -48,7 +48,7 @@ Infectious disease forecasting efforts underwent rapid growth during the COVID-1
 
 In this work, we examined the application of the temporal hierarchical forecasting (THieF) methodology to probabilistic forecasts of COVID-19 incident hospital admissions in the United States. THieF is an innovative forecasting technique that aggregates time-series data into a hierarchy made up of different temporal scales, produces forecasts at each level of the hierarchy, then reconciles those forecasts using optimized weighted forecast combination. While THieF's unique approach has shown substantial accuracy improvements in a diverse range of applications, such as operations management and emergency room admission predictions, this technique had not previously been applied to outbreak forecasting.
 
-We generated candidate models formulated using the THieF methodology, which differed by their hierarchy schemes and data transformations, and ensembles of the THieF models, computed as a mean of predictive quantiles. The models were evaluated using weighted interval score (WIS) as a measure of forecast skill, and the top-performing subset was compared to several benchmark models. These models included simple ARIMA and seasonal ARIMA models, a naive baseline model, and an ensemble of operational incident hospitalization models from the US COVID-19 Forecast Hub. The THieF models and THieF ensembles demonstrated improvements in WIS and MAE, as well as competitive prediction interval coverage, over many benchmark models for both the validation and testing phases. The best THieF model generally ranked second out of nine total models during the testing evaluation. These accuracy improvements suggest the THieF methodology may serve as a useful addition to the infectious disease forecasting toolkit.
+We generated candidate models formulated using the THieF methodology, which differed by their hierarchy schemes and data transformations, and ensembles of the THieF models, computed as a mean of predictive quantiles. The models were evaluated using weighted interval score (WIS) as a measure of forecast skill, and the top-performing subset was compared to a group of benchmark models. These models included simple ARIMA and seasonal ARIMA models, an ensemble of these ARIMA models, a naive baseline model, five operational incident hospitalization models from the U.S. COVID-19 Forecast Hub, and an equally-weighted quantile median of all models that submitted incident hospitalization forecasts to the Forecast Hub. The THieF models and THieF ensembles demonstrated improvements in WIS and MAE, as well as competitive prediction interval coverage, over many benchmark models for both the validation and testing phases. The best THieF model generally ranked second out of fifteen total models during the testing evaluation. These accuracy improvements suggest the THieF methodology may serve as a useful addition to the infectious disease forecasting toolkit.
 \end{abstract}
 
 %%
@@ -68,41 +68,43 @@ We generated candidate models formulated using the THieF methodology, which diff
 \mainmatter   %% <-- This line is mandatory
 
 \chapter{Introduction} \label{Introduction}
-During the pandemic, predictions of COVID-19 informed public policy through balancing prevention and mitigation efforts with other societal and monetary costs while also guiding proper allocation of resources\cite{disease_economics}. Infectious disease forecasting saw rapid growth due to its widespread usage during this time. However, accurately modeling disease transmission patterns is often challenging. For example, generating reliable predictions is hindered by certain factors unique to infectious disease forecasting: 1) the systems governing the spread of infectious disease tend to be non-stationary, 2) communicated forecasts impact the spread of infectious disease, 3) the quality of truth data is often variable, and 4) there are many unknowns about underlying disease mechanisms\cite{lauer}.
+During the pandemic, predictions of COVID-19 informed public policy through balancing prevention and mitigation efforts with other societal and monetary costs while also guiding proper allocation of resources\cite{disease_economics}. Infectious disease forecasting saw rapid growth due to its widespread usage during this time. However, accurately modeling disease transmission patterns is often challenging. For example, generating reliable predictions is hindered by certain factors unique to infectious disease forecasting: 1) the systems governing the spread of infectious disease tend to be non-stationary (and can experience exponential growth and decay), 2) communicated forecasts impact the spread of infectious disease, 3) the quality of truth data is often variable, and 4) there are many unknowns about underlying disease mechanisms\cite{lauer}.
 
-COVID-19 forecasting experienced all of these challenges and more. Non-stationarity was a result of continually changing policies (and thus shifting behaviors) regarding school closures, lock downs, masking, and the appearance of new variants with different characteristics. Additionally, the communication of COVID-19 forecasts altered human behavior and thus disease transmission as well\cite{cramer}. During the emergent outbreak phase, COVID-19 data availability and quality was also severely limited, though this improved during the first few years of the pandemic\cite{lauer}. Further, COVID-19 forecasting occurred in real-time before the virus could be studied.
+COVID-19 forecasting experienced all of these challenges and more. Non-stationarity was a result of continually changing policies (and thus shifting behaviors) regarding school closures, lock downs, masking, and the appearance of new variants with different characteristics. Additionally, the communication of COVID-19 forecasts altered human behavior and thus disease transmission as well\cite{cramer}. During the emergent outbreak phase, COVID-19 data availability and quality was also severely limited, though this improved during the first few years of the pandemic\cite{lauer}. Further, COVID-19 forecasting occurred in real-time before reliable estimates of natural history parameters, such as the incubation period or reproduction number, were established and could be used in such forecasting models.
 
-It is perhaps unsurprising, then, that many COVID-19 models struggled with creating accurate forecasts. In particular, prior research has illuminated a particular weakness when predicting for trend fluctuations, in which the slope or direction of the data deviate from the previously held pattern\cite{cramer}. This gap clearly necessitates the exploration and testing of new methods.
+It is perhaps unsurprising, then, that many COVID-19 models struggled with creating accurate forecasts. In particular, prior research has illuminated a particular weakness when predicting trend fluctuations, in which the slope or direction of the data deviate from the previously held pattern\cite{cramer}. This gap clearly necessitates the exploration and testing of new methods.
 
 Temporal hierarchical forecasting (THieF) is one such method that uniquely combines hierarchical forecasting and forecast combination for time series data. This approach, developed by Athanasopoulos, et al. in 2017, consists of three main steps: creation of a temporal hierarchy through data aggregation, generation of forecasts at each level of the hierarchy with a classic statistical model, and reconciliation of those initial forecasts. The final step performs weighted forecast combination to not only achieve coherence but also improved accuracy\cite{thief}. Coherence describes when hierarchical point forecasts predict the same trend, event, or outcome at every level such that the forecasts at lower levels add up to those at higher levels. Reconciliation describes the process of making forecasts coherent. When forecasts from different levels of the hierarchy disagree about the future (are not coherent), it is unclear which level's forecasts should be trusted and chosen to inform decision-making\cite{hts_talk}.
 
-Based on the challenges that infectious disease forecasting faces, we propose that the THieF methodology may have something to offer. First, THieF relies on a phenomenological model, a class of models that use only observed data to make predictions, which have shown good performance for short-term outbreak forecasting\cite{lauer}. Second, to our knowledge, THieF has yet to be applied to outbreak forecasting. Hence, this methodology may offer insights into effective modeling techniques. Third, THieF has shown significant performance gains in other settings, which may translate to infectious disease forecasting\cite{cramer, thief}.
+Based on the challenges facing infectious disease forecasting, we propose that the THieF methodology may have something to offer. First, THieF relies on a phenomenological model, a class of models that use only observed data to make predictions, which have shown good performance for short-term outbreak forecasting\cite{lauer}. Second, to our knowledge, THieF has yet to be applied to outbreak forecasting. Hence, this methodology may offer insights into effective modeling techniques. Third, THieF has shown significant performance gains in other settings, which may translate to infectious disease forecasting\cite{cramer, thief}.
 
 Additionally, we ensemble the THieF models to take advantage of the performance benefits of forecast combination. Research has shown that aggregating predictions from multiple sources produce forecasts that are more accurate and consistent than individual models\cite{clemen1989, timmermann2006, hibon2005}. The field of infectious disease forecasting has also recently adopted the usage of multi-model ensembles to improve predictions of disease outbreaks, and a simple, equally-weighted median ensemble has been found to be one of the most accurate COVID-19 models for predicting deaths\cite{mcgowan2019, cramer}. %Is it also the most accurate for hospitalizations and cases?
 
-In this work, we use models constructed with the THieF methodology and ensembles of the THieF models to retrospectively forecast for COVID-19 daily incident hospitalizations in the United States. These original THieF models, the THieF ensembles, and a group of Autoregressive Integrated Moving Average (ARIMA) and seasonal ARIMA (SARIMA) models make up a total of twenty-six (26) candidate models evaluated during the validation phase. A most-accurate subset of up to nine (9) models are passed on to the testing phase where they are compared to a naive baseline and an untrained median ensemble. Success is demonstrated by the THieF ensembles and a few original THieF models that showed substantial accuracy gains over the baseline, with one of the models also displaying several modest improvements over an equally-weighted median ensemble.
+In this work, we use models constructed with the THieF methodology and ensembles of the THieF models to retrospectively forecast for COVID-19 daily incident hospitalizations in the United States. These original THieF models, the THieF ensembles, a group of Autoregressive Integrated Moving Average (ARIMA) and seasonal ARIMA (SARIMA) models, and an equally-weighted mean ensemble of the ARIMA and SARIMA models make up a total of twenty-seven (27) candidate models evaluated during the validation phase. A most-accurate subset of up to ten (10) models are passed on to the testing phase where they are compared to seven benchmark models: five operational models that submitted incident hospitalization predictions to the U.S. COVID-19 Forecast Hub (shortened to the "Forecast Hub" from here on), a naive baseline model, and an untrained quantile median ensemble of all models from the Forecast Hub that predicted incident hospitalizations. The Forecast Hub is a centralized repository that synthesizes, collects, archives, and evaluates COVID-19 forecasts\cite{hub_data_repo}. More information on the selected benchmark models can be found in Section \ref{comparison_models}.
+
+Success is demonstrated by the THieF ensembles and a few original THieF models that showed substantial accuracy gains over the baseline, with one of the models also displaying modest improvements over an equally-weighted mean ensemble when the number of incident hospitalizations was changing rapidly from week to week.
 
 \chapter{Methods} \label{methods}
 \section{Surveillance data} \label{surveillance_data}
 
-We used confirmed hospital admissions (aggregated by state daily) reported by HHS Protect to train and evaluate our models\cite{hhs_data}. Our choice of data source was motivated by its designation as the official ground truth data for COVID-19 incident hospitalizations by the U.S. COVID-19 Forecast Hub (shortened to the "Forecast Hub" from here on)\footnote{A centralized repository that synthesizes, collects, archives, and evaluates COVID-19 forecasts\cite{hub_data_repo}.}\cite{hub_data_repo}. The choice to forecast incident hospitalizations was motivated by the target's more consistent and reliable values (due to reporting requirements for Medicare reimbursement) compared to other COVID-19 forecasting targets. For example, incident cases and incident deaths have suffered from massive under reporting and are thus less relevant public health metrics than incident hospitalizations\cite{mech_bayes, jhu_covid, lauer}.
+We used confirmed hospital admissions (aggregated by state daily) reported by HHS Protect to train and evaluate our models\cite{hhs_data}. Our choice of data source was motivated by its designation as the official ground truth data for COVID-19 incident hospitalizations by the Forecast Hub\cite{hub_data_repo}. The choice to forecast incident hospitalizations was motivated by the target's more consistent and reliable values (due to reporting requirements for Medicare reimbursement) compared to other COVID-19 forecasting targets. For example, incident cases and incident deaths have suffered from massive under reporting and are thus less relevant public health metrics than incident hospitalizations\cite{mech_bayes, jhu_covid, lauer}.
 
 Surveillance data, like the HHS Protect confirmed hospitalizations, sometimes requires revisions due to reporting anomalies. Hospitalizations might be entered on incorrect dates or added after COVID-19 was determined to be the cause of hospitalization. Updates to values usually occurred within the first week or so of posting. As a result, real-time forecast models might train on data that include incident hospitalization numbers that do not reflect the finalized values.
 
-We queried these confirmed hospitalizations from the \textit{covidData} package through the \textit{covidHubUtils} package, both developed by Reich Lab at the University of Massachusetts Amherst to interface with COVID-19 surveillance data. Versions of this data are stored such that users may access it as of a specified date\cite{hub_data_research}. For example, one may retrieve a version of the confirmed hospitalization dataset as of July 27, 2020. To ensure fair comparisons between the models developed for this analysis and some real-time forecasting models, our models trained on the confirmed hospitalizations that would have been available as of the ``forecast date" of the retrospective forecast.
+We queried these confirmed hospitalizations from the \textit{covidData} package through the \textit{covidHubUtils} package, both developed by Reich Lab at the University of Massachusetts Amherst to interface with COVID-19 surveillance data. Versions of data are stored such that users may access it as of a specified date\cite{hub_data_research}. For example, one may retrieve a version of the confirmed hospitalization dataset as of July 27, 2020. To ensure fair comparisons between the models developed for this analysis and some real-time forecasting models, our models trained on the confirmed hospitalizations that would have been available as of the ``forecast date" of the retrospective forecast.
 
 \section{Forecasts} \label{forecasts}
 We define a forecast to be a quantitative prediction about the future based on already observed data, usually pertaining to a specific event, outcome, or trend related to one or more infectious diseases\cite{lauer}. COVID-19 forecasting focuses on probabilistic forecasts because they quantify the likelihood of their occurrence, unlike simple point forecasts\cite{cramer, hub_data_repo, lauer}.
 
-In this work, a forecast for a date-target-location combination (e.g. ``1-day ahead COVID-19 incident hospitalizations in Massachusetts relative to 2020-07-04") was described by one or both of a point forecast and a probabilistic forecast, represented by a set of 23 quantiles\cite{cramer}. (More information is given about forecast targets, horizons, locations, and quantiles in Sections \ref{forecast_horizons}, \ref{forecast_locations}, and \ref{forecast_quantiles}.) According to conventions set by the Forecast Hub, all forecast values were truncated to be non-negative, as there is no real-world meaning for negative incident hospitalizations\cite{ensembles_info}.
+In this work, a forecast for a date-target-location combination (e.g. ``1-day ahead COVID-19 incident hospitalizations in Massachusetts relative to 2020-07-04") was described by one or both of a point forecast and a probabilistic forecast, represented by a set of 23 quantiles\cite{cramer}. (More information is given about forecast targets, horizons, locations, and quantiles later in this section.) According to conventions set by the Forecast Hub, all forecast values were truncated to be non-negative, as there is no real-world meaning for negative incident hospitalizations\cite{ensembles_info}.
 
-Further, while this was a retrospective analysis, forecasts were made with weekly Sunday forecast dates (to mirror how they would have been, if made in real-time) using the data available as of that day. We chose to make forecasts on Sunday because confirmed hospitalization values for subsequent days did not update until Tuesday or later until mid-March 2021, which presented several issues. First, if we began the validation phase after March 2021, we would have lost three months of the period of analysis. Second, the main comparison models made forecasts on Monday, meaning that any models that forecast the week before would have been at a disadvantage while any models that forecast on Tuesday or later would have been evaluated with the following week's forecasts. Third, THieF does not allow for missing data points.
+Further, while this was a retrospective analysis, forecasts were made with weekly Sunday forecast dates (to mirror how they would have been, if made in real-time) using the data available as of that day.
 
 \subsection{Forecast horizons} \label{forecast_horizons}
-Short-term forecasts for COVID-19 were defined to encapsulate horizons of 1- to 4-weeks ahead, or, equivalently, 1- to 28-days ahead\cite{cramer}. Forecasts for incident hospitalizations were made on a daily time scale, so we chose to restrict the forecast horizons we evaluated to 1- to 28-days ahead\footnote{Note, there was a slight exception to this restriction. See Section \ref{metrics_and_evaluation} for more information.} (even though some models made up to 84-day ahead forecasts due to the THieF methodology construction). Horizons are related to target end dates in that a target end date of a particular forecast may be calculated by adding its horizon to the forecast date.
+Short-term forecasts for COVID-19 were defined to encapsulate horizons of 1- to 28-days ahead\cite{cramer}. Forecasts for incident hospitalizations were made on a daily time scale, so we chose to restrict the forecast horizons we evaluated to 1- to 28-days ahead\footnote{Note, there was a slight exception to this restriction. See Section \ref{metrics_and_evaluation} for more information.}. Horizons are related to target end dates in that a target end date of a particular forecast may be calculated by adding its horizon to the forecast date.
 
 \subsection{Forecast locations} \label{forecast_locations}
-We made forecasts for 53 of 55 locations from the HHS Protect confirmed hospitalizations dataset during the period of analysis. These 53 locations included the 50 states, two jurisdictions/territories (Washington D.C. and Puerto Rico), and a U.S. national level. American Samoa and Guam were excluded due to their very low or zero COVID-19 incident hospitalizations over the entire period of analysis. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations would not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches\cite{cramer}. Further, even though we included the U.S. national level, the remaining 52 locations were our primary focus, as the magnitude of national forecasts is much greater than that of any single state.
+We made forecasts for 53 of 55 locations from the HHS Protect confirmed hospitalizations dataset during the period of analysis. These 53 locations included the 50 states, two jurisdictions/territories (Washington D.C. and Puerto Rico), and a U.S. national location. American Samoa and Guam were excluded due to their very low or zero COVID-19 incident hospitalizations over the entire period of analysis. Forecasts for low-count locations that predicted single-digit or zero hospitalizations were often very accurate; hence, these locations would not offer meaningful contributions to our understanding of differences in forecast skill between modeling approaches\cite{cramer}. Further, we chose to evaluate the U.S. national location separately from the remaining 52 locations. This decision was motivated by the large difference in magnitude of incident hospitalizations between the two geographic scales, which would lead any unweighted averages of forecast accuracy metrics to favor models with high accuracy at the national level.
 
 \subsection{Forecast quantiles} \label{forecast_quantiles}
 The Forecast Hub specified the usage of 23 quantiles \[\mathbb{Q} = \{.010, 0.025, .050, .100, \cdots, .900, .950, .975, .990\}\] to represent a full probabilistic distribution, with the median 0.500 quantile usually taken as the model's point forecast. We followed this convention, though some additional work was needed to obtain probabilistic forecasts from the THieF methodology (see Section \ref{probabilistic_thief}).
@@ -120,17 +122,20 @@ The first day of the period of analysis (July 27, 2020) was selected as the firs
 
 
 \section{Benchmark comparison models} \label{comparison_models}
-Two models created and run by the U.S. COVID-19 Forecast Hub---the COVIDhub-baseline and COVIDhub-4\_week\_ensemble---served as benchmark comparison models for both the validation and testing phases. Such benchmarks are useful when evaluating forecasting models, especially when the chosen scoring metrics are scale-dependent and thus require relative comparison among models forecasting the same targets\cite{cramer}. Forecasts for these models were queried from the Zoltar forecast archive, a research data repository developed by Reich Lab, through the \textit{covidHubUtils} package\cite{hub_data_research, zoltar}.
+Seven models from the Forecast Hub to serve as benchmark comparisons for both the validation and testing phases: five operational models, a naive baseline, and an equally-weighted median ensemble of all submitting incident hospitalization models. Such benchmarks are useful when evaluating forecasting models, especially when the chosen scoring metrics are scale-dependent and thus require relative comparison among models forecasting the same targets\cite{cramer}. Forecasts from these models were queried from the Zoltar forecast archive, a research data repository developed by Reich Lab, through the \textit{covidHubUtils} package\cite{hub_data_research, zoltar}.
 
-The COVIDhub-baseline is a naive baseline model whose forecasts are made using the previous day's incident hospitalization value as the point forecast (and 0.500 quantile for the probabilistic forecast) and past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts\cite{cramer}. Beating the baseline is typically seen as one marker of a useful model. The COVIDhub-4\_week\_ensemble is an equally-weighted median ensemble of eligible\footnote{For more information about forecast eligibility, see \cite{ensembles_info}} submitting models for incident hospitalizations at the COVID-19 Forecast Hub that makes short-term forecasts for 1- to 28 days ahead. (This is the same as the main COVIDhub-ensemble, except that model's forecasts for horizons beyond 14-days ahead were removed due to declining-accuracy concerns\cite{ensembles_info, short_horizons}.)
+The five operational models consist of COVID-19 incident hospitalization models that submitted forecasts for all required locations, quantiles, and horizons as well as at least 90\% of the forecast dates within the period of interest. We also restricted the selection criteria to allow for a single model per submitting team. These models---JHUAPL-Bucky, USC-SI\_kJalpha, CU-select, Karlen-pypm, and GT-DeepCOVID---use mechanistic or machine learning methods when generating their predictions\cite{hub_data_repo}.
+% model_type: Mechanistic, Mechanistic, Mechanistic, Mechanistic, Machine Learning
+
+The COVIDhub-baseline is a naive baseline model whose forecasts are made using the previous day's incident hospitalization value as the point forecast (and 0.500 quantile for the probabilistic forecast) and past changes in daily incidence to calibrate uncertainty in its probabilistic forecasts\cite{cramer}. Beating the baseline is typically seen as one marker of a useful model. The COVIDhub-4\_week\_ensemble is an equally-weighted median ensemble of eligible submitting models for incident hospitalizations at the COVID-19 Forecast Hub that makes short-term forecasts for 1- to 28 days ahead. (For more information about forecast eligibility, see \cite{ensembles_info}.)
 
 
 \section{Temporal hierarchical forecasting (THieF)} \label{thief}
 Historically, hierarchical forecasting has been utilized in business, economics, operations management, and similar fields. This type of forecasting brings advantages like producing coherent forecasts (hierarchical forecasts are coherent if the forecasts at lower levels sum up to those at higher levels)\footnote{Note that coherence is not an intrinsic property of all hierarchical forecasts.} and increasing prediction accuracy compared to other methods\cite{thief, hts_talk}. While most hierarchical forecasting considers cross-sectional hierarchies, not temporal ones, many of the same concepts may be applied to both types of hierarchies. Like with hierarchical forecasting, forecast combination has shown favorable outcomes in a myriad of applications\cite{thief}. The unique merging of forecast combination with hierarchical forecasting in the THieF methodology has resulted in accuracy improvements over more traditional techniques that solely involve hierarchical forecasting\cite{thief}.
 
-Forecast combination that integrates forecasts from different, independent modeling frameworks to create ensembles often results in better infectious disease forecasts compared to those from individual models\cite{ensemble_accuracy}. Likewise, classical statistical models like ARIMA models have demonstrated good performance for short-term forecasts in outbreak settings\cite{lauer}. THieF's built-in forecast combination (which shares some key similarities with that of ensemble methods) and underlying ARIMA base-forecaster suggested that this methodology might show accuracy improvements when forecasting COVID-19 incident hospitalizations.
+Forecast combination that integrates forecasts from different, independent modeling frameworks to create ensembles often results in better infectious disease forecasts compared to those from individual models\cite{ensemble_accuracy, ensemble_methods, timmermann2006, clemen1989}. Likewise, classical statistical models like ARIMA models have demonstrated good performance for short-term forecasts in outbreak settings\cite{lauer}. THieF's built-in forecast combination (which shares some key similarities with that of ensemble methods) and underlying ARIMA base-forecaster suggested that this methodology might show accuracy improvements when forecasting COVID-19 incident hospitalizations.
 
-Surveillance data tends to be exhibit noise due to reporting artifacts, especially when considering small time scales. The COVID-19 incident hospitalizations signal suffers a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since not all facilities admit patients on weekends and those that do may not report those hospitalizations until the following week. We might better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we were careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels were included in model schemes to investigate the existence of hidden patterns at higher time scales and if such a pattern could improve model accuracy\cite{ideal_interval}.
+Surveillance data tends to exhibit noise due to reporting artifacts, especially when considering small time scales. The COVID-19 incident hospitalizations signal suffers a day-of-the-week effect as a result of hospital and clinic operating hours. Fewer hospitalizations are reported on Saturday and Sunday, instead often recorded as part of Monday hospitalizations, since not all facilities admit patients on weekends and those that do may not report those hospitalizations until the following week. We might better capture true short-term trends by aggregating daily hospitalizations to be weekly or every two weeks, although such smoothing carries some risk of excluding useful information at the daily level. Thus, we were careful to include both daily and weekly aggregation levels in the THieF temporal hierarchy construction for every model. Other higher aggregation levels were included in model schemes to investigate the existence of patterns at higher time scales and if such a pattern could improve model accuracy\cite{ideal_interval}.
 
 The THieF methodology consists of three steps to produce forecasts from time-series data using a time-based hierarchical structure. These steps---data aggregation and hierarchy construction, base forecast creation, and reconciliation of base forecasts---are outlined in further detail below and in Figure \ref{fig:thief_concept_figure}\cite{thief}.
 
@@ -140,16 +145,13 @@ The THieF methodology consists of three steps to produce forecasts from time-ser
 \includegraphics{covid_thief-thief_concept_plot}
 \end{figure}
 
+
 \subsection{Data Aggregation and Hierarchy} \label{thief_agg_hierarchy}
-Suppose we wish to construct a THieF model that combines forecasts from 7- and 14-day aggregate time scales. We create calibration data for the hierarchy by summing the observed daily values over a particular timescale $k$\cite{thief}. By convention, we define all of our models to have a lowest and least-aggregate level to be that of the original time scale. Thus, our example model has three total levels: 1-day, 7-day, and 14-day (see Figure \ref{fig:thief_concept_figure}). If desired, additional $k$-day levels can are added to this THieF model's temporal hierarchy as long as they were factors of the top-most aggregation level (14-days). Non-factor aggregations result in non-integer seasonality and thus impedes computation\cite{thief}.
+Suppose we wish to construct a THieF model that combines forecasts from 7- and 14-day aggregate time scales. We create calibration data for the hierarchy by summing the observed daily values over a particular timescale $k$\cite{thief}. By convention, we define all of our models to have a lowest and least-aggregate level to be that of the original time scale. Thus, our example model has three total levels: 1-day, 7-day, and 14-day (see Figure \ref{fig:thief_concept_figure}). If desired, additional $k$-day levels can be added to this THieF model's temporal hierarchy as long as they are factors of the top-most aggregation level (14-days). Non-factor aggregation values will result in non-integer seasonal periods, and thus cannot be used\cite{thief}. (A visual depiction of three possible THieF hierarchies is provided in Figure \ref{fig:figure_thief_hierarchy} in the Appendix.)
 
-The incident hospitalizations for a particular location may be expressed generally as a time series \{$y_t; t = 1, \cdots, T$\} when observed at the daily level. Let $m$ be the number of observations of the smallest timescale (and the highest frequency) that aggregate to create a single data point for the most-aggregate level. (In our example $m = 14$.) These data are then aggregated to different $k$-day time scales based on the aggregation levels of interest for a particular model\cite{thief}. A data point with index $j$ for a $k$-day aggregated series $y_j^{[k]}$ may be obtained using \[y_j^{[k]} = \Sigma_{t = t^* + (j-1)k}^{t^*+jk-1} y_t\] for $j = 1, \cdots, \lfloor T/k \rfloor$ and seasonal period $M_k = m/k$ for that series. Here we can see that the variable $k \in$ \{$k_p,\cdot,k_2,k_1$\} can take on multiple values and indicates the particular aggregation level, where $k_p = m$, $k_1 = 1$, and $p$ is the total number of levels in the hierarchy\cite{thief}. In our example from earlier, $k \in$ \{$14, 7, 1$\}, where $p = 3$.
+The incident hospitalizations for a particular location may be expressed generally as a time series \{$y_t; t = 1, \cdots, T$\} when observed at the daily level. Let $m$ be the number of observations of the smallest timescale (and the highest frequency) that aggregate to create a single data point for the most-aggregate level. (In our example $m = 14$.) These data are then aggregated to different $k$-day time scales based on the aggregation levels of interest for a particular model\cite{thief}. The variable $k \in$ \{$k_p,\cdot,k_2,k_1$\} can take on multiple values and indicates the particular aggregation level, where $k_p = m$, $k_1 = 1$, and $p$ is the total number of levels in the hierarchy\cite{thief}. In our example from earlier, $k \in$ \{$14, 7, 1$\}, where $p = 3$.
 
-The use of $t^*= T - \lfloor T/m\rfloor m + 1$ ensures even, non-overlapping aggregation where the total number of observations is a multiple of $m$. In practice, this means that the remainder $r = t^*-1$ from dividing $T$ by $m$ is the number of observations that are removed from the beginning of the original time series before aggregation occurs. For example, if we start with $T = 31$ observations in a daily time series and are interested in $k \in$ \{$14, 7, 1$\}-day aggregation levels, we remove the first $t^* - 1 = 3$ data points. We may then begin aggregation and can calculate the first data point for the 7-day time series with the equation $y_1^{[7]} = \Sigma_{t = 4 + (0)7}^{4+7-1} y_t = y_{4} + \cdots + y_{10}$, which is as we expect given that the first $t^*-1 = 3$ observations are removed.
-
-Notice that the index $j$ used above is aggregation-level specific, with no easy way to translate between levels of the hierarchy. Hence, Athanasopoulos, et al. propose an alternative index $i$ where $i$ is the original observation index of the top, most-aggregate series $y_i^{[m]}$ for $i=1, \cdots, \lfloor T/m \rfloor$ so that $i=j$. A more general form for any level $k$ becomes $y_{M_k(i-1)+z}^{[k]}$ for $z = 1, \cdots, M_k$. An increase in the index $i$ by 1 causes an increase of $M_k$ periods for the time series at all aggregation levels, while an increase in $z$ denotes a single period increase for the $k$-day aggregation level.
-
-We can show that the new notation is consistent with the old notation using our example. The first observation ($z=1)$ at the $k = 7$-day level of the second 14-day period ($i = 2$) is written in the new notation as $y_{M_7(2-1)+1}^{[7]}$. This simplifies down to $y_3^{[7]}$ (the third overall observation in the 7-day series), which matches the original notation for $j = 3$.
+Athanasopoulos, et al. propose an index $i$ for each data point in the temporal hierarchy, defined based on the top, most-aggregate series $y_i^{[m]}$ for $i=1, \cdots, \lfloor T/m \rfloor$. A more general form for the time series for any level $k$ is $y_{M_k(i-1)+z}^{[k]}$ for $z = 1, \cdots, M_k$, where $M_k = m/k$ is the seasonal period for a particular level of $k$. An increase in the index $i$ by 1 causes an increase of $M_k$ periods for the time series at all aggregation levels, while an increase in $z$ denotes a single period increase for the $k$-unit aggregation level\cite{thief}.
 
 For every index $i$, we construct $p-1$ column vectors of dimension $(M_k \times 1)$ \[\boldsymbol{y_i}^{[k]} = (y_{M_k(i-1)+1}^{[k]}, y_{M_k(i-1)+2}^{[k]}, \cdots, y_{M_ki}^{[k]})',\] for all but the topmost level which only contains a single observation for each $i$.
 
@@ -164,11 +166,11 @@ These column vectors are then stacked into a larger $(\Sigma_{k} M_k \times 1)$ 
 \begin{bmatrix} \boldsymbol{y_{14(i-1)+1}^{[1]}}\\ \boldsymbol {y_{14(i-1)+2}^{[1]}}\\ \cdots\\ \boldsymbol{y_{14i}^{[1]}} \end{bmatrix}\] in which the dimensions of the matrices are $(17 \times 1)$, $(17 \times 14)$, and $(14 \times 1)$, respectively.
 
 \subsection{Base Forecasts} \label{thief_base_forecasts}
-Next, base forecasts are made at every level of the hierarchy, treating each aggregation level as independent univariate time series (see Figure \ref{fig:thief_concept_figure}). We fit an ARIMA model to each level of the series---which was found to produce the most accurate reconciled THieF forecasts\cite{thief}---and allow the parameters to vary for each level. At this stage, the base forecasts are usually incoherent, which may indicate that important patterns have been detected at different time scales that can be leveraged to create more accurate forecasts using the THieF method.
+Next, base forecasts are made at every level of the hierarchy, treating each aggregation level as independent univariate time series (see Figure \ref{fig:thief_concept_figure}). We fit an ARIMA model to each level of the series---which was found to produce the most accurate reconciled THieF forecasts\cite{thief}---and allow the parameters to vary for each level. At this stage, the base forecasts are usually incoherent, which may indicate that important patterns have been detected at different time scales using the THieF method.
 
-Although for this work we were only interested in evaluating up to 28-day ahead forecasts from our models, the THieF method requires us to make forecasts at every level with horizons at least as large as the top, $k_p$-day aggregation. The variable $g^*$ represents our maximum required forecast horizon in terms of days. Then we construct an index $g$ based on the top-level series, just as we did with the index $i$ for the observed series above, such that $g = 1, \cdots, \lceil g^*/m \rceil$\cite{thief}. Based on the $\lfloor T/k \rfloor$ observations for $z = 1, \cdots, M_k$, we make $\lceil g^*/k \rceil$ forecasts for each $k$-day aggregation level of the form $\hat{y}_{M_k(g-1) + z}$. Like with the observed data, we then construct $(\Sigma_k M_k \times 1)$ column vectors for each forecast horizon $g$: \[\boldsymbol{\hat{y}_g} = (\hat{y}_g^{[m]}, \cdots, \boldsymbol{\hat{y}_g}^{[k_3]'}, \boldsymbol{\hat{y}_g}^{[k_2]'}, \boldsymbol{\hat{y}_g}^{[1]'})'\] where each element $\boldsymbol{\hat{y_g}}^{[k]} = (y_{M_k(g-1)+1}^{[k]}, y_{M_k(g-1)+2}^{[k]}, \cdots, y_{M_kg}^{[k]})'$ is a $(M_k \times 1)$ column vector of the base forecasts from that level\cite{thief}.
+The base forecasts have the form $\hat{y}_{M_k(g-1) + z}$, where $g$ represents the forecast horizon and is based on the index for the top-level series. Like with the observed data, we then construct $(\Sigma_k M_k \times 1)$ column vectors for each forecast horizon $g$: \[\boldsymbol{\hat{y}_g} = (\hat{y}_g^{[m]}, \cdots, \boldsymbol{\hat{y}_g}^{[k_3]'}, \boldsymbol{\hat{y}_g}^{[k_2]'}, \boldsymbol{\hat{y}_g}^{[1]'})'\] where each element $\boldsymbol{\hat{y_g}}^{[k]} = (y_{M_k(g-1)+1}^{[k]}, y_{M_k(g-1)+2}^{[k]}, \cdots, y_{M_kg}^{[k]})'$ is a $(M_k \times 1)$ column vector of the base forecasts from that level\cite{thief}.
 
-The base forecasts may also be expressed as \[\boldsymbol{\hat{y}_g} = \boldsymbol{S \beta}(g) + \boldsymbol{\varepsilon_g}\] where $\boldsymbol{\beta}(g) = \boldsymbol{E}[\boldsymbol{y}_{\lfloor T/m \rfloor + g}^{[1]} | y_1, \cdots, y_T]$ is the unknown mean of future daily observed values conditional on the currently observed data points; and $\boldsymbol{\varepsilon_g}$ is the difference between the base forecasts $\boldsymbol{\hat{y}}_g$ and the expected value of their corresponding reconciled forecasts, termed the reconciliation error, assuming that $\varepsilon_g$ has zero mean and covariance matrix $\boldsymbol{\Sigma}$ \cite{thief}.
+The base forecasts may also be expressed as \[\boldsymbol{\hat{y}_g} = \boldsymbol{S \beta}(g) + \boldsymbol{\varepsilon_g}\] where $\boldsymbol{S}$ is the summing matrix defined in the previous section, $\boldsymbol{\beta}(g) = \boldsymbol{E}[\boldsymbol{y}_{\lfloor T/m \rfloor + g}^{[1]} | y_1, \cdots, y_T]$ is the unknown mean of future daily observed values conditional on the currently observed data points; and $\boldsymbol{\varepsilon_g}$ is the difference between the base forecasts $\boldsymbol{\hat{y}}_g$ and the expected value of their corresponding reconciled forecasts, termed the reconciliation error, assuming that $\varepsilon_g$ has zero mean and covariance matrix $\boldsymbol{\Sigma}$ \cite{thief}.
 
 \subsection{Reconciled Forecasts} \label{thief_reconciled_forecasts}
 Through the step of reconciliation, we integrate the information from all the aggregation levels into the output forecasts. Ideally, we want to combine the base forecasts $\boldsymbol{\hat{y}_{g}}$ in a way that minimizes the difference between them and the reconciled forecasts $\boldsymbol{\tilde{y}_{g}}$. If we knew the covariance matrix of the reconciliation error $\boldsymbol{\Sigma}$, we could use a generalized least squares (GLS) estimator to solve this minimization problem; however, $\boldsymbol{\Sigma}$ has been shown to not be identifiable\cite{thief}. Instead, we substitute a weighted least squares (WLS) estimator $\boldsymbol{\Lambda_{SV}}$ called the series variance estimator to obtain the reconciled forecasts \[\boldsymbol{\tilde{y}_g} = \boldsymbol{S \hat{\beta}}(g) = \boldsymbol{S}(\boldsymbol{S'\Lambda}_{SV}^{-1}\boldsymbol{S})^{-1}\boldsymbol{S \Lambda}_{SV}^{-1}\boldsymbol{\hat{y}_g},\] where $\boldsymbol{S}$ is the previously defined summing matrix and $\boldsymbol{\hat{\beta}}(g)$ is an estimator of the unknown conditional mean $\boldsymbol{\beta}(g)$\cite{thief}.
@@ -178,7 +180,7 @@ The series variance estimator is a diagonal $(\Sigma_k M_k \times \Sigma_k M_k)$
 
 While Athanasopoulos, et al. proposed two other alternative WLS estimators, they later showed that $\boldsymbol{\Lambda}_{SV}$ yields the most accurate reconciled forecasts. All of these WLS estimators are estimators for the sample covariance estimator $\boldsymbol{\Lambda}$ for $\boldsymbol{W}$, the covariance matrix of the base forecast error. In turn, $\boldsymbol{W}$ is an estimator for the unknowable $\boldsymbol{\Sigma}$\cite{thief}.
 
-The reason we don't use $\boldsymbol{\Lambda}$ is that its calculation is difficult to implement in practice\footnote{This estimator also cannot be calculated for non-model based forecasts like expert judgements in which in-sample forecast errors may not be available\cite{thief}, though this was not a concern for our work.}. This estimator has $(\Sigma_k M_k)^2$ elements that must be estimated, and the sample size that can be used for such estimation is limited by the number of observations at the topmost aggregation level $\lfloor T/m \rfloor$. Since $\lfloor T/m \rfloor \ll T$, the accuracy of the estimation is degraded. Hence, we instead choose to rely on $\boldsymbol{\Lambda}_{SV}$\cite{thief}.
+The reason we prefer the series variants estimate rover the sample covariance estimator $\boldsymbol{\Lambda}$ is that calculation of the latter is difficult to implement in practice\footnote{This estimator also cannot be calculated for non-model based forecasts like expert judgements in which in-sample forecast errors may not be available\cite{thief}, though this was not a concern for our work.}. This estimator has $(\Sigma_k M_k)^2$ elements that must be estimated, and the sample size that can be used for such estimation is limited by the number of observations at the topmost aggregation level $\lfloor T/m \rfloor$. Since $\lfloor T/m \rfloor \ll T$, the accuracy of the estimation is degraded. Hence, we instead choose to rely on $\boldsymbol{\Lambda}_{SV}$\cite{thief}.
 
 Following this final step of reconciliation, the forecasts from every time scale will agree about the number of daily incident hospitalizations for all horizons. The reconciled forecasts are shown in Figure \ref{fig:thief_concept_figure}.
 
@@ -192,7 +194,7 @@ Although this means that the interval forecasts are not coherent (only the point
 \caption{Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}
 \label{tab:table_quant_int}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:02:42 2025
+% Tue Jun 17 17:02:45 2025
 \begin{tabular}{rlllllllllll}
   \hline
  &  \\ 
@@ -204,7 +206,7 @@ Quantile & .010 & .025 & .050 & 0.100 & ... & 0.500 & ... & 0.900 & 0.950 & .975
 \end{table}
 
 \section{Model specifications} \label{model_specifications}
-We created three distinct classes of models for comparison during the validation phase: the original THieF models, the THieF ensembles, and the ARIMA and SARIMA models. In total, these three groups consisted of twenty-six (26) candidate models, all of which were implemented using the \textit{forecast} package in R.
+We created four distinct classes of models for comparison during the validation phase: the original THieF models, the THieF ensembles, the ARIMA and SARIMA models, and an untrained mean ensemble of the ARIMA and SARIMA models. In total, these four groups consisted of twenty-seven (27) candidate models, all of which were implemented using the \textit{forecast} package in R.
 
 \subsection{Original THieF models} \label{thief_models}
 The original THieF models were constructed using the THieF methodology outlined in Section \ref{thief} with different combinations of aggregation levels and data transformations. Seven hierarchical structures and two data transformations resulted in fourteen (14) original THieF models. Each model was defined (and named) based on the highest level of its temporal hierarchy and the data transformation that is used before generating the forecasts. For example, the simplest of the THieF models is THieF\_1wk-noTransform while the most complex is THieF\_12wk-4root.
@@ -214,9 +216,9 @@ The aggregation levels of any model's temporal hierarchy were daily, plus $f_m$-
 We explored these seven hierarchy schemes with both no data transformation and a fourth-root data transformation. The latter transform was implemented by first taking the fourth root of the confirmed hospitalizations time series, using the truth data to make forecasts with the THieF methodology, then performing an inverse fourth-power transformation to the resulting forecasts. We selected the fourth-root transformation over more common log or square root transforms based on prior research showing accuracy improvements for COVID-19 forecasting due to its variance-stabilizing effect\cite{4root_transform}.
 
 \subsection{THieF ensemble models} \label{thief_ensembles}
-The THieF ensemble models, defined using equations adapted from Ray, et al.\cite{ensemble_methods}, consisted of seven mean ensembles of the fourteen total original THieF models. While not all fourteen original THieF models were passed onto the testing phase, the THieF ensembles that were selected remain ensembles of these fourteen original THieF models (see Section \ref{testing_eval}).
+The THieF ensemble models, defined using equations adapted from Ray, et al.\cite{ensemble_methods}, consisted of eight mean ensembles of the fourteen total original THieF models. While not all fourteen original THieF models were passed onto the testing phase, the THieF ensembles that were selected remain ensembles of these fourteen original THieF models (see Section \ref{testing_eval}).
 
-Of the seven THieF ensembles, we formulated six as trained ensembles, in which past performance of the component THieF models was used to assign the components' weights, and one as an untrained ensemble, in which all component forecasters were assigned equal weight\cite{ensemble_methods}. Both types of ensembles made quantile forecasts\footnote{Recall that we use the 0.500 quantile forecast as the point forecast.} at level $u$ by combining those of the component forecasts for a particular forecast date, location, horizon, and quantile combination. (For example, a particular model $d$ might have made a 0.500 quantile forecast on December 7, 2020 that predicted the number of 1-day ahead incident hospitalizations in Massachusetts will be 185.) An ensemble quantile forecast can be expressed mathematically as \[q_{l,s,h,u}^{ens} = f(q_{l,s,h,u}^1, \cdots, q_{l,s,h,u}^D),\] where $l$ is the location, $s$ is the forecast date, $h$ is the horizon, and the superscript $d = 1, \cdots, D$ denotes the model\cite{ensemble_methods}.
+Of the eight THieF ensembles, we formulated six as trained ensembles, in which past performance of the component THieF models was used to assign the components' weights, and one as an untrained ensemble, in which all component forecasters were assigned equal weight\cite{ensemble_methods}. Both types of ensembles made quantile forecasts\footnote{Recall that we use the 0.500 quantile forecast as the point forecast.} at level $u$ by combining those of the component forecasts for a particular forecast date, location, horizon, and quantile combination. (For example, a particular model $d$ might have made a 0.500 quantile forecast on December 7, 2020 that predicted the number of 1-day ahead incident hospitalizations in Massachusetts will be 185.) An ensemble quantile forecast can be expressed mathematically as \[q_{l,s,h,u}^{ens} = f(q_{l,s,h,u}^1, \cdots, q_{l,s,h,u}^D),\] where $l$ is the location, $s$ is the forecast date, $h$ is the horizon, and the superscript $d = 1, \cdots, D$ denotes the model\cite{ensemble_methods}.
 
 A trained, weighted mean ensemble calculated its forecast quantiles as \[q_{l,s,h,u}^{ens} = \Sigma_{d=1}^D w_s^d q_{l,s,h,u}^d,\] in which the weights were calculated using a sigmoidal transformation of the component models' relative WIS (rWIS) over a rolling window of twelve (12) weeks leading up to the ensemble's forecast date $s$: \[w_s^d=\frac{exp(-\theta \cdot rWIS_s^d)}{\Sigma_{d'=1}^D exp(-\theta) \cdot rWIS_s^{d'}}.\] When the non-negative parameter $\theta = 0$, this became an equally weighted ensemble. However, as $\theta$ increases, the weights became more unequal, with the contributions of better-performing component models eclipsing that of worse-performing models. Note that the weights, however, were always non-negative and summed to one. A group of weights was calculated for a particular forecast date, location, horizon, and quantile combination\cite{ensemble_methods}.
 
@@ -227,7 +229,10 @@ While the value of $\theta$ generally remained static for each ensemble, all tra
 \subsection{ARIMA and SARIMA models} \label{sarima_models}
 The four ARIMA and SARIMA (seasonal ARIMA) models were classic statistical models created using the \textit{auto.arima()} function from the \textit{forecast} package in R. This function makes forecasts based on input time series data, and the user may specify seasonality when creating a SARIMA model. Using the original HHS Protect confirmed hospitalizations dataset, we created two ARIMA models and two SARIMA models, with either no data transformation or a variance-stabilizing fourth root transformation, as described in Section \ref{thief_models}. The SARIMA models both had a seasonality of 7 days (1 week), named sarima\_s7-4root and sarima\_s7-noTransform, while the ARIMA models had no seasonality, named arima\_s1-4root and arima\_s1-noTransform.
 
-The construction of the ARIMA and SARIMA models intentionally matched that of the daily and weekly aggregation levels of the original THieF models, though in practice the resulting base forecasts from the THieF models may have differed slightly due to the aggregation process to create the temporal hierarchy. We specifically wanted to use the ARIMA and SARIMA models to help investigate whether the THieF methodology's temporal hierarchy and forecast reconciliation impacted its performance rather than simply its underlying ARIMA base forecaster. (Recall that research has shown that classic statistical models have shown good performance for outbreak forecasting\cite{lauer}.)
+The construction of the ARIMA and SARIMA models intentionally matched that of the daily and weekly aggregation levels of the original THieF models, though in practice the resulting base forecasts from the THieF models may have differed slightly due to the aggregation process to create the temporal hierarchy. We specifically wanted to use the ARIMA and SARIMA models to help investigate whether the THieF methodology's temporal hierarchy and forecast reconciliation impacted its performance rather than simply its underlying ARIMA base forecaster. (Recall that research has shown that classic statistical models have shown good performance for outbreak forecasting, thus they were chosen as reasonable comparators\cite{lauer}.)
+
+\subsection{ARIMA and SARIMA ensemble} \label{sarima_ensemble}
+The ARIMA and SARIMA ensemble, named sarima-untrained\_ensemble, is an untrained quantile mean of all the models described in the previous section. We formulated this ensemble to investigate whether the source of any potential performance improvements with THieF are a result of just combining multiple ARIMA forecasts, or the result of weighted, temporal reconciliation of ARIMA forecasts at different time scales.
 
 \section{Metrics and Evaluation} \label{metrics_and_evaluation}
 
@@ -245,7 +250,7 @@ Weighted interval score is a proper scoring rule for a set of interval forecasts
 
 Relative versions of MAE and WIS were also used to adjust for truth data magnitude to allow for comparison between forecast values of different scales. These relative metrics were calculated as $MAE_{\textrm{model d}} / MAE_{\textrm{baseline}}$ and $WIS_{\textrm{model d}} /WIS_{\textrm{baseline}}$, respectively\cite{cramer}.
 
-The scores were then aggregated in one of seven ways: overall validation phase, last 17 weeks of the validation phase, overall testing phase, by pandemic wave for the testing phase, by forecast date for the testing phase, and by location for the testing phase. We separate the evaluations of the U.S. national location from the other 52 locations to avoid inflated scores that disproportionately represent a single location. Additionally, the by--forecast date aggregation of scores was performed weekly instead of daily, following conventions set by the Forecast Hub for evaluation reports to condense the amount of scores. These weekly scores were obtained by averaging score values across a single week (Tuesday through Monday)\cite{eval_reports}\footnote{Note that scores for different models had to be re-aligned because teams made forecasts on different days, resulting in a mismatch between horizons for the same target and date. The scores for our models, which predicted on a Sunday, were for 3- to 30-days ahead, rather than 1- to 28 days ahead like those for the two Forecast Hub benchmark models. This may have resulted in a slight disadvantage for our models, though only marginally.}.
+The scores were then aggregated in one of seven ways: overall validation phase, last 17 weeks of the validation phase, overall testing phase, by pandemic wave for the testing phase, by forecast date for the testing phase, and by location for the testing phase. We separate the evaluations of the U.S. national location from the other 52 locations to avoid inflated scores that disproportionately represent a single location, as scores are generally higher when counts are higher and counts are higher for larger population locations. Additionally, the by--forecast date aggregation of scores was performed weekly instead of daily, following conventions set by the Forecast Hub for evaluation reports to condense the amount of scores. These weekly scores were obtained by averaging score values across a single week (Tuesday through Monday)\cite{eval_reports}\footnote{Note that scores for different models had to be re-aligned because teams made forecasts on different days, resulting in a mismatch between horizons for the same target and date. The scores for our models, which predicted on a Sunday, were for 3- to 30-days ahead, rather than 1- to 28 days ahead like those for the two Forecast Hub benchmark models. This may have resulted in a slight disadvantage for our models, though only marginally.}.
 
 We performed no statistical tests to assess the significance of performance differences between models, as certain issues arise when making time series forecasts that prevent usage of such tests. Namely, scores tend to be highly correlated across multiple dimensions, like horizons, forecast dates, locations, etc. Assumptions of independent, identically distributed data found in standard inference are invalid in time series forecasting. In practice, numerical comparisons of forecast error between prospective models (without excluding any models that were compared) is sufficient for choosing the best model to inform decision-making. Additionally, foregoing formal statistical tests is common practice in infectious disease forecasting. Still, it should be noted that we cannot necessarily make a definitive statement about the predominance of one model over another without such tests\cite{lauer}.
 
@@ -254,20 +259,21 @@ The validation phase is used to train the candidate models, calibrate the foreca
 
 We prespecified a set of criteria to investigate several objectives of interest to help us determine which models to pass along as part of the best subset:
 \begin{itemize}
-\item \textbf{Best original THieF model} \newline Best model created using THieF over the entire validation phase
-\item \textbf{Does ensembling THieF models improve performance:} \newline Best trained ensemble of THieF models over the entire validation phase
-\item \textbf{Does THieF improve upon performance compared to its base forecaster:} \newline Best ARIMA/SARIMA model over the entire validation phase
-\item \textbf{Can weighted ensembles improve upon performance over unweighted ones:} \newline Untrained ensemble of THieF models
-\item \textbf{Do some THieF models improve with more input data:} Best model created using THieF during the last 17 weeks of the validation phase
+\item \textbf{What is the best model created using THieF over the entire validation phase?} \newline Best THieF model (not including ensembles) over the entire validation phase
+\item \textbf{Does ensembling THieF models with accuracy-based weights improve performance?} \newline Best trained ensemble of THieF models over the entire validation phase
+\item \textbf{Does THieF improve upon performance compared to its base forecaster?} \newline Best ARIMA/SARIMA model over the entire validation phase
+\item \textbf{Does THieF improve upon performance compared to an ensemble of its base forecaster?} \newline ARIMA and SARIMA model ensemble
+\item \textbf{How does a simple equally-weighted ensemble compare against trained ensembles?} \newline Untrained ensemble of THieF models
+\item \textbf{Do some THieF models improve with more input data?} \newline Best model created using THieF during the last 17 weeks of the validation phase
 \end{itemize}
-where ``best" is defined by lowest WIS. These criteria involve passing on a representative from each class of models---original THieF, THieF (trained) ensemble, ARIMA/SARIMA---plus the equally weighted THieF ensemble and an additional original THieF model based on performance during the last 17 weeks of the validation phase. We limit the last category to original THieF models because we suspected those with large aggregation levels might fit this description. Thus, a maximum of five models could make up the best subset to move onto the training phase evaluations, if unique candidates occupied each category. However, if the same model occupied multiple categories, we might pass on only four models.
+where ``best" is defined by lowest WIS. These criteria involve passing on a representative from each class of models---original THieF, THieF (trained) ensemble, ARIMA/SARIMA---plus the equally weighted THieF ensemble and an additional original THieF model based on performance during the last 17 weeks of the validation phase. We limit the last category to original THieF models because we suspected those with large aggregation levels might fit this description. Additionally, we allow each geographic scale to put forth a model for each category when applicable. Thus, a maximum of ten models could make up the best subset to move onto the testing phase evaluations, if unique candidates occupied each category for each geographic scale. However, if the same model occupied multiple categories for both states and U.S. national, we might pass on only five models.
 
 \subsection{Testing phase} \label{testing_eval}
-We use the best subset to make forecasts during the testing phase and evaluated model accuracy among this subset and against the two comparison models from the Forecast Hub, COVIDhub-baseline and COVIDhub-4\_week\_ensemble. Like with the validation phase, all testing phase evaluations are restricted to forecasts with target end dates within the testing phase (November 1, 2021 to October 2, 2022).
+We use the best subset to make forecasts during the testing phase and evaluated model accuracy among this subset and against the seven comparison models from the Forecast Hub, COVIDhub-baseline and COVIDhub-4\_week\_ensemble and the five operational models. Like with the validation phase, all testing phase evaluations are restricted to forecasts with target end dates within the testing phase (November 1, 2021 to October 2, 2022).
 
 The testing phase analysis is broken down into five smaller evaluations, based on aggregating the testing phase forecasts for the overall period, by horizon week, by pandemic wave, by location, and by forecast date. The smaller evaluations are intended to help pinpoint any potential accuracy gains (or losses) the original THieF or THieF ensembles had over the COVIDhub-baseline (or COVIDhub-4\_week\_ensemble) and allow us to hypothesize the origin of these accuracy differences.
 
-The overall period evaluation provides a generalized view of the testing phase analysis and is meant to identify a single best model that could be used to inform decision-making. (Though of course we cannot say this definitively given that we do not perform any formal statistical tests\cite{lauer}.) The by-horizon evaluation helps identify models that perform well at shorter horizons (typically 1 to 2 week ahead), as the larger WIS and MAE values for longer horizons (3 to 4 week ahead) likely dominated these metrics in the overall period evaluation. This dominance is particularly undesirable given that the Forecast Hub ensemble models, which tend to be some of the most accurate models overall, experience a sharp decline in accuracy beyond two week ahead horizons for incident hospitalizations\cite{short_horizons}.
+The overall period evaluation provides a generalized view of the testing phase analysis and is meant to identify a single best model that could be used to inform decision-making. The by-horizon evaluation helps identify models that perform well at shorter horizons (typically 1 to 2 week ahead), as the larger WIS and MAE values for longer horizons (3 to 4 week ahead) likely dominated these metrics in the overall period evaluation\cite{short_horizons}.
 
 The by--pandemic wave and by--forecast date evaluations investigate time periods with different magnitudes or fluctuating rates of incident hospitalizations. Times of greater values or most rapid changes have larger WIS and MAE and are generally harder to predict\cite{mech_bayes, short_horizons}, and it might be useful to identify which models performed best under different scenarios. These two evaluations are also stratified by horizon week. However, the by-location evaluation, which provided insight into differences in model performance between higher and lower count locations, is not stratified by horizon week.
 
@@ -280,7 +286,7 @@ During the validation phase, we found that the THieF ensembles generally made th
 \caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS}
 \label{tab:table_validation_states}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:02:42 2025
+% Tue Jun 17 17:02:45 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -294,24 +300,25 @@ During the validation phase, we found that the THieF ensembles generally made th
   7 & THieF\_ensemble-train1 & 31.33 & 47.44 & 0.53 & 0.94 & 0.87 & 0.95 \\ 
   8 & THieF\_6wk-4root & 31.65 & 48.11 & 0.46 & 0.91 & 0.88 & 0.96 \\ 
   9 & THieF\_6wk-noTransform & 32.26 & 48.67 & 0.54 & 0.92 & 0.90 & 0.97 \\ 
-  10 & THieF\_1wk-4root & 32.68 & 50.06 & 0.48 & 0.91 & 0.91 & 1.00 \\ 
-  11 & THieF\_2wk-4root & 32.94 & 50.26 & 0.47 & 0.91 & 0.92 & 1.01 \\ 
-  12 & THieF\_2wk-noTransform & 33.26 & 48.03 & 0.57 & 0.90 & 0.93 & 0.96 \\ 
-  13 & THieF\_1wk-noTransform & 33.74 & 49.21 & 0.58 & 0.90 & 0.94 & 0.98 \\ 
-  14 & THieF\_8wk-4root & 33.84 & 51.14 & 0.43 & 0.89 & 0.94 & 1.02 \\ 
-  15 & THieF\_4wk-4root & 34.10 & 51.50 & 0.46 & 0.90 & 0.95 & 1.03 \\ 
-  16 & THieF\_ensemble-mean & 34.29 & 47.65 & 0.53 & 0.94 & 0.96 & 0.95 \\ 
-  17 & THieF\_3wk-4root & 34.62 & 52.71 & 0.46 & 0.90 & 0.96 & 1.05 \\ 
-  18 & THieF\_8wk-noTransform & 34.76 & 52.06 & 0.51 & 0.90 & 0.97 & 1.04 \\ 
-  19 & THieF\_3wk-noTransform & 34.96 & 52.08 & 0.54 & 0.90 & 0.97 & 1.04 \\ 
-  20 & THieF\_4wk-noTransform & 35.63 & 52.82 & 0.53 & 0.89 & 0.99 & 1.06 \\ 
-  21 & COVIDhub-baseline & 35.88 & 49.98 & 0.83 & 0.98 & 1.00 & 1.00 \\ 
-  22 & sarima\_s7-noTransform & 36.29 & 51.91 & 0.57 & 0.89 & 1.01 & 1.04 \\ 
-  23 & sarima\_s7-4root & 36.35 & 54.55 & 0.46 & 0.90 & 1.01 & 1.09 \\ 
-  24 & arima\_s1-4root & 36.91 & 55.43 & 0.46 & 0.89 & 1.03 & 1.11 \\ 
-  25 & THieF\_12wk-noTransform & 39.14 & 59.06 & 0.42 & 0.89 & 1.09 & 1.18 \\ 
-  26 & arima\_s1-noTransform & 39.41 & 56.38 & 0.54 & 0.88 & 1.10 & 1.13 \\ 
-  27 & THieF\_12wk-4root & 84.32 & 54.49 & 0.41 & 0.86 & 2.35 & 1.09 \\ 
+  10 & sarima-untrained\_ensemble & 32.46 & 49.06 & 0.54 & 0.91 & 0.90 & 0.98 \\ 
+  11 & THieF\_1wk-4root & 32.68 & 50.06 & 0.48 & 0.91 & 0.91 & 1.00 \\ 
+  12 & THieF\_2wk-4root & 32.94 & 50.26 & 0.47 & 0.91 & 0.92 & 1.01 \\ 
+  13 & THieF\_2wk-noTransform & 33.26 & 48.03 & 0.57 & 0.90 & 0.93 & 0.96 \\ 
+  14 & THieF\_1wk-noTransform & 33.74 & 49.21 & 0.58 & 0.90 & 0.94 & 0.98 \\ 
+  15 & THieF\_8wk-4root & 33.84 & 51.14 & 0.43 & 0.89 & 0.94 & 1.02 \\ 
+  16 & THieF\_4wk-4root & 34.10 & 51.50 & 0.46 & 0.90 & 0.95 & 1.03 \\ 
+  17 & THieF\_ensemble-mean & 34.29 & 47.65 & 0.53 & 0.94 & 0.96 & 0.95 \\ 
+  18 & THieF\_3wk-4root & 34.62 & 52.71 & 0.46 & 0.90 & 0.96 & 1.05 \\ 
+  19 & THieF\_8wk-noTransform & 34.76 & 52.06 & 0.51 & 0.90 & 0.97 & 1.04 \\ 
+  20 & THieF\_3wk-noTransform & 34.96 & 52.08 & 0.54 & 0.90 & 0.97 & 1.04 \\ 
+  21 & THieF\_4wk-noTransform & 35.63 & 52.82 & 0.53 & 0.89 & 0.99 & 1.06 \\ 
+  22 & COVIDhub-baseline & 35.88 & 49.98 & 0.83 & 0.98 & 1.00 & 1.00 \\ 
+  23 & sarima\_s7-noTransform & 36.29 & 51.91 & 0.57 & 0.89 & 1.01 & 1.04 \\ 
+  24 & sarima\_s7-4root & 36.35 & 54.55 & 0.46 & 0.90 & 1.01 & 1.09 \\ 
+  25 & arima\_s1-4root & 36.91 & 55.43 & 0.46 & 0.89 & 1.03 & 1.11 \\ 
+  26 & THieF\_12wk-noTransform & 39.14 & 59.06 & 0.42 & 0.89 & 1.09 & 1.18 \\ 
+  27 & arima\_s1-noTransform & 39.41 & 56.38 & 0.54 & 0.88 & 1.10 & 1.13 \\ 
+  28 & THieF\_12wk-4root & 84.32 & 54.49 & 0.41 & 0.86 & 2.35 & 1.09 \\ 
    \hline
 \end{tabular}\end{center}
 \end{table}
@@ -321,38 +328,39 @@ During the validation phase, we found that the THieF ensembles generally made th
 \caption{Summary of overall model performance during the validation phase for the entire U.S., ordered by ascending WIS}
 \label{tab:table_validation_us}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:02:42 2025
+% Tue Jun 17 17:02:45 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
   \hline
-1 & THieF\_6wk-noTransform & 1116.4 & 1756.0 & 0.36 & 0.91 & 0.88 & 0.88 \\ 
-  2 & THieF\_ensemble-train3 & 1139.8 & 1808.6 & 0.34 & 0.91 & 0.89 & 0.91 \\ 
-  3 & THieF\_ensemble-train1 & 1144.9 & 1814.9 & 0.35 & 0.90 & 0.90 & 0.91 \\ 
-  4 & THieF\_ensemble-train6.5 & 1146.6 & 1817.4 & 0.34 & 0.91 & 0.90 & 0.91 \\ 
-  5 & THieF\_6wk-4root & 1152.4 & 1765.8 & 0.33 & 0.76 & 0.90 & 0.88 \\ 
-  6 & THieF\_ensemble-train10 & 1159.2 & 1834.0 & 0.33 & 0.91 & 0.91 & 0.92 \\ 
-  7 & THieF\_ensemble-train15 & 1180.2 & 1866.3 & 0.33 & 0.90 & 0.92 & 0.94 \\ 
-  8 & THieF\_ensemble-train20 & 1199.4 & 1897.5 & 0.32 & 0.90 & 0.94 & 0.95 \\ 
-  9 & THieF\_ensemble-mean & 1212.7 & 1822.3 & 0.35 & 0.90 & 0.95 & 0.91 \\ 
-  10 & THieF\_ensemble-train25 & 1214.3 & 1919.3 & 0.32 & 0.89 & 0.95 & 0.96 \\ 
-  11 & THieF\_1wk-noTransform & 1218.5 & 1856.4 & 0.46 & 0.87 & 0.95 & 0.93 \\ 
-  12 & THieF\_2wk-4root & 1234.7 & 1941.8 & 0.25 & 0.85 & 0.97 & 0.97 \\ 
-  13 & THieF\_1wk-4root & 1252.2 & 1993.1 & 0.30 & 0.85 & 0.98 & 1.00 \\ 
-  14 & COVIDhub-baseline & 1276.5 & 1995.9 & 0.64 & 0.99 & 1.00 & 1.00 \\ 
-  15 & THieF\_8wk-noTransform & 1277.0 & 1968.9 & 0.38 & 0.85 & 1.00 & 0.99 \\ 
-  16 & THieF\_8wk-4root & 1303.6 & 1963.8 & 0.26 & 0.70 & 1.02 & 0.98 \\ 
-  17 & THieF\_2wk-noTransform & 1343.1 & 1985.2 & 0.40 & 0.82 & 1.05 & 0.99 \\ 
-  18 & THieF\_4wk-4root & 1383.4 & 2058.0 & 0.28 & 0.70 & 1.08 & 1.03 \\ 
-  19 & THieF\_3wk-noTransform & 1392.9 & 2008.6 & 0.38 & 0.78 & 1.09 & 1.01 \\ 
-  20 & THieF\_4wk-noTransform & 1397.4 & 2038.4 & 0.35 & 0.77 & 1.09 & 1.02 \\ 
-  21 & THieF\_3wk-4root & 1401.7 & 2164.8 & 0.26 & 0.80 & 1.10 & 1.08 \\ 
-  22 & arima\_s1-noTransform & 1477.9 & 2162.0 & 0.37 & 0.79 & 1.16 & 1.08 \\ 
-  23 & sarima\_s7-noTransform & 1483.2 & 2200.6 & 0.39 & 0.81 & 1.16 & 1.10 \\ 
-  24 & arima\_s1-4root & 1530.2 & 2227.1 & 0.26 & 0.75 & 1.20 & 1.12 \\ 
-  25 & THieF\_12wk-noTransform & 1553.5 & 2357.8 & 0.32 & 0.76 & 1.22 & 1.18 \\ 
-  26 & sarima\_s7-4root & 1601.5 & 2467.2 & 0.22 & 0.76 & 1.25 & 1.24 \\ 
-  27 & THieF\_12wk-4root & 2270.6 & 2039.9 & 0.34 & 0.66 & 1.78 & 1.02 \\ 
+1 & sarima-untrained\_ensemble & 1104.9 & 1778.1 & 0.30 & 0.86 & 0.87 & 0.89 \\ 
+  2 & THieF\_6wk-noTransform & 1116.4 & 1756.0 & 0.36 & 0.91 & 0.88 & 0.88 \\ 
+  3 & THieF\_ensemble-train3 & 1139.8 & 1808.6 & 0.34 & 0.91 & 0.89 & 0.91 \\ 
+  4 & THieF\_ensemble-train1 & 1144.9 & 1814.9 & 0.35 & 0.90 & 0.90 & 0.91 \\ 
+  5 & THieF\_ensemble-train6.5 & 1146.6 & 1817.4 & 0.34 & 0.91 & 0.90 & 0.91 \\ 
+  6 & THieF\_6wk-4root & 1152.4 & 1765.8 & 0.33 & 0.76 & 0.90 & 0.88 \\ 
+  7 & THieF\_ensemble-train10 & 1159.2 & 1834.0 & 0.33 & 0.91 & 0.91 & 0.92 \\ 
+  8 & THieF\_ensemble-train15 & 1180.2 & 1866.3 & 0.33 & 0.90 & 0.92 & 0.94 \\ 
+  9 & THieF\_ensemble-train20 & 1199.4 & 1897.5 & 0.32 & 0.90 & 0.94 & 0.95 \\ 
+  10 & THieF\_ensemble-mean & 1212.7 & 1822.3 & 0.35 & 0.90 & 0.95 & 0.91 \\ 
+  11 & THieF\_ensemble-train25 & 1214.3 & 1919.3 & 0.32 & 0.89 & 0.95 & 0.96 \\ 
+  12 & THieF\_1wk-noTransform & 1218.5 & 1856.4 & 0.46 & 0.87 & 0.95 & 0.93 \\ 
+  13 & THieF\_2wk-4root & 1234.7 & 1941.8 & 0.25 & 0.85 & 0.97 & 0.97 \\ 
+  14 & THieF\_1wk-4root & 1252.2 & 1993.1 & 0.30 & 0.85 & 0.98 & 1.00 \\ 
+  15 & COVIDhub-baseline & 1276.5 & 1995.9 & 0.64 & 0.99 & 1.00 & 1.00 \\ 
+  16 & THieF\_8wk-noTransform & 1277.0 & 1968.9 & 0.38 & 0.85 & 1.00 & 0.99 \\ 
+  17 & THieF\_8wk-4root & 1303.6 & 1963.8 & 0.26 & 0.70 & 1.02 & 0.98 \\ 
+  18 & THieF\_2wk-noTransform & 1343.1 & 1985.2 & 0.40 & 0.82 & 1.05 & 0.99 \\ 
+  19 & THieF\_4wk-4root & 1383.4 & 2058.0 & 0.28 & 0.70 & 1.08 & 1.03 \\ 
+  20 & THieF\_3wk-noTransform & 1392.9 & 2008.6 & 0.38 & 0.78 & 1.09 & 1.01 \\ 
+  21 & THieF\_4wk-noTransform & 1397.4 & 2038.4 & 0.35 & 0.77 & 1.09 & 1.02 \\ 
+  22 & THieF\_3wk-4root & 1401.7 & 2164.8 & 0.26 & 0.80 & 1.10 & 1.08 \\ 
+  23 & arima\_s1-noTransform & 1477.9 & 2162.0 & 0.37 & 0.79 & 1.16 & 1.08 \\ 
+  24 & sarima\_s7-noTransform & 1483.2 & 2200.6 & 0.39 & 0.81 & 1.16 & 1.10 \\ 
+  25 & arima\_s1-4root & 1530.2 & 2227.1 & 0.26 & 0.75 & 1.20 & 1.12 \\ 
+  26 & THieF\_12wk-noTransform & 1553.5 & 2357.8 & 0.32 & 0.76 & 1.22 & 1.18 \\ 
+  27 & sarima\_s7-4root & 1601.5 & 2467.2 & 0.22 & 0.76 & 1.25 & 1.24 \\ 
+  28 & THieF\_12wk-4root & 2270.6 & 2039.9 & 0.34 & 0.66 & 1.78 & 1.02 \\ 
    \hline
 \end{tabular}\end{center}
 \end{table}
@@ -376,20 +384,26 @@ Model rankings were consistent between the averaged states and U.S. national sca
 \caption{Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}
 \label{tab:table_overall_states}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:02:56 2025
+% Tue Jun 17 17:03:01 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
   \hline
-1 & COVIDhub-4\_week\_ensemble & 30.18 & 44.87 & 0.64 & 0.94 & 0.72 & 0.79 \\ 
-  2 & THieF\_6wk-4root & 34.55 & 50.12 & 0.51 & 0.90 & 0.83 & 0.88 \\ 
-  3 & THieF\_12wk-4root & 35.25 & 51.35 & 0.50 & 0.89 & 0.85 & 0.90 \\ 
-  4 & THieF\_ensemble-train3 & 35.62 & 51.57 & 0.56 & 0.91 & 0.86 & 0.91 \\ 
-  5 & THieF\_ensemble-mean & 35.91 & 51.80 & 0.57 & 0.91 & 0.86 & 0.91 \\ 
-  6 & THieF\_6wk-noTransform & 39.51 & 56.87 & 0.55 & 0.88 & 0.95 & 1.00 \\ 
-  7 & COVIDhub-baseline & 41.63 & 56.77 & 0.79 & 0.96 & 1.00 & 1.00 \\ 
-  8 & arima\_s1-noTransform & 42.92 & 58.04 & 0.60 & 0.86 & 1.03 & 1.02 \\ 
-  9 & sarima\_s7-noTransform & 43.54 & 58.94 & 0.60 & 0.87 & 1.05 & 1.04 \\ 
+1 & Karlen-pypm & 21.97 & 33.87 & 0.55 & 0.90 & 0.53 & 0.60 \\ 
+  2 & COVIDhub-4\_week\_ensemble & 30.18 & 44.87 & 0.64 & 0.94 & 0.72 & 0.79 \\ 
+  3 & THieF\_6wk-4root & 34.55 & 50.12 & 0.51 & 0.90 & 0.83 & 0.88 \\ 
+  4 & CU-select & 34.89 & 49.98 & 0.32 & 0.75 & 0.84 & 0.88 \\ 
+  5 & THieF\_12wk-4root & 35.25 & 51.35 & 0.50 & 0.89 & 0.85 & 0.90 \\ 
+  6 & THieF\_ensemble-train3 & 35.62 & 51.57 & 0.56 & 0.91 & 0.86 & 0.91 \\ 
+  7 & THieF\_ensemble-mean & 35.91 & 51.80 & 0.57 & 0.91 & 0.86 & 0.91 \\ 
+  8 & THieF\_6wk-noTransform & 39.51 & 56.87 & 0.55 & 0.88 & 0.95 & 1.00 \\ 
+  9 & COVIDhub-baseline & 41.63 & 56.77 & 0.79 & 0.96 & 1.00 & 1.00 \\ 
+  10 & sarima-untrained\_ensemble & 42.06 & 56.87 & 0.60 & 0.86 & 1.01 & 1.00 \\ 
+  11 & arima\_s1-noTransform & 42.92 & 58.04 & 0.60 & 0.86 & 1.03 & 1.02 \\ 
+  12 & sarima\_s7-noTransform & 43.54 & 58.94 & 0.60 & 0.87 & 1.05 & 1.04 \\ 
+  13 & GT-DeepCOVID & 44.16 & 57.82 & 0.28 & 0.59 & 1.06 & 1.02 \\ 
+  14 & JHUAPL-Bucky & 44.67 & 65.69 & 0.48 & 0.89 & 1.07 & 1.16 \\ 
+  15 & USC-SI\_kJalpha & 70.83 & 90.52 & 0.21 & 0.50 & 1.70 & 1.59 \\ 
    \hline
 \end{tabular}\end{center}
 \end{table}
@@ -399,20 +413,26 @@ Model rankings were consistent between the averaged states and U.S. national sca
 \caption{Summary of overall model performance during the testing phase for the entire U.S., ordered by ascending WIS}
 \label{tab:table_overall_us}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:02:56 2025
+% Tue Jun 17 17:03:01 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
   \hline
-1 & COVIDhub-4\_week\_ensemble & 1401.3 & 2085.1 & 0.63 & 0.91 & 0.75 & 0.83 \\ 
-  2 & THieF\_6wk-4root & 1642.5 & 2358.8 & 0.40 & 0.82 & 0.88 & 0.94 \\ 
-  3 & THieF\_ensemble-train3 & 1687.4 & 2443.4 & 0.36 & 0.83 & 0.90 & 0.97 \\ 
-  4 & THieF\_ensemble-mean & 1700.5 & 2458.9 & 0.39 & 0.84 & 0.91 & 0.98 \\ 
-  5 & THieF\_12wk-4root & 1723.9 & 2481.7 & 0.31 & 0.81 & 0.92 & 0.99 \\ 
-  6 & THieF\_6wk-noTransform & 1727.7 & 2504.8 & 0.46 & 0.86 & 0.92 & 1.00 \\ 
-  7 & COVIDhub-baseline & 1867.5 & 2514.1 & 0.71 & 0.85 & 1.00 & 1.00 \\ 
-  8 & arima\_s1-noTransform & 1949.6 & 2487.0 & 0.53 & 0.82 & 1.04 & 0.99 \\ 
-  9 & sarima\_s7-noTransform & 2316.8 & 3042.4 & 0.41 & 0.80 & 1.24 & 1.21 \\ 
+1 & Karlen-pypm & 730.6 & 1092.2 & 0.61 & 0.92 & 0.39 & 0.43 \\ 
+  2 & COVIDhub-4\_week\_ensemble & 1401.3 & 2085.1 & 0.63 & 0.91 & 0.75 & 0.83 \\ 
+  3 & CU-select & 1479.2 & 2186.3 & 0.28 & 0.71 & 0.79 & 0.87 \\ 
+  4 & THieF\_6wk-4root & 1642.5 & 2358.8 & 0.40 & 0.82 & 0.88 & 0.94 \\ 
+  5 & THieF\_ensemble-train3 & 1687.4 & 2443.4 & 0.36 & 0.83 & 0.90 & 0.97 \\ 
+  6 & THieF\_ensemble-mean & 1700.5 & 2458.9 & 0.39 & 0.84 & 0.91 & 0.98 \\ 
+  7 & THieF\_12wk-4root & 1723.9 & 2481.7 & 0.31 & 0.81 & 0.92 & 0.99 \\ 
+  8 & THieF\_6wk-noTransform & 1727.7 & 2504.8 & 0.46 & 0.86 & 0.92 & 1.00 \\ 
+  9 & GT-DeepCOVID & 1864.9 & 2455.9 & 0.26 & 0.55 & 1.00 & 0.98 \\ 
+  10 & COVIDhub-baseline & 1867.5 & 2514.1 & 0.71 & 0.85 & 1.00 & 1.00 \\ 
+  11 & JHUAPL-Bucky & 1888.7 & 2707.8 & 0.69 & 0.97 & 1.01 & 1.08 \\ 
+  12 & arima\_s1-noTransform & 1949.6 & 2487.0 & 0.53 & 0.82 & 1.04 & 0.99 \\ 
+  13 & sarima-untrained\_ensemble & 1987.8 & 2552.5 & 0.51 & 0.81 & 1.06 & 1.01 \\ 
+  14 & sarima\_s7-noTransform & 2316.8 & 3042.4 & 0.41 & 0.80 & 1.24 & 1.21 \\ 
+  15 & USC-SI\_kJalpha & 2635.9 & 3590.1 & 0.36 & 0.77 & 1.41 & 1.43 \\ 
    \hline
 \end{tabular}\end{center}
 \end{table}
@@ -531,7 +551,7 @@ THieF\_12wk-4root & Best original THieF during last 17 weeks & - \\
 \end{table}
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:03:02 2025
+% Tue Jun 17 17:03:06 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{llrrrrrr}
 \caption{Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS} \\ 
@@ -564,7 +584,8 @@ THieF\_12wk-4root & Best original THieF during last 17 weeks & - \\
   24 & COVIDhub-baseline & 42.785 & 64.408 & 0.72 & 0.97 & 1.00 & 1.00 \\ 
   25 & sarima\_s7-4root & 43.511 & 64.229 & 0.44 & 0.87 & 1.02 & 1.00 \\ 
   26 & sarima\_s7-noTransform & 43.516 & 62.037 & 0.46 & 0.84 & 1.02 & 0.96 \\ 
-  27 & arima\_s1-noTransform & 46.119 & 66.363 & 0.43 & 0.84 & 1.08 & 1.03 \\ 
+  27 & sarima-untrained\_ensemble & 45.987 & 67.710 & 0.42 & 0.85 & 1.07 & 1.05 \\ 
+  28 & arima\_s1-noTransform & 46.119 & 66.363 & 0.43 & 0.84 & 1.08 & 1.03 \\ 
    \hline
 \hline
 \label{tab:table_last17_states}
@@ -580,7 +601,7 @@ THieF\_12wk-4root & Best original THieF during last 17 weeks & - \\
 \newpage
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:03:02 2025
+% Tue Jun 17 17:03:07 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{llrrrrrr}
 \caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS} \\ 
@@ -611,9 +632,10 @@ THieF\_12wk-4root & Best original THieF during last 17 weeks & - \\
   22 & THieF\_1wk-4root & 1565.4 & 2542.2 & 0.27 & 0.85 & 1.01 & 0.97 \\ 
   23 & THieF\_4wk-4root & 1614.4 & 2433.5 & 0.30 & 0.71 & 1.04 & 0.93 \\ 
   24 & arima\_s1-noTransform & 1774.3 & 2639.2 & 0.22 & 0.71 & 1.14 & 1.01 \\ 
-  25 & arima\_s1-4root & 1803.2 & 2614.4 & 0.22 & 0.75 & 1.16 & 1.00 \\ 
-  26 & sarima\_s7-noTransform & 1922.0 & 2884.6 & 0.15 & 0.65 & 1.24 & 1.11 \\ 
-  27 & sarima\_s7-4root & 2155.2 & 3344.1 & 0.17 & 0.73 & 1.38 & 1.28 \\ 
+  25 & sarima-untrained\_ensemble & 1790.2 & 2855.8 & 0.06 & 0.65 & 1.15 & 1.10 \\ 
+  26 & arima\_s1-4root & 1803.2 & 2614.4 & 0.22 & 0.75 & 1.16 & 1.00 \\ 
+  27 & sarima\_s7-noTransform & 1922.0 & 2884.6 & 0.15 & 0.65 & 1.24 & 1.11 \\ 
+  28 & sarima\_s7-4root & 2155.2 & 3344.1 & 0.17 & 0.73 & 1.38 & 1.28 \\ 
    \hline
 \hline
 \label{tab:table_last17_us}
@@ -630,49 +652,73 @@ THieF\_12wk-4root & Best original THieF during last 17 weeks & - \\
 
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:03:02 2025
+% Tue Jun 17 17:03:07 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS} \\ 
   \hline
 Model & Hzn & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
   \hline
-COVIDhub-4\_week\_ensemble & 1 & 16.70 & 25.11 & 0.65 & 0.96 & 0.70 & 0.79 \\ 
+Karlen-pypm & 1 & 15.00 & 21.16 & 0.72 & 0.98 & 0.63 & 0.66 \\ 
+  COVIDhub-4\_week\_ensemble & 1 & 16.70 & 25.11 & 0.65 & 0.96 & 0.70 & 0.79 \\ 
   THieF\_ensemble-train3 & 1 & 20.32 & 30.04 & 0.55 & 0.93 & 0.85 & 0.94 \\ 
   THieF\_ensemble-mean & 1 & 20.76 & 30.52 & 0.56 & 0.93 & 0.87 & 0.96 \\ 
+  CU-select & 1 & 20.81 & 27.91 & 0.33 & 0.74 & 0.87 & 0.88 \\ 
   THieF\_6wk-4root & 1 & 22.50 & 32.97 & 0.49 & 0.89 & 0.94 & 1.03 \\ 
+  GT-DeepCOVID & 1 & 22.66 & 30.64 & 0.30 & 0.63 & 0.95 & 0.96 \\ 
   sarima\_s7-noTransform & 1 & 23.11 & 31.92 & 0.57 & 0.89 & 0.97 & 1.00 \\ 
+  sarima-untrained\_ensemble & 1 & 23.12 & 31.75 & 0.60 & 0.89 & 0.97 & 1.00 \\ 
+  JHUAPL-Bucky & 1 & 23.38 & 34.92 & 0.46 & 0.89 & 0.98 & 1.10 \\ 
   COVIDhub-baseline & 1 & 23.92 & 31.87 & 0.80 & 0.97 & 1.00 & 1.00 \\ 
   arima\_s1-noTransform & 1 & 23.98 & 32.81 & 0.60 & 0.89 & 1.00 & 1.03 \\ 
   THieF\_12wk-4root & 1 & 24.28 & 35.21 & 0.48 & 0.89 & 1.01 & 1.10 \\ 
   THieF\_6wk-noTransform & 1 & 25.17 & 36.41 & 0.52 & 0.89 & 1.05 & 1.14 \\ 
+  USC-SI\_kJalpha & 1 & 29.63 & 37.54 & 0.22 & 0.55 & 1.24 & 1.18 \\ 
+  Karlen-pypm & 2 & 18.50 & 29.77 & 0.59 & 0.95 & 0.50 & 0.60 \\ 
   COVIDhub-4\_week\_ensemble & 2 & 25.42 & 37.90 & 0.66 & 0.95 & 0.69 & 0.77 \\ 
   THieF\_6wk-4root & 2 & 30.10 & 43.94 & 0.52 & 0.91 & 0.81 & 0.89 \\ 
   THieF\_ensemble-train3 & 2 & 30.66 & 44.49 & 0.56 & 0.91 & 0.83 & 0.90 \\ 
   THieF\_ensemble-mean & 2 & 31.04 & 44.80 & 0.58 & 0.91 & 0.84 & 0.90 \\ 
+  CU-select & 2 & 31.20 & 43.54 & 0.34 & 0.76 & 0.84 & 0.88 \\ 
   THieF\_12wk-4root & 2 & 31.29 & 45.58 & 0.51 & 0.90 & 0.85 & 0.92 \\ 
   THieF\_6wk-noTransform & 2 & 34.99 & 50.27 & 0.56 & 0.88 & 0.95 & 1.02 \\ 
+  JHUAPL-Bucky & 2 & 35.10 & 52.62 & 0.50 & 0.91 & 0.95 & 1.06 \\ 
+  GT-DeepCOVID & 2 & 36.53 & 48.38 & 0.29 & 0.61 & 0.99 & 0.98 \\ 
+  sarima-untrained\_ensemble & 2 & 36.65 & 49.30 & 0.61 & 0.87 & 0.99 & 1.00 \\ 
   COVIDhub-baseline & 2 & 36.95 & 49.48 & 0.80 & 0.96 & 1.00 & 1.00 \\ 
   sarima\_s7-noTransform & 2 & 37.32 & 50.28 & 0.60 & 0.87 & 1.01 & 1.02 \\ 
   arima\_s1-noTransform & 2 & 37.78 & 50.84 & 0.61 & 0.87 & 1.02 & 1.03 \\ 
+  USC-SI\_kJalpha & 2 & 50.42 & 63.90 & 0.21 & 0.52 & 1.36 & 1.29 \\ 
+  Karlen-pypm & 3 & 23.68 & 38.22 & 0.48 & 0.88 & 0.49 & 0.58 \\ 
   COVIDhub-4\_week\_ensemble & 3 & 35.22 & 52.52 & 0.64 & 0.94 & 0.73 & 0.79 \\ 
   THieF\_6wk-4root & 3 & 38.98 & 56.36 & 0.52 & 0.90 & 0.80 & 0.85 \\ 
   THieF\_12wk-4root & 3 & 39.40 & 57.34 & 0.51 & 0.90 & 0.81 & 0.86 \\ 
+  CU-select & 3 & 41.03 & 60.37 & 0.32 & 0.75 & 0.84 & 0.91 \\ 
   THieF\_ensemble-train3 & 3 & 41.60 & 59.88 & 0.56 & 0.90 & 0.86 & 0.90 \\ 
   THieF\_ensemble-mean & 3 & 41.85 & 60.07 & 0.58 & 0.90 & 0.86 & 0.91 \\ 
   THieF\_6wk-noTransform & 3 & 45.11 & 64.83 & 0.56 & 0.87 & 0.93 & 0.98 \\ 
   COVIDhub-baseline & 3 & 48.54 & 66.30 & 0.79 & 0.95 & 1.00 & 1.00 \\ 
+  sarima-untrained\_ensemble & 3 & 49.27 & 66.33 & 0.60 & 0.85 & 1.01 & 1.00 \\ 
   arima\_s1-noTransform & 3 & 50.20 & 67.64 & 0.60 & 0.85 & 1.03 & 1.02 \\ 
   sarima\_s7-noTransform & 3 & 51.31 & 69.07 & 0.60 & 0.86 & 1.06 & 1.04 \\ 
+  JHUAPL-Bucky & 3 & 52.06 & 76.94 & 0.49 & 0.89 & 1.07 & 1.16 \\ 
+  GT-DeepCOVID & 3 & 52.73 & 68.51 & 0.26 & 0.57 & 1.09 & 1.03 \\ 
+  USC-SI\_kJalpha & 3 & 83.34 & 106.44 & 0.20 & 0.47 & 1.72 & 1.60 \\ 
+  Karlen-pypm & 4 & 31.39 & 47.40 & 0.40 & 0.79 & 0.54 & 0.58 \\ 
   COVIDhub-4\_week\_ensemble & 4 & 44.39 & 65.43 & 0.63 & 0.93 & 0.76 & 0.80 \\ 
   THieF\_12wk-4root & 4 & 46.84 & 68.49 & 0.50 & 0.89 & 0.80 & 0.84 \\ 
   THieF\_6wk-4root & 4 & 47.53 & 68.48 & 0.52 & 0.88 & 0.81 & 0.84 \\ 
+  CU-select & 4 & 47.54 & 69.72 & 0.31 & 0.73 & 0.81 & 0.86 \\ 
   THieF\_ensemble-train3 & 4 & 51.04 & 73.47 & 0.55 & 0.89 & 0.88 & 0.90 \\ 
   THieF\_ensemble-mean & 4 & 51.11 & 73.39 & 0.56 & 0.88 & 0.88 & 0.90 \\ 
   THieF\_6wk-noTransform & 4 & 53.80 & 77.46 & 0.55 & 0.86 & 0.92 & 0.95 \\ 
   COVIDhub-baseline & 4 & 58.35 & 81.23 & 0.77 & 0.95 & 1.00 & 1.00 \\ 
+  sarima-untrained\_ensemble & 4 & 60.56 & 81.92 & 0.59 & 0.84 & 1.04 & 1.01 \\ 
   arima\_s1-noTransform & 4 & 61.05 & 82.67 & 0.58 & 0.83 & 1.05 & 1.02 \\ 
   sarima\_s7-noTransform & 4 & 63.89 & 86.44 & 0.60 & 0.85 & 1.09 & 1.06 \\ 
+  GT-DeepCOVID & 4 & 66.48 & 85.93 & 0.25 & 0.55 & 1.14 & 1.06 \\ 
+  JHUAPL-Bucky & 4 & 68.14 & 98.29 & 0.47 & 0.88 & 1.17 & 1.21 \\ 
+  USC-SI\_kJalpha & 4 & 122.37 & 157.38 & 0.20 & 0.45 & 2.10 & 1.94 \\ 
    \hline
 \hline
 \label{tab:table_horizon_states}
@@ -688,40 +734,60 @@ COVIDhub-4\_week\_ensemble & 1 & 16.70 & 25.11 & 0.65 & 0.96 & 0.70 & 0.79 \\
 \newpage
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:03:02 2025
+% Tue Jun 17 17:03:07 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS} \\ 
   \hline
 Model & Hzn & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
   \hline
-COVIDhub-4\_week\_ensemble & 1 & 659.8 & 966.8 & 0.68 & 0.94 & 0.69 & 0.77 \\ 
+Karlen-pypm & 1 & 481.1 & 670.2 & 0.81 & 0.99 & 0.50 & 0.53 \\ 
+  COVIDhub-4\_week\_ensemble & 1 & 659.8 & 966.8 & 0.68 & 0.94 & 0.69 & 0.77 \\ 
+  USC-SI\_kJalpha & 1 & 836.2 & 1186.7 & 0.43 & 0.84 & 0.88 & 0.94 \\ 
+  GT-DeepCOVID & 1 & 883.0 & 1235.9 & 0.31 & 0.66 & 0.93 & 0.98 \\ 
+  JHUAPL-Bucky & 1 & 888.7 & 1283.6 & 0.69 & 0.99 & 0.93 & 1.02 \\ 
   THieF\_ensemble-train3 & 1 & 909.6 & 1348.8 & 0.37 & 0.86 & 0.95 & 1.07 \\ 
   THieF\_ensemble-mean & 1 & 930.9 & 1372.9 & 0.38 & 0.86 & 0.98 & 1.09 \\ 
+  CU-select & 1 & 950.8 & 1204.7 & 0.18 & 0.43 & 1.00 & 0.96 \\ 
   COVIDhub-baseline & 1 & 952.2 & 1258.8 & 0.73 & 0.92 & 1.00 & 1.00 \\ 
   arima\_s1-noTransform & 1 & 995.0 & 1308.1 & 0.59 & 0.87 & 1.04 & 1.04 \\ 
+  sarima-untrained\_ensemble & 1 & 1000.4 & 1334.5 & 0.55 & 0.85 & 1.05 & 1.06 \\ 
   THieF\_6wk-4root & 1 & 1007.4 & 1419.1 & 0.45 & 0.79 & 1.06 & 1.13 \\ 
   THieF\_6wk-noTransform & 1 & 1028.7 & 1467.4 & 0.46 & 0.88 & 1.08 & 1.17 \\ 
   sarima\_s7-noTransform & 1 & 1143.4 & 1533.9 & 0.32 & 0.81 & 1.20 & 1.22 \\ 
   THieF\_12wk-4root & 1 & 1178.7 & 1666.8 & 0.33 & 0.83 & 1.24 & 1.32 \\ 
+  Karlen-pypm & 2 & 594.3 & 945.8 & 0.65 & 0.97 & 0.37 & 0.45 \\ 
   COVIDhub-4\_week\_ensemble & 2 & 1156.2 & 1694.7 & 0.66 & 0.92 & 0.72 & 0.80 \\ 
+  CU-select & 2 & 1303.2 & 1866.8 & 0.29 & 0.75 & 0.81 & 0.88 \\ 
   THieF\_6wk-4root & 2 & 1413.2 & 2029.0 & 0.42 & 0.85 & 0.88 & 0.96 \\ 
   THieF\_ensemble-train3 & 2 & 1417.1 & 2046.9 & 0.39 & 0.84 & 0.88 & 0.97 \\ 
+  JHUAPL-Bucky & 2 & 1427.4 & 2146.7 & 0.69 & 0.99 & 0.89 & 1.02 \\ 
   THieF\_ensemble-mean & 2 & 1436.9 & 2070.8 & 0.40 & 0.85 & 0.90 & 0.98 \\ 
   THieF\_12wk-4root & 2 & 1523.7 & 2185.5 & 0.37 & 0.82 & 0.95 & 1.03 \\ 
   THieF\_6wk-noTransform & 2 & 1528.5 & 2177.0 & 0.47 & 0.86 & 0.95 & 1.03 \\ 
+  GT-DeepCOVID & 2 & 1578.5 & 2135.1 & 0.25 & 0.57 & 0.98 & 1.01 \\ 
   COVIDhub-baseline & 2 & 1604.9 & 2113.3 & 0.74 & 0.85 & 1.00 & 1.00 \\ 
+  USC-SI\_kJalpha & 2 & 1658.6 & 2284.1 & 0.35 & 0.80 & 1.03 & 1.08 \\ 
   arima\_s1-noTransform & 2 & 1675.2 & 2133.3 & 0.56 & 0.83 & 1.04 & 1.01 \\ 
+  sarima-untrained\_ensemble & 2 & 1692.6 & 2164.6 & 0.52 & 0.82 & 1.05 & 1.02 \\ 
   sarima\_s7-noTransform & 2 & 1923.1 & 2536.3 & 0.41 & 0.82 & 1.20 & 1.20 \\ 
+  Karlen-pypm & 3 & 769.4 & 1223.1 & 0.52 & 0.91 & 0.35 & 0.41 \\ 
   COVIDhub-4\_week\_ensemble & 3 & 1670.6 & 2528.8 & 0.60 & 0.90 & 0.75 & 0.84 \\ 
+  CU-select & 3 & 1688.3 & 2633.3 & 0.32 & 0.84 & 0.76 & 0.88 \\ 
   THieF\_6wk-4root & 3 & 1867.4 & 2715.3 & 0.37 & 0.84 & 0.84 & 0.91 \\ 
   THieF\_12wk-4root & 3 & 1905.9 & 2766.1 & 0.31 & 0.80 & 0.86 & 0.92 \\ 
   THieF\_ensemble-train3 & 3 & 1979.6 & 2845.1 & 0.35 & 0.81 & 0.89 & 0.95 \\ 
   THieF\_6wk-noTransform & 3 & 1989.0 & 2883.6 & 0.46 & 0.85 & 0.90 & 0.96 \\ 
   THieF\_ensemble-mean & 3 & 1989.0 & 2860.1 & 0.39 & 0.83 & 0.90 & 0.95 \\ 
   COVIDhub-baseline & 3 & 2217.0 & 2993.7 & 0.71 & 0.83 & 1.00 & 1.00 \\ 
+  JHUAPL-Bucky & 3 & 2219.4 & 3143.1 & 0.69 & 0.95 & 1.00 & 1.05 \\ 
+  GT-DeepCOVID & 3 & 2290.2 & 2979.7 & 0.24 & 0.49 & 1.03 & 0.99 \\ 
   arima\_s1-noTransform & 3 & 2314.1 & 2946.7 & 0.49 & 0.81 & 1.04 & 0.98 \\ 
+  sarima-untrained\_ensemble & 3 & 2353.4 & 3013.8 & 0.47 & 0.80 & 1.06 & 1.01 \\ 
   sarima\_s7-noTransform & 3 & 2738.4 & 3581.4 & 0.46 & 0.80 & 1.24 & 1.20 \\ 
+  USC-SI\_kJalpha & 3 & 3191.1 & 4319.0 & 0.32 & 0.73 & 1.44 & 1.44 \\ 
+  Karlen-pypm & 4 & 1103.1 & 1566.6 & 0.46 & 0.80 & 0.40 & 0.41 \\ 
+  CU-select & 4 & 2015.2 & 3114.1 & 0.32 & 0.85 & 0.73 & 0.82 \\ 
   COVIDhub-4\_week\_ensemble & 4 & 2173.4 & 3232.7 & 0.56 & 0.89 & 0.79 & 0.85 \\ 
   THieF\_12wk-4root & 4 & 2328.9 & 3370.2 & 0.22 & 0.78 & 0.84 & 0.89 \\ 
   THieF\_6wk-4root & 4 & 2330.0 & 3341.7 & 0.36 & 0.80 & 0.84 & 0.88 \\ 
@@ -729,8 +795,12 @@ COVIDhub-4\_week\_ensemble & 1 & 659.8 & 966.8 & 0.68 & 0.94 & 0.69 & 0.77 \\
   THieF\_ensemble-train3 & 4 & 2501.1 & 3615.3 & 0.32 & 0.80 & 0.91 & 0.96 \\ 
   THieF\_ensemble-mean & 4 & 2502.2 & 3613.6 & 0.38 & 0.80 & 0.91 & 0.95 \\ 
   COVIDhub-baseline & 4 & 2761.4 & 3782.1 & 0.67 & 0.80 & 1.00 & 1.00 \\ 
+  GT-DeepCOVID & 4 & 2777.2 & 3557.7 & 0.23 & 0.47 & 1.01 & 0.94 \\ 
   arima\_s1-noTransform & 4 & 2882.6 & 3644.9 & 0.46 & 0.78 & 1.04 & 0.96 \\ 
+  sarima-untrained\_ensemble & 4 & 2976.2 & 3786.1 & 0.48 & 0.77 & 1.08 & 1.00 \\ 
+  JHUAPL-Bucky & 4 & 3019.4 & 4257.9 & 0.67 & 0.93 & 1.09 & 1.13 \\ 
   sarima\_s7-noTransform & 4 & 3549.4 & 4630.4 & 0.45 & 0.76 & 1.28 & 1.22 \\ 
+  USC-SI\_kJalpha & 4 & 4933.9 & 6672.4 & 0.32 & 0.69 & 1.79 & 1.76 \\ 
    \hline
 \hline
 \label{tab:table_horizon_us}
@@ -747,7 +817,7 @@ COVIDhub-4\_week\_ensemble & 1 & 659.8 & 966.8 & 0.68 & 0.94 & 0.69 & 0.77 \\
 
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:03:02 2025
+% Tue Jun 17 17:03:07 2025
 \begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
 \begin{longtable}{lrlrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS} \\ 
@@ -755,68 +825,112 @@ COVIDhub-4\_week\_ensemble & 1 & 659.8 & 966.8 & 0.68 & 0.94 & 0.69 & 0.77 \\
 Model & Hzn & Wave & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
   \hline
 COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 8.91 & 13.43 & 0.72 & 0.99 & 0.61 & 0.81 \\ 
+  CU-select & 1 & BA.4/BA.5 & 8.92 & 13.22 & 0.39 & 0.83 & 0.62 & 0.80 \\ 
   THieF\_6wk-4root & 1 & BA.4/BA.5 & 9.95 & 14.83 & 0.62 & 0.97 & 0.69 & 0.89 \\ 
   THieF\_ensemble-train3 & 1 & BA.4/BA.5 & 10.48 & 15.62 & 0.67 & 0.99 & 0.72 & 0.94 \\ 
+  JHUAPL-Bucky & 1 & BA.4/BA.5 & 10.58 & 15.92 & 0.47 & 0.89 & 0.73 & 0.96 \\ 
   THieF\_ensemble-mean & 1 & BA.4/BA.5 & 11.10 & 16.47 & 0.69 & 0.99 & 0.77 & 0.99 \\ 
   THieF\_12wk-4root & 1 & BA.4/BA.5 & 11.28 & 16.92 & 0.60 & 0.96 & 0.78 & 1.02 \\ 
+  Karlen-pypm & 1 & BA.4/BA.5 & 12.23 & 15.98 & 0.73 & 0.98 & 0.84 & 0.96 \\ 
+  sarima-untrained\_ensemble & 1 & BA.4/BA.5 & 12.25 & 17.09 & 0.73 & 0.98 & 0.85 & 1.03 \\ 
   arima\_s1-noTransform & 1 & BA.4/BA.5 & 12.33 & 16.95 & 0.74 & 0.98 & 0.85 & 1.02 \\ 
   sarima\_s7-noTransform & 1 & BA.4/BA.5 & 12.81 & 19.00 & 0.68 & 0.98 & 0.88 & 1.14 \\ 
+  GT-DeepCOVID & 1 & BA.4/BA.5 & 13.31 & 18.75 & 0.32 & 0.66 & 0.92 & 1.13 \\ 
   THieF\_6wk-noTransform & 1 & BA.4/BA.5 & 13.93 & 20.54 & 0.70 & 0.99 & 0.96 & 1.24 \\ 
   COVIDhub-baseline & 1 & BA.4/BA.5 & 14.49 & 16.59 & 0.92 & 1.00 & 1.00 & 1.00 \\ 
+  USC-SI\_kJalpha & 1 & BA.4/BA.5 & 14.74 & 19.04 & 0.17 & 0.58 & 1.02 & 1.15 \\ 
   COVIDhub-4\_week\_ensemble & 2 & BA.4/BA.5 & 11.85 & 17.64 & 0.76 & 1.00 & 0.60 & 0.81 \\ 
+  CU-select & 2 & BA.4/BA.5 & 13.07 & 19.86 & 0.39 & 0.85 & 0.66 & 0.92 \\ 
   THieF\_6wk-4root & 2 & BA.4/BA.5 & 13.28 & 19.07 & 0.69 & 0.99 & 0.68 & 0.88 \\ 
   THieF\_12wk-4root & 2 & BA.4/BA.5 & 14.03 & 20.32 & 0.68 & 0.98 & 0.71 & 0.94 \\ 
   THieF\_ensemble-train3 & 2 & BA.4/BA.5 & 14.15 & 20.34 & 0.74 & 0.99 & 0.72 & 0.94 \\ 
+  JHUAPL-Bucky & 2 & BA.4/BA.5 & 14.53 & 21.48 & 0.57 & 0.94 & 0.74 & 0.99 \\ 
   THieF\_ensemble-mean & 2 & BA.4/BA.5 & 14.86 & 21.20 & 0.75 & 0.99 & 0.76 & 0.98 \\ 
+  Karlen-pypm & 2 & BA.4/BA.5 & 15.16 & 23.19 & 0.62 & 0.95 & 0.77 & 1.07 \\ 
   arima\_s1-noTransform & 2 & BA.4/BA.5 & 16.37 & 22.05 & 0.79 & 0.99 & 0.83 & 1.02 \\ 
+  sarima-untrained\_ensemble & 2 & BA.4/BA.5 & 16.40 & 22.18 & 0.78 & 0.99 & 0.83 & 1.02 \\ 
   sarima\_s7-noTransform & 2 & BA.4/BA.5 & 17.46 & 25.07 & 0.75 & 0.99 & 0.89 & 1.16 \\ 
   THieF\_6wk-noTransform & 2 & BA.4/BA.5 & 17.92 & 25.69 & 0.77 & 1.00 & 0.91 & 1.19 \\ 
+  GT-DeepCOVID & 2 & BA.4/BA.5 & 18.41 & 26.95 & 0.33 & 0.69 & 0.94 & 1.24 \\ 
   COVIDhub-baseline & 2 & BA.4/BA.5 & 19.69 & 21.67 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
+  USC-SI\_kJalpha & 2 & BA.4/BA.5 & 22.14 & 29.02 & 0.16 & 0.49 & 1.12 & 1.34 \\ 
   COVIDhub-4\_week\_ensemble & 3 & BA.4/BA.5 & 15.22 & 22.86 & 0.76 & 0.99 & 0.64 & 0.83 \\ 
   THieF\_6wk-4root & 3 & BA.4/BA.5 & 16.82 & 23.30 & 0.72 & 0.99 & 0.70 & 0.85 \\ 
   THieF\_12wk-4root & 3 & BA.4/BA.5 & 17.49 & 25.05 & 0.71 & 0.99 & 0.73 & 0.91 \\ 
   THieF\_ensemble-train3 & 3 & BA.4/BA.5 & 17.95 & 25.29 & 0.76 & 1.00 & 0.75 & 0.92 \\ 
+  JHUAPL-Bucky & 3 & BA.4/BA.5 & 18.52 & 27.44 & 0.57 & 0.94 & 0.77 & 1.00 \\ 
   THieF\_ensemble-mean & 3 & BA.4/BA.5 & 18.68 & 26.22 & 0.78 & 1.00 & 0.78 & 0.95 \\ 
+  Karlen-pypm & 3 & BA.4/BA.5 & 19.28 & 30.76 & 0.52 & 0.90 & 0.80 & 1.12 \\ 
   arima\_s1-noTransform & 3 & BA.4/BA.5 & 19.90 & 27.30 & 0.80 & 0.99 & 0.83 & 0.99 \\ 
+  sarima-untrained\_ensemble & 3 & BA.4/BA.5 & 20.15 & 27.47 & 0.80 & 0.99 & 0.84 & 1.00 \\ 
+  CU-select & 3 & BA.4/BA.5 & 21.41 & 32.24 & 0.35 & 0.80 & 0.90 & 1.17 \\ 
   THieF\_6wk-noTransform & 3 & BA.4/BA.5 & 21.59 & 31.20 & 0.78 & 1.00 & 0.90 & 1.14 \\ 
   sarima\_s7-noTransform & 3 & BA.4/BA.5 & 22.06 & 31.34 & 0.78 & 0.99 & 0.92 & 1.14 \\ 
   COVIDhub-baseline & 3 & BA.4/BA.5 & 23.93 & 27.49 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
+  GT-DeepCOVID & 3 & BA.4/BA.5 & 25.12 & 36.89 & 0.32 & 0.68 & 1.05 & 1.34 \\ 
+  USC-SI\_kJalpha & 3 & BA.4/BA.5 & 35.05 & 47.24 & 0.16 & 0.42 & 1.46 & 1.72 \\ 
   COVIDhub-4\_week\_ensemble & 4 & BA.4/BA.5 & 18.26 & 27.51 & 0.76 & 0.99 & 0.66 & 0.84 \\ 
   THieF\_6wk-4root & 4 & BA.4/BA.5 & 19.92 & 26.57 & 0.75 & 1.00 & 0.72 & 0.81 \\ 
   THieF\_12wk-4root & 4 & BA.4/BA.5 & 21.18 & 29.92 & 0.71 & 0.99 & 0.77 & 0.91 \\ 
   THieF\_ensemble-train3 & 4 & BA.4/BA.5 & 21.50 & 29.63 & 0.78 & 1.00 & 0.78 & 0.90 \\ 
   THieF\_ensemble-mean & 4 & BA.4/BA.5 & 22.13 & 30.41 & 0.79 & 1.00 & 0.81 & 0.93 \\ 
+  JHUAPL-Bucky & 4 & BA.4/BA.5 & 22.58 & 33.18 & 0.55 & 0.94 & 0.82 & 1.01 \\ 
   arima\_s1-noTransform & 4 & BA.4/BA.5 & 22.72 & 31.82 & 0.81 & 0.99 & 0.83 & 0.97 \\ 
+  sarima-untrained\_ensemble & 4 & BA.4/BA.5 & 23.18 & 32.08 & 0.82 & 0.99 & 0.84 & 0.98 \\ 
+  Karlen-pypm & 4 & BA.4/BA.5 & 23.70 & 37.22 & 0.45 & 0.83 & 0.86 & 1.14 \\ 
   THieF\_6wk-noTransform & 4 & BA.4/BA.5 & 24.17 & 34.33 & 0.80 & 1.00 & 0.88 & 1.05 \\ 
   sarima\_s7-noTransform & 4 & BA.4/BA.5 & 25.95 & 36.72 & 0.80 & 0.99 & 0.94 & 1.12 \\ 
+  CU-select & 4 & BA.4/BA.5 & 26.21 & 39.73 & 0.34 & 0.80 & 0.95 & 1.21 \\ 
   COVIDhub-baseline & 4 & BA.4/BA.5 & 27.46 & 32.80 & 0.97 & 1.00 & 1.00 & 1.00 \\ 
+  GT-DeepCOVID & 4 & BA.4/BA.5 & 32.10 & 46.31 & 0.32 & 0.66 & 1.17 & 1.41 \\ 
+  USC-SI\_kJalpha & 4 & BA.4/BA.5 & 45.92 & 63.13 & 0.15 & 0.38 & 1.67 & 1.92 \\ 
+  Karlen-pypm & 1 & Omicron & 18.64 & 27.95 & 0.71 & 0.99 & 0.55 & 0.58 \\ 
   COVIDhub-4\_week\_ensemble & 1 & Omicron & 25.02 & 37.57 & 0.57 & 0.92 & 0.74 & 0.78 \\ 
   THieF\_ensemble-train3 & 1 & Omicron & 30.84 & 45.43 & 0.41 & 0.86 & 0.91 & 0.94 \\ 
   THieF\_ensemble-mean & 1 & Omicron & 31.09 & 45.53 & 0.42 & 0.86 & 0.91 & 0.94 \\ 
+  GT-DeepCOVID & 1 & Omicron & 32.84 & 43.60 & 0.27 & 0.59 & 0.97 & 0.90 \\ 
+  CU-select & 1 & Omicron & 33.55 & 43.64 & 0.28 & 0.64 & 0.99 & 0.91 \\ 
   COVIDhub-baseline & 1 & Omicron & 34.00 & 48.18 & 0.66 & 0.94 & 1.00 & 1.00 \\ 
   sarima\_s7-noTransform & 1 & Omicron & 34.12 & 45.73 & 0.46 & 0.79 & 1.00 & 0.95 \\ 
+  sarima-untrained\_ensemble & 1 & Omicron & 34.73 & 47.41 & 0.47 & 0.79 & 1.02 & 0.98 \\ 
+  JHUAPL-Bucky & 1 & Omicron & 35.07 & 52.26 & 0.45 & 0.88 & 1.03 & 1.08 \\ 
   THieF\_6wk-4root & 1 & Omicron & 35.91 & 52.36 & 0.35 & 0.81 & 1.06 & 1.09 \\ 
   arima\_s1-noTransform & 1 & Omicron & 36.43 & 49.76 & 0.46 & 0.79 & 1.07 & 1.03 \\ 
   THieF\_6wk-noTransform & 1 & Omicron & 37.18 & 53.36 & 0.34 & 0.79 & 1.09 & 1.11 \\ 
   THieF\_12wk-4root & 1 & Omicron & 38.17 & 54.74 & 0.35 & 0.81 & 1.12 & 1.14 \\ 
+  USC-SI\_kJalpha & 1 & Omicron & 44.56 & 56.09 & 0.27 & 0.52 & 1.31 & 1.16 \\ 
+  Karlen-pypm & 2 & Omicron & 22.70 & 38.01 & 0.56 & 0.95 & 0.41 & 0.49 \\ 
   COVIDhub-4\_week\_ensemble & 2 & Omicron & 39.33 & 58.67 & 0.56 & 0.91 & 0.72 & 0.75 \\ 
   THieF\_6wk-4root & 2 & Omicron & 47.34 & 69.42 & 0.34 & 0.82 & 0.87 & 0.89 \\ 
   THieF\_ensemble-train3 & 2 & Omicron & 47.58 & 69.23 & 0.39 & 0.83 & 0.87 & 0.89 \\ 
   THieF\_ensemble-mean & 2 & Omicron & 47.61 & 68.98 & 0.40 & 0.83 & 0.87 & 0.88 \\ 
   THieF\_12wk-4root & 2 & Omicron & 48.98 & 71.48 & 0.34 & 0.82 & 0.90 & 0.92 \\ 
+  CU-select & 2 & Omicron & 49.79 & 67.83 & 0.28 & 0.67 & 0.91 & 0.87 \\ 
   THieF\_6wk-noTransform & 2 & Omicron & 52.49 & 75.46 & 0.35 & 0.77 & 0.96 & 0.97 \\ 
+  JHUAPL-Bucky & 2 & Omicron & 53.89 & 81.05 & 0.44 & 0.88 & 0.99 & 1.04 \\ 
   COVIDhub-baseline & 2 & Omicron & 54.64 & 77.98 & 0.64 & 0.92 & 1.00 & 1.00 \\ 
+  GT-DeepCOVID & 2 & Omicron & 55.45 & 70.78 & 0.25 & 0.52 & 1.01 & 0.91 \\ 
+  sarima-untrained\_ensemble & 2 & Omicron & 57.40 & 77.09 & 0.43 & 0.75 & 1.05 & 0.99 \\ 
   sarima\_s7-noTransform & 2 & Omicron & 57.67 & 76.11 & 0.45 & 0.76 & 1.05 & 0.98 \\ 
   arima\_s1-noTransform & 2 & Omicron & 59.73 & 80.34 & 0.42 & 0.74 & 1.09 & 1.03 \\ 
+  USC-SI\_kJalpha & 2 & Omicron & 78.32 & 98.33 & 0.26 & 0.54 & 1.43 & 1.26 \\ 
+  Karlen-pypm & 3 & Omicron & 28.95 & 47.17 & 0.43 & 0.86 & 0.40 & 0.45 \\ 
   COVIDhub-4\_week\_ensemble & 3 & Omicron & 54.85 & 81.62 & 0.53 & 0.89 & 0.76 & 0.78 \\ 
+  CU-select & 3 & Omicron & 60.27 & 87.94 & 0.29 & 0.70 & 0.83 & 0.84 \\ 
   THieF\_6wk-4root & 3 & Omicron & 60.72 & 88.81 & 0.32 & 0.81 & 0.83 & 0.85 \\ 
   THieF\_12wk-4root & 3 & Omicron & 60.90 & 89.02 & 0.32 & 0.80 & 0.84 & 0.85 \\ 
   THieF\_ensemble-mean & 3 & Omicron & 64.60 & 93.29 & 0.38 & 0.80 & 0.89 & 0.89 \\ 
   THieF\_ensemble-train3 & 3 & Omicron & 64.80 & 93.84 & 0.37 & 0.80 & 0.89 & 0.90 \\ 
   THieF\_6wk-noTransform & 3 & Omicron & 68.19 & 97.82 & 0.33 & 0.75 & 0.94 & 0.94 \\ 
   COVIDhub-baseline & 3 & Omicron & 72.69 & 104.38 & 0.60 & 0.90 & 1.00 & 1.00 \\ 
+  sarima-untrained\_ensemble & 3 & Omicron & 77.85 & 104.47 & 0.40 & 0.72 & 1.07 & 1.00 \\ 
   arima\_s1-noTransform & 3 & Omicron & 79.93 & 107.22 & 0.39 & 0.71 & 1.10 & 1.03 \\ 
   sarima\_s7-noTransform & 3 & Omicron & 80.02 & 106.10 & 0.43 & 0.73 & 1.10 & 1.02 \\ 
+  GT-DeepCOVID & 3 & Omicron & 80.33 & 100.12 & 0.20 & 0.46 & 1.10 & 0.96 \\ 
+  JHUAPL-Bucky & 3 & Omicron & 82.69 & 122.13 & 0.42 & 0.85 & 1.14 & 1.17 \\ 
+  USC-SI\_kJalpha & 3 & Omicron & 129.21 & 162.67 & 0.25 & 0.52 & 1.78 & 1.56 \\ 
+  Karlen-pypm & 4 & Omicron & 40.18 & 59.04 & 0.34 & 0.74 & 0.46 & 0.47 \\ 
+  CU-select & 4 & Omicron & 67.49 & 97.77 & 0.28 & 0.68 & 0.77 & 0.77 \\ 
   COVIDhub-4\_week\_ensemble & 4 & Omicron & 68.91 & 100.99 & 0.50 & 0.87 & 0.79 & 0.80 \\ 
   THieF\_12wk-4root & 4 & Omicron & 70.92 & 104.68 & 0.29 & 0.79 & 0.81 & 0.83 \\ 
   THieF\_6wk-4root & 4 & Omicron & 73.43 & 107.79 & 0.30 & 0.78 & 0.84 & 0.85 \\ 
@@ -824,8 +938,12 @@ COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 8.91 & 13.43 & 0.72 & 0.99 & 0.61 &
   THieF\_ensemble-train3 & 4 & Omicron & 78.74 & 114.59 & 0.34 & 0.78 & 0.90 & 0.90 \\ 
   THieF\_6wk-noTransform & 4 & Omicron & 81.60 & 117.92 & 0.31 & 0.73 & 0.93 & 0.93 \\ 
   COVIDhub-baseline & 4 & Omicron & 87.33 & 126.66 & 0.58 & 0.90 & 1.00 & 1.00 \\ 
+  sarima-untrained\_ensemble & 4 & Omicron & 95.62 & 128.66 & 0.38 & 0.69 & 1.09 & 1.02 \\ 
   arima\_s1-noTransform & 4 & Omicron & 97.01 & 130.36 & 0.37 & 0.68 & 1.11 & 1.03 \\ 
+  GT-DeepCOVID & 4 & Omicron & 99.20 & 123.66 & 0.19 & 0.46 & 1.14 & 0.98 \\ 
   sarima\_s7-noTransform & 4 & Omicron & 99.46 & 133.08 & 0.42 & 0.71 & 1.14 & 1.05 \\ 
+  JHUAPL-Bucky & 4 & Omicron & 109.74 & 157.74 & 0.40 & 0.82 & 1.26 & 1.25 \\ 
+  USC-SI\_kJalpha & 4 & Omicron & 192.30 & 243.58 & 0.24 & 0.50 & 2.20 & 1.92 \\ 
    \hline
 \hline
 \label{tab:table_wave_states}
@@ -842,7 +960,7 @@ COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 8.91 & 13.43 & 0.72 & 0.99 & 0.61 &
 
 %\captionsetup{width=6cm}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Apr 30 17:03:03 2025
+% Tue Jun 17 17:03:07 2025
 \begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
 \begin{longtable}{lrlrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS} \\ 
@@ -850,59 +968,97 @@ COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 8.91 & 13.43 & 0.72 & 0.99 & 0.61 &
 Model & Hzn & Wave & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
   \hline
 COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 277.8 & 378.7 & 0.89 & 1.00 & 0.62 & 0.78 \\ 
+  CU-select & 1 & BA.4/BA.5 & 287.3 & 406.5 & 0.25 & 0.58 & 0.64 & 0.83 \\ 
+  USC-SI\_kJalpha & 1 & BA.4/BA.5 & 297.5 & 451.5 & 0.45 & 0.92 & 0.66 & 0.93 \\ 
+  JHUAPL-Bucky & 1 & BA.4/BA.5 & 325.9 & 395.3 & 0.89 & 1.00 & 0.72 & 0.81 \\ 
+  Karlen-pypm & 1 & BA.4/BA.5 & 345.2 & 387.3 & 0.94 & 1.00 & 0.77 & 0.80 \\ 
   THieF\_6wk-4root & 1 & BA.4/BA.5 & 350.4 & 542.9 & 0.60 & 0.99 & 0.78 & 1.11 \\ 
   THieF\_ensemble-train3 & 1 & BA.4/BA.5 & 399.1 & 685.3 & 0.46 & 1.00 & 0.88 & 1.41 \\ 
   THieF\_ensemble-mean & 1 & BA.4/BA.5 & 433.6 & 740.3 & 0.49 & 1.00 & 0.96 & 1.52 \\ 
+  sarima-untrained\_ensemble & 1 & BA.4/BA.5 & 436.1 & 579.6 & 0.72 & 1.00 & 0.97 & 1.19 \\ 
   arima\_s1-noTransform & 1 & BA.4/BA.5 & 439.7 & 531.4 & 0.80 & 1.00 & 0.98 & 1.09 \\ 
+  GT-DeepCOVID & 1 & BA.4/BA.5 & 444.1 & 625.3 & 0.35 & 0.67 & 0.98 & 1.28 \\ 
   COVIDhub-baseline & 1 & BA.4/BA.5 & 450.8 & 486.9 & 0.92 & 1.00 & 1.00 & 1.00 \\ 
   THieF\_12wk-4root & 1 & BA.4/BA.5 & 455.6 & 760.8 & 0.42 & 1.00 & 1.01 & 1.56 \\ 
   THieF\_6wk-noTransform & 1 & BA.4/BA.5 & 516.5 & 822.5 & 0.60 & 1.00 & 1.15 & 1.69 \\ 
   sarima\_s7-noTransform & 1 & BA.4/BA.5 & 517.8 & 828.6 & 0.41 & 0.99 & 1.15 & 1.70 \\ 
+  Karlen-pypm & 2 & BA.4/BA.5 & 402.6 & 582.8 & 0.79 & 1.00 & 0.61 & 0.79 \\ 
   COVIDhub-4\_week\_ensemble & 2 & BA.4/BA.5 & 411.4 & 572.5 & 0.85 & 1.00 & 0.63 & 0.77 \\ 
+  CU-select & 2 & BA.4/BA.5 & 451.3 & 706.9 & 0.30 & 0.86 & 0.69 & 0.95 \\ 
+  USC-SI\_kJalpha & 2 & BA.4/BA.5 & 496.5 & 794.8 & 0.32 & 0.85 & 0.76 & 1.07 \\ 
   THieF\_6wk-4root & 2 & BA.4/BA.5 & 518.8 & 813.0 & 0.61 & 1.00 & 0.79 & 1.10 \\ 
+  JHUAPL-Bucky & 2 & BA.4/BA.5 & 538.0 & 647.7 & 0.88 & 1.00 & 0.82 & 0.87 \\ 
   THieF\_ensemble-train3 & 2 & BA.4/BA.5 & 578.6 & 966.6 & 0.49 & 1.00 & 0.88 & 1.30 \\ 
   THieF\_12wk-4root & 2 & BA.4/BA.5 & 597.8 & 988.5 & 0.52 & 1.00 & 0.91 & 1.33 \\ 
   arima\_s1-noTransform & 2 & BA.4/BA.5 & 599.4 & 685.5 & 0.79 & 1.00 & 0.92 & 0.92 \\ 
+  sarima-untrained\_ensemble & 2 & BA.4/BA.5 & 606.7 & 736.7 & 0.71 & 1.00 & 0.93 & 0.99 \\ 
   THieF\_ensemble-mean & 2 & BA.4/BA.5 & 621.8 & 1030.3 & 0.50 & 1.00 & 0.95 & 1.39 \\ 
   COVIDhub-baseline & 2 & BA.4/BA.5 & 654.2 & 741.0 & 0.98 & 1.00 & 1.00 & 1.00 \\ 
+  GT-DeepCOVID & 2 & BA.4/BA.5 & 716.3 & 1020.0 & 0.29 & 0.64 & 1.09 & 1.38 \\ 
   THieF\_6wk-noTransform & 2 & BA.4/BA.5 & 727.8 & 1145.9 & 0.59 & 1.00 & 1.11 & 1.55 \\ 
   sarima\_s7-noTransform & 2 & BA.4/BA.5 & 729.7 & 1169.6 & 0.53 & 1.00 & 1.11 & 1.58 \\ 
+  Karlen-pypm & 3 & BA.4/BA.5 & 493.9 & 768.1 & 0.72 & 0.97 & 0.60 & 0.74 \\ 
   COVIDhub-4\_week\_ensemble & 3 & BA.4/BA.5 & 563.3 & 824.7 & 0.77 & 1.00 & 0.68 & 0.79 \\ 
   THieF\_6wk-4root & 3 & BA.4/BA.5 & 683.9 & 1069.1 & 0.59 & 1.00 & 0.83 & 1.03 \\ 
+  JHUAPL-Bucky & 3 & BA.4/BA.5 & 713.4 & 940.9 & 0.83 & 1.00 & 0.86 & 0.91 \\ 
   arima\_s1-noTransform & 3 & BA.4/BA.5 & 725.7 & 824.4 & 0.73 & 1.00 & 0.88 & 0.79 \\ 
+  sarima-untrained\_ensemble & 3 & BA.4/BA.5 & 756.0 & 908.7 & 0.66 & 1.00 & 0.92 & 0.88 \\ 
   THieF\_ensemble-train3 & 3 & BA.4/BA.5 & 784.0 & 1311.5 & 0.45 & 1.00 & 0.95 & 1.26 \\ 
   THieF\_12wk-4root & 3 & BA.4/BA.5 & 797.1 & 1329.2 & 0.44 & 1.00 & 0.97 & 1.28 \\ 
   COVIDhub-baseline & 3 & BA.4/BA.5 & 825.0 & 1038.9 & 1.00 & 1.00 & 1.00 & 1.00 \\ 
   THieF\_ensemble-mean & 3 & BA.4/BA.5 & 825.0 & 1371.3 & 0.50 & 1.00 & 1.00 & 1.32 \\ 
+  CU-select & 3 & BA.4/BA.5 & 861.2 & 1348.1 & 0.27 & 0.83 & 1.04 & 1.30 \\ 
   THieF\_6wk-noTransform & 3 & BA.4/BA.5 & 911.0 & 1464.4 & 0.59 & 1.00 & 1.10 & 1.41 \\ 
+  GT-DeepCOVID & 3 & BA.4/BA.5 & 934.1 & 1347.0 & 0.32 & 0.63 & 1.13 & 1.30 \\ 
   sarima\_s7-noTransform & 3 & BA.4/BA.5 & 953.5 & 1514.2 & 0.57 & 1.00 & 1.16 & 1.46 \\ 
+  USC-SI\_kJalpha & 3 & BA.4/BA.5 & 1046.5 & 1719.7 & 0.29 & 0.73 & 1.27 & 1.66 \\ 
+  Karlen-pypm & 4 & BA.4/BA.5 & 582.6 & 882.8 & 0.67 & 0.92 & 0.60 & 0.67 \\ 
   COVIDhub-4\_week\_ensemble & 4 & BA.4/BA.5 & 698.9 & 1034.3 & 0.77 & 1.00 & 0.72 & 0.78 \\ 
   THieF\_6wk-4root & 4 & BA.4/BA.5 & 801.9 & 1210.3 & 0.64 & 1.00 & 0.82 & 0.92 \\ 
   arima\_s1-noTransform & 4 & BA.4/BA.5 & 826.6 & 917.4 & 0.71 & 1.00 & 0.85 & 0.69 \\ 
+  sarima-untrained\_ensemble & 4 & BA.4/BA.5 & 884.2 & 1040.7 & 0.68 & 1.00 & 0.91 & 0.79 \\ 
+  JHUAPL-Bucky & 4 & BA.4/BA.5 & 893.4 & 1239.9 & 0.78 & 1.00 & 0.92 & 0.94 \\ 
   THieF\_ensemble-train3 & 4 & BA.4/BA.5 & 969.8 & 1585.1 & 0.48 & 1.00 & 1.00 & 1.20 \\ 
   COVIDhub-baseline & 4 & BA.4/BA.5 & 972.0 & 1320.5 & 1.00 & 1.00 & 1.00 & 1.00 \\ 
   THieF\_ensemble-mean & 4 & BA.4/BA.5 & 1010.8 & 1651.7 & 0.53 & 1.00 & 1.04 & 1.25 \\ 
   THieF\_6wk-noTransform & 4 & BA.4/BA.5 & 1034.0 & 1631.7 & 0.61 & 1.00 & 1.06 & 1.24 \\ 
   THieF\_12wk-4root & 4 & BA.4/BA.5 & 1035.3 & 1729.4 & 0.33 & 0.99 & 1.06 & 1.31 \\ 
+  CU-select & 4 & BA.4/BA.5 & 1084.5 & 1749.5 & 0.26 & 0.88 & 1.12 & 1.32 \\ 
+  GT-DeepCOVID & 4 & BA.4/BA.5 & 1134.6 & 1628.1 & 0.30 & 0.62 & 1.17 & 1.23 \\ 
   sarima\_s7-noTransform & 4 & BA.4/BA.5 & 1169.6 & 1821.8 & 0.60 & 1.00 & 1.20 & 1.38 \\ 
+  USC-SI\_kJalpha & 4 & BA.4/BA.5 & 1212.8 & 2144.8 & 0.29 & 0.71 & 1.25 & 1.62 \\ 
+  Karlen-pypm & 1 & Omicron & 659.1 & 1040.6 & 0.64 & 0.98 & 0.44 & 0.50 \\ 
   COVIDhub-4\_week\_ensemble & 1 & Omicron & 1067.9 & 1595.1 & 0.46 & 0.87 & 0.72 & 0.77 \\ 
+  USC-SI\_kJalpha & 1 & Omicron & 1351.4 & 1889.8 & 0.42 & 0.76 & 0.91 & 0.91 \\ 
+  GT-DeepCOVID & 1 & Omicron & 1351.9 & 1888.2 & 0.26 & 0.66 & 0.91 & 0.91 \\ 
+  JHUAPL-Bucky & 1 & Omicron & 1402.6 & 2094.6 & 0.52 & 0.99 & 0.94 & 1.00 \\ 
   THieF\_ensemble-train3 & 1 & Omicron & 1455.0 & 2057.5 & 0.27 & 0.71 & 0.98 & 0.99 \\ 
   THieF\_ensemble-mean & 1 & Omicron & 1462.3 & 2048.6 & 0.27 & 0.71 & 0.98 & 0.98 \\ 
   COVIDhub-baseline & 1 & Omicron & 1487.9 & 2083.4 & 0.53 & 0.83 & 1.00 & 1.00 \\ 
   THieF\_6wk-noTransform & 1 & Omicron & 1576.0 & 2156.3 & 0.32 & 0.74 & 1.06 & 1.03 \\ 
   arima\_s1-noTransform & 1 & Omicron & 1588.3 & 2137.9 & 0.37 & 0.73 & 1.07 & 1.03 \\ 
+  sarima-untrained\_ensemble & 1 & Omicron & 1603.3 & 2140.9 & 0.36 & 0.69 & 1.08 & 1.03 \\ 
+  CU-select & 1 & Omicron & 1661.8 & 2059.9 & 0.11 & 0.27 & 1.12 & 0.99 \\ 
   THieF\_6wk-4root & 1 & Omicron & 1709.3 & 2355.1 & 0.28 & 0.56 & 1.15 & 1.13 \\ 
   sarima\_s7-noTransform & 1 & Omicron & 1811.9 & 2287.4 & 0.22 & 0.62 & 1.22 & 1.10 \\ 
   THieF\_12wk-4root & 1 & Omicron & 1951.3 & 2634.7 & 0.23 & 0.65 & 1.31 & 1.26 \\ 
+  Karlen-pypm & 2 & Omicron & 834.7 & 1401.1 & 0.47 & 0.94 & 0.32 & 0.40 \\ 
   COVIDhub-4\_week\_ensemble & 2 & Omicron & 1919.4 & 2844.9 & 0.47 & 0.84 & 0.74 & 0.81 \\ 
+  CU-select & 2 & Omicron & 2177.2 & 3056.8 & 0.28 & 0.64 & 0.84 & 0.87 \\ 
+  JHUAPL-Bucky & 2 & Omicron & 2239.4 & 3515.4 & 0.52 & 0.98 & 0.87 & 1.00 \\ 
   THieF\_ensemble-mean & 2 & Omicron & 2272.2 & 3137.2 & 0.30 & 0.69 & 0.88 & 0.89 \\ 
   THieF\_ensemble-train3 & 2 & Omicron & 2276.3 & 3154.0 & 0.29 & 0.68 & 0.88 & 0.90 \\ 
   THieF\_6wk-4root & 2 & Omicron & 2329.9 & 3275.3 & 0.22 & 0.69 & 0.90 & 0.93 \\ 
   THieF\_6wk-noTransform & 2 & Omicron & 2349.2 & 3233.6 & 0.34 & 0.73 & 0.91 & 0.92 \\ 
+  GT-DeepCOVID & 2 & Omicron & 2462.2 & 3278.0 & 0.21 & 0.50 & 0.95 & 0.93 \\ 
   THieF\_12wk-4root & 2 & Omicron & 2472.5 & 3412.2 & 0.22 & 0.63 & 0.96 & 0.97 \\ 
   COVIDhub-baseline & 2 & Omicron & 2579.1 & 3519.7 & 0.50 & 0.70 & 1.00 & 1.00 \\ 
+  USC-SI\_kJalpha & 2 & Omicron & 2748.4 & 3680.9 & 0.37 & 0.76 & 1.07 & 1.05 \\ 
   arima\_s1-noTransform & 2 & Omicron & 2777.8 & 3617.0 & 0.34 & 0.66 & 1.08 & 1.03 \\ 
+  sarima-untrained\_ensemble & 2 & Omicron & 2805.4 & 3628.1 & 0.34 & 0.65 & 1.09 & 1.03 \\ 
   sarima\_s7-noTransform & 2 & Omicron & 3146.1 & 3936.9 & 0.29 & 0.65 & 1.22 & 1.12 \\ 
+  Karlen-pypm & 3 & Omicron & 1099.5 & 1768.2 & 0.29 & 0.84 & 0.31 & 0.36 \\ 
+  CU-select & 3 & Omicron & 2499.3 & 3893.6 & 0.36 & 0.84 & 0.70 & 0.79 \\ 
   COVIDhub-4\_week\_ensemble & 3 & Omicron & 2757.2 & 4201.2 & 0.43 & 0.80 & 0.77 & 0.85 \\ 
   THieF\_12wk-4root & 3 & Omicron & 2994.0 & 4176.2 & 0.18 & 0.60 & 0.84 & 0.85 \\ 
   THieF\_6wk-4root & 3 & Omicron & 3028.8 & 4330.8 & 0.15 & 0.68 & 0.84 & 0.88 \\ 
@@ -910,17 +1066,27 @@ COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 277.8 & 378.7 & 0.89 & 1.00 & 0.62 
   THieF\_ensemble-mean & 3 & Omicron & 3131.3 & 4321.1 & 0.28 & 0.67 & 0.87 & 0.88 \\ 
   THieF\_ensemble-train3 & 3 & Omicron & 3152.9 & 4350.3 & 0.26 & 0.63 & 0.88 & 0.89 \\ 
   COVIDhub-baseline & 3 & Omicron & 3583.0 & 4912.1 & 0.43 & 0.67 & 1.00 & 1.00 \\ 
+  JHUAPL-Bucky & 3 & Omicron & 3594.4 & 5153.9 & 0.57 & 0.91 & 1.00 & 1.05 \\ 
+  GT-DeepCOVID & 3 & Omicron & 3621.0 & 4582.0 & 0.15 & 0.35 & 1.01 & 0.93 \\ 
   arima\_s1-noTransform & 3 & Omicron & 3872.9 & 5029.4 & 0.25 & 0.61 & 1.08 & 1.02 \\ 
+  sarima-untrained\_ensemble & 3 & Omicron & 3921.1 & 5079.6 & 0.28 & 0.61 & 1.09 & 1.03 \\ 
   sarima\_s7-noTransform & 3 & Omicron & 4490.1 & 5610.1 & 0.35 & 0.60 & 1.25 & 1.14 \\ 
+  USC-SI\_kJalpha & 3 & Omicron & 5149.2 & 6692.3 & 0.35 & 0.73 & 1.44 & 1.36 \\ 
+  Karlen-pypm & 4 & Omicron & 1697.9 & 2348.0 & 0.22 & 0.67 & 0.38 & 0.38 \\ 
+  CU-select & 4 & Omicron & 2885.4 & 4390.1 & 0.37 & 0.82 & 0.65 & 0.72 \\ 
   THieF\_12wk-4root & 4 & Omicron & 3542.1 & 4909.0 & 0.12 & 0.58 & 0.80 & 0.81 \\ 
   COVIDhub-4\_week\_ensemble & 4 & Omicron & 3556.3 & 5294.6 & 0.37 & 0.79 & 0.80 & 0.87 \\ 
   THieF\_6wk-noTransform & 4 & Omicron & 3709.9 & 5382.9 & 0.27 & 0.71 & 0.84 & 0.88 \\ 
   THieF\_6wk-4root & 4 & Omicron & 3763.1 & 5340.8 & 0.10 & 0.60 & 0.85 & 0.88 \\ 
   THieF\_ensemble-mean & 4 & Omicron & 3901.0 & 5453.5 & 0.23 & 0.62 & 0.88 & 0.90 \\ 
   THieF\_ensemble-train3 & 4 & Omicron & 3937.2 & 5519.3 & 0.17 & 0.60 & 0.89 & 0.91 \\ 
+  GT-DeepCOVID & 4 & Omicron & 4317.8 & 5367.4 & 0.16 & 0.34 & 0.97 & 0.88 \\ 
   COVIDhub-baseline & 4 & Omicron & 4439.6 & 6090.8 & 0.36 & 0.61 & 1.00 & 1.00 \\ 
   arima\_s1-noTransform & 4 & Omicron & 4810.9 & 6203.0 & 0.23 & 0.58 & 1.08 & 1.02 \\ 
+  sarima-untrained\_ensemble & 4 & Omicron & 4938.2 & 6361.0 & 0.30 & 0.55 & 1.11 & 1.04 \\ 
+  JHUAPL-Bucky & 4 & Omicron & 4960.5 & 7013.5 & 0.56 & 0.87 & 1.12 & 1.15 \\ 
   sarima\_s7-noTransform & 4 & Omicron & 5781.5 & 7264.5 & 0.31 & 0.53 & 1.30 & 1.19 \\ 
+  USC-SI\_kJalpha & 4 & Omicron & 8262.1 & 10721.8 & 0.34 & 0.67 & 1.86 & 1.76 \\ 
    \hline
 \hline
 \label{tab:table_wave_us}
