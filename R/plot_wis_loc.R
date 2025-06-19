@@ -70,7 +70,7 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
   # select relevant columns:
   heat_scores <- inc_scores %>%
     dplyr::left_join(covidHubUtils::hub_locations[1:2], by = c("location" = "fips")) %>%
-    dplyr::select("model", "forecast_date", "location", "location_name", "horizon", "abs_error", "wis", "horizon_wk") %>%
+    dplyr::select("model", "forecast_date", "location", "location_name", "horizon", "abs_error", "wis") %>%
     droplevels()
 
   # the included models and locations:
@@ -94,9 +94,9 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
     for(mx in seq_along(models)){
       for(my in 1:mx){
         pwc <- pairwise_comparison(
-          heat_scores = dplyr::filter(heat_scores, .data[["horizon_wk"]] %in% 1:4), mx = models[mx], my = models[my],
+          heat_scores = dplyr::filter(heat_scores, .data[["horizon"]] %in% 1:4), mx = models[mx], my = models[my],
           permutation_test = FALSE, # disable permutation test to speed up things
-          subset = dplyr::filter(heat_scores, .data[["horizon_wk"]] %in% 1:4)$location == loc
+          subset = dplyr::filter(heat_scores, .data[["horizon"]] %in% 1:4)$location == loc
             # this will subset to the respective location inside the function
         )
         results_ratio_temp[mx, my] <- pwc$ratio
@@ -161,13 +161,11 @@ plot_wis_loc <- function(scores, truth, model_levels, baseline_name) { # potenti
       labels =c("0.25", 0.5, 1, "2+")
     ) +
     ggplot2::xlab(NULL) + ggplot2::ylab(NULL) +
+    guides(x = guide_axis(angle = 45)) +
     ggplot2::theme(
-      axis.text.x = ggplot2::element_text(angle = 45, hjust = 1, size = 9),
-#     color =
-#        ifelse(levels(average_by_loc_to_plot$model) %in% models_to_highlight, "red", "black")),
-      axis.title.x = ggplot2::element_text(size = 9),
-      axis.text.y = ggplot2::element_text(size = 9),
-      title = ggplot2::element_text(size = 9)
+      axis.title.x = ggplot2::element_text(size = 12),
+      axis.text.y = ggplot2::element_text(size = 12),
+      title = ggplot2::element_text(size = 12)
     ) +
     ggplot2::theme_bw()
 
