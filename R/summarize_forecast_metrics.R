@@ -22,7 +22,7 @@ summarize_overall_metrics <- function(scores, baseline_name, us_only=FALSE) {
     dplyr::summarize(WIS = mean(wis), MAE = mean(abs_error), Cov50 = mean(coverage_50), Cov95 = mean(coverage_95))
 
   # add relative metrics
-  summarized_metrics <- summarized_metrics %>%
+  summarized_metrics %>%
     dplyr::mutate(
       rWIS = WIS / dplyr::pull(dplyr::filter(summarized_metrics, model == baseline_name), 2),
       rMAE = MAE / dplyr::pull(dplyr::filter(summarized_metrics, model == baseline_name), 3) #,
@@ -30,14 +30,8 @@ summarize_overall_metrics <- function(scores, baseline_name, us_only=FALSE) {
       #rCov95 = Cov95 / abs(dplyr::pull(dplyr::filter(summarized_metrics, model == baseline_name), 5)-0.95)
     ) %>%
     dplyr::rename(Model = model) %>%
-    dplyr::mutate(dplyr::across(dplyr::where(is.numeric), round, digits = 3)) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), round, digits = 3)) %>%
     dplyr::arrange(WIS)
-
-  if (us_only) {
-    dplyr::mutate(summarized_metrics, dplyr::across(WIS:MAE, round, digits = 1))
-  } else {
-    summarized_metrics
-  }
 }
 
 #combined_scores <- rbind(scores, scores_baseline)
@@ -71,7 +65,7 @@ summarize_horizon_metrics <- function(scores, baseline_name, us_only =  FALSE) {
                      Cov50 = mean(coverage_50), Cov95 = mean(coverage_95))
 
   # add relative metrics
-  summarized_metrics <- summarized_metrics %>%
+  summarized_metrics %>%
     dplyr::mutate(
       rWIS = dplyr::case_when(
         horizon_wk == 1 ~ WIS / dplyr::pull(dplyr::filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 3),
@@ -88,14 +82,8 @@ summarize_horizon_metrics <- function(scores, baseline_name, us_only =  FALSE) {
       )
     ) %>%
     dplyr::rename(Model = model) %>%
-    dplyr::mutate(dplyr::across(dplyr::where(is.numeric), round, digits = 3)) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), round, digits = 2)) %>%
     dplyr::arrange(horizon_wk, WIS)
-
-  if (us_only) {
-    dplyr::mutate(summarized_metrics, dplyr::across(WIS:MAE, round, digits = 1))
-  } else {
-    summarized_metrics
-  }
 }
 
 #summarize_horizon_metrics(scores = combined_scores, baseline_name = "COVIDhub-baseline", us_only = TRUE)
@@ -137,7 +125,7 @@ summarize_wave_metrics <- function(scores, baseline_name, us_only=FALSE) {
     dplyr::summarize(WIS = mean(wis), MAE = mean(abs_error), Cov50 = mean(coverage_50), Cov95 = mean(coverage_95))
 
   # add relative metrics
-  summarized_metrics <- summarized_metrics %>%
+  summarized_metrics %>%
     dplyr::mutate(
       rWIS = dplyr::case_when(
         horizon_wk == 1 & wave == "winter21" ~ WIS / dplyr::pull(dplyr::filter(summarized_metrics, model == baseline_name, horizon_wk == 1), 4),
@@ -185,14 +173,8 @@ summarize_wave_metrics <- function(scores, baseline_name, us_only=FALSE) {
       )
     ) %>%
     dplyr::rename(Model = model) %>%
-    dplyr::mutate(dplyr::across(dplyr::where(is.numeric), round, digits = 3)) %>%
+    dplyr::mutate(dplyr::across(where(is.numeric), round, digits = 3)) %>%
     dplyr::arrange(wave, horizon_wk, WIS)
-
-    if (us_only) {
-      dplyr::mutate(summarized_metrics, dplyr::across(WIS:MAE, round, digits = 1))
-    } else {
-      summarized_metrics
-    }
   }
 
 #summarize_wave_metrics(scores=combined_scores, baseline_name="COVIDhub-baseline", us_only=TRUE)
