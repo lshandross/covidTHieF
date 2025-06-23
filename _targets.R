@@ -45,7 +45,7 @@ list(
   tar_target(thief_old, sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep = ""))),
   tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep = ""))),
   tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 7), c(1, 3, 6.5, 10, 15, 20, 25), sep = "")), sep = "")),
-  tar_target(operational_models, c("JHUAPL-Bucky", "USC-SI_kJalpha", "CU-select", "Karlen-pypm", "GT-DeepCOVID")),
+  tar_target(operational_models, c("JHUAPL-Bucky", "USC-SI_kJalpha", "CU-select", "GT-DeepCOVID")),
   tar_target(validation_models, c(all_thief, sarima_models, thief_ensembles, "sarima-untrained_ensemble")),
   tar_target(testing_models, c("sarima_s7-noTransform", "arima_s1-noTransform", "sarima-untrained_ensemble", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_ensemble-train3", "THieF_ensemble-mean")),
 
@@ -61,7 +61,7 @@ list(
   tar_target(testing_model_names, c("COVIDhub-4_week_ensemble", operational_models, "COVIDhub-baseline", testing_models)),
   tar_target(
     testing_model_colors,
-    c("#000000", "#252525", "#525252", "#737373", "#969696", "#BDBDBD", "#D9D9D9",
+    c("#000000", "#525252", "#737373", "#969696", "#BDBDBD", "#D9D9D9",
       "red", "orange", "yellow", "green", "cyan", "blue", "magenta", "purple")
   ),
 
@@ -171,7 +171,7 @@ list(
         model = replace(model, model == "sarima_s1-noTransform","arima_s1-noTransform")
       ) %>%
       select(-mon_fc_date) %>%
-      filter(horizon_wk %in% 1:4, model != "THieF_12wk-noTransform")
+      filter(horizon_wk %in% 1:4, model %in% testing_model_names)
   ),
   tar_target(
     full_hosp_truth,
@@ -253,7 +253,7 @@ list(
     plot_models_1,
     plot_models_one_location(
       forecasts = testing_forecasts_to_plot,
-      models = testing_model_names[c(7, 1, 10,11)],
+      models = testing_model_names[c(6, 1, 7, 10)],
       truth = full_hosp_truth,
       fips = ordered_testing_locations[1],
       fc_dates = testing_dates_to_plot,
@@ -265,7 +265,7 @@ list(
     plot_models_2,
     plot_models_one_location(
       forecasts = testing_forecasts_to_plot,
-      models = testing_model_names[c(7, 1, 10,11)],
+      models = testing_model_names[c(6, 1, 7, 10)],
       truth = full_hosp_truth,
       fips = ordered_testing_locations[2],
       fc_dates = testing_dates_to_plot,
@@ -277,7 +277,7 @@ list(
     plot_models_53,
     plot_models_one_location(
       forecasts = testing_forecasts_to_plot,
-      models = testing_model_names[c(7, 1, 10,11)],
+      models = testing_model_names[c(6, 1, 7, 10)],
       truth = full_hosp_truth,
       fips = ordered_testing_locations[53],
       fc_dates = testing_dates_to_plot,
