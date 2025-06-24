@@ -5,14 +5,15 @@ date: "`r Sys.Date()`"
 geometry: "left=1.25cm,right=0.75cm,top=1.5cm,bottom=1.5cm"
 output: 
   pdf_document: 
-    fig_width: 32
-    fig_height: 24
+    fig_width: 28
+    fig_height: 21
 classoption: landscape
 ---
 
+Additional plots of 1- to 28-day ahead forecasts for daily incident COVID-19 hospitalizations for all fourteen models compared during the testing phase are provided in this supplemental document. Only five locations are shown: the entire U.S., the two locations with the highest cumulative hospitalization counts during the period of analysis (Texas and Florida), and the two locations with the lowest cumulative hospitalizations during the period of analysis (Alaska and Vermont). Note that we only plot forecasts made every four weeks, starting on the week of November 1, 2021 (the first day of the testing face) for readability. This means that only 25\% of all forecasts made and evaluated during the testing phase are shown. Forecasts are represented by a (median) point forecast, 50\% and 90\% prediction intervals.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
-library(forecast)
 library(dplyr)
 library(ggplot2)
 library(lubridate)
@@ -41,7 +42,8 @@ date_limits <- c(as.Date("2021-09-01"), as.Date("2022-10-01"))
 fc_dates <- c(as.Date("2021-10-31") + weeks(4 * (0:11)),
               as.Date("2021-11-01") + weeks(4 * (0:11)),
               unique(best_subset_testing_forecasts$forecast_date))
-locs <- unique(best_subset_testing_forecasts$location)
+# locs <- unique(best_subset_testing_forecasts$location)
+locs <- c("US", "45", "11", "02", "47") # US, TX, FL, AL, VT
 
 fc_ver <- baseline_testing_forecasts %>%
   rbind(ensemble_testing_forecasts, operational_testing_forecasts, sarima_ensemble_testing_forecasts, best_subset_testing_forecasts) %>% 
@@ -58,7 +60,6 @@ for (i in 1:length(locs)) {
   }
   
   p <- plot_forecasts(fdat,
-#                      models = testing_model_names,
                       target_variable = "inc hosp", 
                       intervals = c(.50, .95),
                       truth_source = "HealthData",
@@ -73,6 +74,7 @@ for (i in 1:length(locs)) {
     coord_cartesian(ylim = c(0, max(filter(full_hosp_truth, location == locs[i], target_end_date <= date_limits[2])$value * 1.15))) +
     theme(axis.ticks.length.x = unit(0.5, "cm"),
           axis.text.x = element_text(vjust = 7, hjust = -0.2),
+          strip.text.x = element_text(size = 12),
           legend.position = "none")
           
   print(pt)
