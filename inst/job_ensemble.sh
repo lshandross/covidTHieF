@@ -14,4 +14,4 @@ module load bzip2/1.0.6_fPIC_lib
 module load pcre/8.40
 module load libtool/2.4.6
 
-R CMD BATCH --vanilla '--args linux 32 generate_forecasts training ensemble 1 F 1 47' inst/generate_forecasts.R
+R CMD BATCH --vanilla '--args linux 32 generate_forecasts training ensemble 1 F 1 47' generate_forecasts.R

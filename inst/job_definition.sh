@@ -1,11 +1,11 @@
 #!/bin/bash
 #BSUB -n 32 # how many cores we want for our job
 #BSUB -R span[hosts=1] # ask for all the cores on a single machine
-#BSUB -R rusage[mem=500] # ask for memory
+#BSUB -R rusage[mem=1000] # ask for memory
 #BSUB -o job_log.out # log LSF output to a file
 #BSUB -W 96:00 # run time (hh:mm)
 #BSUB -q long # which queue we want to run in
-#BSUB -J gen_2 # job name
+#BSUB -J job_def # Job name
  
 module load R/4.1.1
 module load xz/5.2.3
@@ -15,4 +15,4 @@ module load bzip2/1.0.6_fPIC_lib
 module load pcre/8.40
 module load libtool/2.4.6
 
-R CMD BATCH --vanilla '--args linux 32 generate_forecasts testing thief 8 T 19 24' inst/generate_forecasts.R gen_2_43_47.Rout
+R CMD BATCH --vanilla '--args linux 32 generate_forecasts testing thief 6 T 1 12' generate_forecasts.R
