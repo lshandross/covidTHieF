@@ -1,0 +1,80 @@
+---
+title: "Forecasting COVID-19 with Temporal Hierarchies and Ensemble Methods"
+author: "Li Shandross"
+date: "`r Sys.Date()`"
+geometry: "left=1.25cm,right=0.75cm,top=1.5cm,bottom=1.5cm"
+output: 
+  pdf_document: 
+    fig_width: 32
+    fig_height: 24
+classoption: landscape
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message=FALSE, warning=FALSE)
+library(forecast)
+library(dplyr)
+library(ggplot2)
+library(lubridate)
+library(zoltr)
+library(covidHubUtils)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+full_hosp_truth <- load_truth("HealthData", 
+                         "inc hosp", 
+                         as_of=as.Date("2022-10-01"),
+                         temporal_resolution="weekly",
+                         data_location = "covidData")
+
+baseline_testing_forecasts <- readr::read_rds("../../data/testing_fcv_baseline.rds")
+ensemble_testing_forecasts <- readr::read_rds("../../data/testing_fcv_ensemble.rds")
+operational_testing_forecasts <- readr::read_rds("../../data/testing_fcv_operational.rds")
+sarima_ensemble_testing_forecasts <- readr::read_rds("../../data/testing_fcv_sarima_ensemble.rds")
+best_subset_testing_forecasts <- readr::read_rds("../../data/testing_fcv_models_small.rds")
+
+operational_models <- c("JHUAPL-Bucky", "USC-SI_kJalpha", "CU-select", "GT-DeepCOVID")
+testing_models <- c("sarima_s7-noTransform", "sarima_s1-noTransform", "sarima-untrained_ensemble", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_ensemble-train3", "THieF_ensemble-mean")
+testing_model_names <- c("COVIDhub-4_week_ensemble", operational_models, "COVIDhub-baseline", testing_models)
+inc_hosp_targets <- paste(0:35, "day ahead inc hosp")
+date_limits <- c(as.Date("2021-09-01"), as.Date("2022-10-01"))
+fc_dates <- c(as.Date("2021-10-31") + weeks(4 * (0:11)),
+              as.Date("2021-11-01") + weeks(4 * (0:11)),
+              unique(best_subset_testing_forecasts$forecast_date))
+locs <- unique(best_subset_testing_forecasts$location)
+
+fc_ver <- baseline_testing_forecasts %>%
+  rbind(ensemble_testing_forecasts, operational_testing_forecasts, sarima_ensemble_testing_forecasts, best_subset_testing_forecasts) %>% 
+  filter(model %in% testing_model_names, forecast_date %in% fc_dates)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+for (i in 1:length(locs)) {
+  fdat <- filter(fc_ver, location == locs[i], horizon %in% c(1:28))
+  
+  if (locs[i] %in% c("US", "22")) {
+  fdat <- fdat %>%
+    filter(forecast_date > as.Date("2021-01-04"))
+  }
+  
+  p <- plot_forecasts(fdat,
+#                      models = testing_model_names,
+                      target_variable = "inc hosp", 
+                      intervals = c(.50, .95),
+                      truth_source = "HealthData",
+                      use_median_as_point = TRUE,
+                      facet = model ~.,
+                      facet_nrow = 5,
+                      fill_by_model = TRUE, 
+                      plot = FALSE)
+
+  pt <- p +
+    scale_x_date(name = NULL, limits = date_limits, date_breaks = "3 months", date_labels = "%b %y") +
+    coord_cartesian(ylim = c(0, max(filter(full_hosp_truth, location == locs[i], target_end_date <= date_limits[2])$value * 1.15))) +
+    theme(axis.ticks.length.x = unit(0.5, "cm"),
+          axis.text.x = element_text(vjust = 7, hjust = -0.2),
+          legend.position = "none")
+          
+  print(pt)
+}
+```
