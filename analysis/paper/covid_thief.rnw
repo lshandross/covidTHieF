@@ -297,6 +297,9 @@ The overall period evaluation provides a generalized view of the testing phase a
 
 The by--pandemic wave and by--forecast date evaluations investigate time periods with different magnitudes or fluctuating rates of incident hospitalizations. Times of greater values or most rapid changes have larger WIS and MAE and are generally harder to predict\cite{mech_bayes, short_horizons}, and it might be useful to identify which models performed best under different scenarios. These two evaluations are also stratified by horizon week. However, the by-location evaluation, which provided insight into differences in model performance between higher and lower count locations, is not stratified by horizon week.
 
+\section{Software and Reproducibility} \label{reproducibility}
+Code for the manuscript and supplement can be found at \url{https://github.com/lshandross/covidTHieF}. Functions for making the forecasts are based on the THieF package\cite{thief_package}. The manuscript is generated with a reproducible workflow using the targets package\cite{targets_package}. All analysis was performed using R version 4.4.1\cite{RSoftware}.
+
 \chapter{Results} \label{results}
 \section{Validation phase} \label{validation_results}
 During the validation phase, we found that the THieF ensembles generally made the most accurate predictions of incident COVID-19 hospitalizations of all our constructed models, followed by the ARIMA/SARIMA ensemble, then the original THieF models, and finally the ARIMA/SARIMA models. These results are summarized in Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us}, which shows the overall model ranking and evaluation metrics ordered by ascending WIS. A complete list of the best subset models passed onto the testing phase is provided in the below in Table \ref{tab:table_best_subset}.
