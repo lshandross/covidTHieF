@@ -305,35 +305,18 @@ Code for the manuscript and supplement can be found at \url{https://github.com/l
 
 \section{Results} \label{results}
 \subsection{Validation phase} \label{validation_results}
-During the validation phase, we found that the THieF ensembles generally made the most accurate predictions of incident COVID-19 hospitalizations of all our constructed models, followed by the ARIMA/SARIMA ensemble, then the original THieF models, and finally the ARIMA/SARIMA models. These results are summarized in Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us}, which shows the overall model ranking and evaluation metrics ordered by ascending WIS. A complete list of the best subset models passed onto the testing phase is provided in the below in Table \ref{tab:table_best_subset}.
-
-\begin{table}[h]
-\begin{center}
-\caption{Summary of best subset models passed on from the validation phase to the testing phase, including explanation of model choice if not strictly based on lowest WIS. Note that THieF\_ensemble-train3 was chosen based on cross-validation selection rule of the simplest and not substantially worse model.}
-\label{tab:table_best_subset}
-\begin{tabular}{ p{7.5cm} p{2.5cm} p{5cm} }
-\hline
-Criteria & Geo Scale & Model \\
-\hline
-Best original THieF & states & THieF\_6wk-4root \\
- & US & THieF\_6wk-noTransform \\
-Best (weighted) THieF ensemble & both & THieF\_ensemble-train3* \\
-Best ARIMA/SARIMA & states & sarima\_s7-noTransform \\
- & US & arima\_s1-noTransform \\
-ARIMA/SARIMA ensemble & NA & sarima\_unweighted-mean \\
-Untrained THieF ensemble & NA & THieF\_ensemble-mean \\
-Best original THieF during last 17 weeks & both & THieF\_12wk-4root \\
-\hline
-\end{tabular}
-\end{center}
-\end{table}
+During the validation phase, we found that the THieF ensembles generally made the most accurate predictions of incident COVID-19 hospitalizations of all our constructed models, followed by the ARIMA/SARIMA ensemble, then the original THieF models, and finally the ARIMA/SARIMA models. These results are summarized in Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us}, which shows the overall model ranking and evaluation metrics ordered by ascending WIS. A complete list of the best subset models passed onto the testing phase is provided in the Appendix in Table \ref{tab:table_best_subset}.
 
 \begin{table}%[h]
 \begin{center}
-\caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS. The COVIDhub-baseline is included as a point of reference.}
+\caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS. Models part of the best subset are denoted with an asterisk (*). The COVIDhub-baseline is included as a point of reference.}
 \label{tab:table_validation_states}
 <<echo=FALSE, eval=TRUE, results=tex>>=
+bold_row <- c(6, 8, 10, 17, 23, 28)
 table_validation_states <- tar_read(overall_validation_states, store="../../_targets") %>%
+  tibble::rownames_to_column("row") %>%
+  mutate(` ` = ifelse(row %in% bold_row, "*", "")) %>%
+  select(-"row") %>%
   xtable()
 print(table_validation_states, booktabs=FALSE, floating=FALSE)
 @
@@ -342,11 +325,15 @@ print(table_validation_states, booktabs=FALSE, floating=FALSE)
 
 \begin{table}%[h]
 \begin{center}
-\caption{Summary of overall model performance during the validation phase for the entire U.S., ordered by ascending WIS. The COVIDhub-baseline is included as a point of reference.}
+\caption{Summary of overall model performance during the validation phase for the entire U.S., ordered by ascending WIS. Models part of the best subset are denoted with an asterisk (*). The COVIDhub-baseline is included as a point of reference.}
 \label{tab:table_validation_us}
 <<echo=FALSE, eval=TRUE, results=tex>>=
+bold_row <- c(1, 2, 3, 10, 23, 24)
 table_validation_us <- tar_read(overall_validation_us, store="../../_targets") %>%
-  xtable(digits=c(0, rep(1, 3), rep(2, 4)))
+  tibble::rownames_to_column("row") %>%
+  mutate(` ` = ifelse(row %in% bold_row, "*", "")) %>%
+  select(-"row") %>%
+  xtable(digits=c(0, rep(1, 3), rep(2, 5)))
 print(table_validation_us, booktabs=FALSE, floating=FALSE)
 @
 \end{center}
@@ -496,6 +483,29 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 \label{fig:figure_thief_hierarchy}
 \includegraphics[width=0.95\textwidth]{../honors_thesis/thief_all}
 \end{figure}
+
+\newpage
+
+\begin{table}[h]
+\begin{center}
+\caption{Summary of best subset models passed on from the validation phase to the testing phase, including explanation of model choice if not strictly based on lowest WIS. Note that THieF\_ensemble-train3 was chosen based on cross-validation selection rule of the simplest and not substantially worse model.}
+\label{tab:table_best_subset}
+\begin{tabular}{ p{7.5cm} p{2.5cm} p{5cm} }
+\hline
+Criteria & Geo Scale & Model \\
+\hline
+Best original THieF & states & THieF\_6wk-4root \\
+ & US & THieF\_6wk-noTransform \\
+Best (weighted) THieF ensemble & both & THieF\_ensemble-train3* \\
+Best ARIMA/SARIMA & states & sarima\_s7-noTransform \\
+ & US & arima\_s1-noTransform \\
+ARIMA/SARIMA ensemble & NA & sarima\_unweighted-mean \\
+Untrained THieF ensemble & NA & THieF\_ensemble-mean \\
+Best original THieF during last 17 weeks & both & THieF\_12wk-4root \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \newpage
 

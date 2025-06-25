@@ -195,7 +195,7 @@ Although this means that the interval forecasts are not coherent (only the point
 \caption{Table of the 23 quantiles required by the Forecast Hub and their associated prediction interval bound.}
 \label{tab:table_quant_int}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:10:44 2025
+% Wed Jun 25 16:37:00 2025
 \begin{tabular}{rlllllllllll}
   \hline
  &  \\ 
@@ -283,109 +283,88 @@ Code for the manuscript and supplement can be found at \url{https://github.com/l
 
 \section{Results} \label{results}
 \subsection{Validation phase} \label{validation_results}
-During the validation phase, we found that the THieF ensembles generally made the most accurate predictions of incident COVID-19 hospitalizations of all our constructed models, followed by the ARIMA/SARIMA ensemble, then the original THieF models, and finally the ARIMA/SARIMA models. These results are summarized in Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us}, which shows the overall model ranking and evaluation metrics ordered by ascending WIS. A complete list of the best subset models passed onto the testing phase is provided in the below in Table \ref{tab:table_best_subset}.
-
-\begin{table}[h]
-\begin{center}
-\caption{Summary of best subset models passed on from the validation phase to the testing phase, including explanation of model choice if not strictly based on lowest WIS. Note that THieF\_ensemble-train3 was chosen based on cross-validation selection rule of the simplest and not substantially worse model.}
-\label{tab:table_best_subset}
-\begin{tabular}{ p{7.5cm} p{2.5cm} p{5cm} }
-\hline
-Criteria & Geo Scale & Model \\
-\hline
-Best original THieF & states & THieF\_6wk-4root \\
- & US & THieF\_6wk-noTransform \\
-Best (weighted) THieF ensemble & both & THieF\_ensemble-train3* \\
-Best ARIMA/SARIMA & states & sarima\_s7-noTransform \\
- & US & arima\_s1-noTransform \\
-ARIMA/SARIMA ensemble & NA & sarima\_unweighted-mean \\
-Untrained THieF ensemble & NA & THieF\_ensemble-mean \\
-Best original THieF during last 17 weeks & both & THieF\_12wk-4root \\
-\hline
-\end{tabular}
-\end{center}
-\end{table}
+During the validation phase, we found that the THieF ensembles generally made the most accurate predictions of incident COVID-19 hospitalizations of all our constructed models, followed by the ARIMA/SARIMA ensemble, then the original THieF models, and finally the ARIMA/SARIMA models. These results are summarized in Tables \ref{tab:table_validation_states} and \ref{tab:table_validation_us}, which shows the overall model ranking and evaluation metrics ordered by ascending WIS. A complete list of the best subset models passed onto the testing phase is provided in the Appendix in Table \ref{tab:table_best_subset}.
 
 \begin{table}%[h]
 \begin{center}
-\caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS. The COVIDhub-baseline is included as a point of reference.}
+\caption{Summary of overall model performance during the validation phase for averaged states, ordered by ascending WIS. Models part of the best subset are denoted with an asterisk (*). The COVIDhub-baseline is included as a point of reference.}
 \label{tab:table_validation_states}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:10:44 2025
-\begin{tabular}{rlrrrrrr}
+% Wed Jun 25 16:37:00 2025
+\begin{tabular}{rlrrrrrrl}
   \hline
- & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+ & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE &   \\ 
   \hline
-1 & THieF\_ensemble-train10 & 30.73 & 47.22 & 0.53 & 0.93 & 0.86 & 0.94 \\ 
-  2 & THieF\_ensemble-train15 & 30.74 & 47.28 & 0.52 & 0.93 & 0.86 & 0.95 \\ 
-  3 & THieF\_ensemble-train6.5 & 30.77 & 47.20 & 0.53 & 0.94 & 0.86 & 0.94 \\ 
-  4 & THieF\_ensemble-train20 & 30.77 & 47.33 & 0.52 & 0.93 & 0.86 & 0.95 \\ 
-  5 & THieF\_ensemble-train25 & 30.81 & 47.37 & 0.51 & 0.93 & 0.86 & 0.95 \\ 
-  6 & THieF\_ensemble-train3 & 30.90 & 47.25 & 0.54 & 0.94 & 0.86 & 0.95 \\ 
-  7 & THieF\_ensemble-train1 & 31.33 & 47.44 & 0.53 & 0.94 & 0.87 & 0.95 \\ 
-  8 & THieF\_6wk-4root & 31.65 & 48.11 & 0.46 & 0.91 & 0.88 & 0.96 \\ 
-  9 & THieF\_6wk-noTransform & 32.26 & 48.67 & 0.54 & 0.92 & 0.90 & 0.97 \\ 
-  10 & sarima-untrained\_ensemble & 32.46 & 49.06 & 0.54 & 0.91 & 0.90 & 0.98 \\ 
-  11 & THieF\_1wk-4root & 32.68 & 50.06 & 0.48 & 0.91 & 0.91 & 1.00 \\ 
-  12 & THieF\_2wk-4root & 32.94 & 50.26 & 0.47 & 0.91 & 0.92 & 1.01 \\ 
-  13 & THieF\_2wk-noTransform & 33.26 & 48.03 & 0.57 & 0.90 & 0.93 & 0.96 \\ 
-  14 & THieF\_1wk-noTransform & 33.74 & 49.21 & 0.58 & 0.90 & 0.94 & 0.98 \\ 
-  15 & THieF\_8wk-4root & 33.84 & 51.14 & 0.43 & 0.89 & 0.94 & 1.02 \\ 
-  16 & THieF\_4wk-4root & 34.10 & 51.50 & 0.46 & 0.90 & 0.95 & 1.03 \\ 
-  17 & THieF\_ensemble-mean & 34.29 & 47.65 & 0.53 & 0.94 & 0.96 & 0.95 \\ 
-  18 & THieF\_3wk-4root & 34.62 & 52.71 & 0.46 & 0.90 & 0.96 & 1.05 \\ 
-  19 & THieF\_8wk-noTransform & 34.76 & 52.06 & 0.51 & 0.90 & 0.97 & 1.04 \\ 
-  20 & THieF\_3wk-noTransform & 34.96 & 52.08 & 0.54 & 0.90 & 0.97 & 1.04 \\ 
-  21 & THieF\_4wk-noTransform & 35.63 & 52.82 & 0.53 & 0.89 & 0.99 & 1.06 \\ 
-  22 & COVIDhub-baseline & 35.88 & 49.98 & 0.83 & 0.98 & 1.00 & 1.00 \\ 
-  23 & sarima\_s7-noTransform & 36.29 & 51.91 & 0.57 & 0.89 & 1.01 & 1.04 \\ 
-  24 & sarima\_s7-4root & 36.35 & 54.55 & 0.46 & 0.90 & 1.01 & 1.09 \\ 
-  25 & arima\_s1-4root & 36.91 & 55.43 & 0.46 & 0.89 & 1.03 & 1.11 \\ 
-  26 & THieF\_12wk-noTransform & 39.14 & 59.06 & 0.42 & 0.89 & 1.09 & 1.18 \\ 
-  27 & arima\_s1-noTransform & 39.41 & 56.38 & 0.54 & 0.88 & 1.10 & 1.13 \\ 
-  28 & THieF\_12wk-4root & 84.32 & 54.49 & 0.41 & 0.86 & 2.35 & 1.09 \\ 
+1 & THieF\_ensemble-train10 & 30.73 & 47.22 & 0.53 & 0.93 & 0.86 & 0.94 &  \\ 
+  2 & THieF\_ensemble-train15 & 30.74 & 47.28 & 0.52 & 0.93 & 0.86 & 0.95 &  \\ 
+  3 & THieF\_ensemble-train6.5 & 30.77 & 47.20 & 0.53 & 0.94 & 0.86 & 0.94 &  \\ 
+  4 & THieF\_ensemble-train20 & 30.77 & 47.33 & 0.52 & 0.93 & 0.86 & 0.95 &  \\ 
+  5 & THieF\_ensemble-train25 & 30.81 & 47.37 & 0.51 & 0.93 & 0.86 & 0.95 &  \\ 
+  6 & THieF\_ensemble-train3 & 30.90 & 47.25 & 0.54 & 0.94 & 0.86 & 0.95 & * \\ 
+  7 & THieF\_ensemble-train1 & 31.33 & 47.44 & 0.53 & 0.94 & 0.87 & 0.95 &  \\ 
+  8 & THieF\_6wk-4root & 31.65 & 48.11 & 0.46 & 0.91 & 0.88 & 0.96 & * \\ 
+  9 & THieF\_6wk-noTransform & 32.26 & 48.67 & 0.54 & 0.92 & 0.90 & 0.97 &  \\ 
+  10 & sarima-untrained\_ensemble & 32.46 & 49.06 & 0.54 & 0.91 & 0.90 & 0.98 & * \\ 
+  11 & THieF\_1wk-4root & 32.68 & 50.06 & 0.48 & 0.91 & 0.91 & 1.00 &  \\ 
+  12 & THieF\_2wk-4root & 32.94 & 50.26 & 0.47 & 0.91 & 0.92 & 1.01 &  \\ 
+  13 & THieF\_2wk-noTransform & 33.26 & 48.03 & 0.57 & 0.90 & 0.93 & 0.96 &  \\ 
+  14 & THieF\_1wk-noTransform & 33.74 & 49.21 & 0.58 & 0.90 & 0.94 & 0.98 &  \\ 
+  15 & THieF\_8wk-4root & 33.84 & 51.14 & 0.43 & 0.89 & 0.94 & 1.02 &  \\ 
+  16 & THieF\_4wk-4root & 34.10 & 51.50 & 0.46 & 0.90 & 0.95 & 1.03 &  \\ 
+  17 & THieF\_ensemble-mean & 34.29 & 47.65 & 0.53 & 0.94 & 0.96 & 0.95 & * \\ 
+  18 & THieF\_3wk-4root & 34.62 & 52.71 & 0.46 & 0.90 & 0.96 & 1.05 &  \\ 
+  19 & THieF\_8wk-noTransform & 34.76 & 52.06 & 0.51 & 0.90 & 0.97 & 1.04 &  \\ 
+  20 & THieF\_3wk-noTransform & 34.96 & 52.08 & 0.54 & 0.90 & 0.97 & 1.04 &  \\ 
+  21 & THieF\_4wk-noTransform & 35.63 & 52.82 & 0.53 & 0.89 & 0.99 & 1.06 &  \\ 
+  22 & COVIDhub-baseline & 35.88 & 49.98 & 0.83 & 0.98 & 1.00 & 1.00 &  \\ 
+  23 & sarima\_s7-noTransform & 36.29 & 51.91 & 0.57 & 0.89 & 1.01 & 1.04 & * \\ 
+  24 & sarima\_s7-4root & 36.35 & 54.55 & 0.46 & 0.90 & 1.01 & 1.09 &  \\ 
+  25 & arima\_s1-4root & 36.91 & 55.43 & 0.46 & 0.89 & 1.03 & 1.11 &  \\ 
+  26 & THieF\_12wk-noTransform & 39.14 & 59.06 & 0.42 & 0.89 & 1.09 & 1.18 &  \\ 
+  27 & arima\_s1-noTransform & 39.41 & 56.38 & 0.54 & 0.88 & 1.10 & 1.13 &  \\ 
+  28 & THieF\_12wk-4root & 84.32 & 54.49 & 0.41 & 0.86 & 2.35 & 1.09 & * \\ 
    \hline
 \end{tabular}\end{center}
 \end{table}
 
 \begin{table}%[h]
 \begin{center}
-\caption{Summary of overall model performance during the validation phase for the entire U.S., ordered by ascending WIS. The COVIDhub-baseline is included as a point of reference.}
+\caption{Summary of overall model performance during the validation phase for the entire U.S., ordered by ascending WIS. Models part of the best subset are denoted with an asterisk (*). The COVIDhub-baseline is included as a point of reference.}
 \label{tab:table_validation_us}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:10:44 2025
-\begin{tabular}{rlrrrrrr}
+% Wed Jun 25 16:37:00 2025
+\begin{tabular}{rlrrrrrrl}
   \hline
- & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
+ & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE &   \\ 
   \hline
-1 & sarima-untrained\_ensemble & 1104.9 & 1778.1 & 0.30 & 0.86 & 0.87 & 0.89 \\ 
-  2 & THieF\_6wk-noTransform & 1116.4 & 1756.0 & 0.36 & 0.91 & 0.88 & 0.88 \\ 
-  3 & THieF\_ensemble-train3 & 1139.8 & 1808.6 & 0.34 & 0.91 & 0.89 & 0.91 \\ 
-  4 & THieF\_ensemble-train1 & 1144.9 & 1814.9 & 0.35 & 0.90 & 0.90 & 0.91 \\ 
-  5 & THieF\_ensemble-train6.5 & 1146.6 & 1817.4 & 0.34 & 0.91 & 0.90 & 0.91 \\ 
-  6 & THieF\_6wk-4root & 1152.4 & 1765.8 & 0.33 & 0.76 & 0.90 & 0.88 \\ 
-  7 & THieF\_ensemble-train10 & 1159.2 & 1834.0 & 0.33 & 0.91 & 0.91 & 0.92 \\ 
-  8 & THieF\_ensemble-train15 & 1180.2 & 1866.3 & 0.33 & 0.90 & 0.92 & 0.94 \\ 
-  9 & THieF\_ensemble-train20 & 1199.4 & 1897.5 & 0.32 & 0.90 & 0.94 & 0.95 \\ 
-  10 & THieF\_ensemble-mean & 1212.7 & 1822.3 & 0.35 & 0.90 & 0.95 & 0.91 \\ 
-  11 & THieF\_ensemble-train25 & 1214.3 & 1919.3 & 0.32 & 0.89 & 0.95 & 0.96 \\ 
-  12 & THieF\_1wk-noTransform & 1218.5 & 1856.4 & 0.46 & 0.87 & 0.95 & 0.93 \\ 
-  13 & THieF\_2wk-4root & 1234.7 & 1941.8 & 0.25 & 0.85 & 0.97 & 0.97 \\ 
-  14 & THieF\_1wk-4root & 1252.2 & 1993.1 & 0.30 & 0.85 & 0.98 & 1.00 \\ 
-  15 & COVIDhub-baseline & 1276.5 & 1995.9 & 0.64 & 0.99 & 1.00 & 1.00 \\ 
-  16 & THieF\_8wk-noTransform & 1277.0 & 1968.9 & 0.38 & 0.85 & 1.00 & 0.99 \\ 
-  17 & THieF\_8wk-4root & 1303.6 & 1963.8 & 0.26 & 0.70 & 1.02 & 0.98 \\ 
-  18 & THieF\_2wk-noTransform & 1343.1 & 1985.2 & 0.40 & 0.82 & 1.05 & 0.99 \\ 
-  19 & THieF\_4wk-4root & 1383.4 & 2058.0 & 0.28 & 0.70 & 1.08 & 1.03 \\ 
-  20 & THieF\_3wk-noTransform & 1392.9 & 2008.6 & 0.38 & 0.78 & 1.09 & 1.01 \\ 
-  21 & THieF\_4wk-noTransform & 1397.4 & 2038.4 & 0.35 & 0.77 & 1.09 & 1.02 \\ 
-  22 & THieF\_3wk-4root & 1401.7 & 2164.8 & 0.26 & 0.80 & 1.10 & 1.08 \\ 
-  23 & arima\_s1-noTransform & 1477.9 & 2162.0 & 0.37 & 0.79 & 1.16 & 1.08 \\ 
-  24 & sarima\_s7-noTransform & 1483.2 & 2200.6 & 0.39 & 0.81 & 1.16 & 1.10 \\ 
-  25 & arima\_s1-4root & 1530.2 & 2227.1 & 0.26 & 0.75 & 1.20 & 1.12 \\ 
-  26 & THieF\_12wk-noTransform & 1553.5 & 2357.8 & 0.32 & 0.76 & 1.22 & 1.18 \\ 
-  27 & sarima\_s7-4root & 1601.5 & 2467.2 & 0.22 & 0.76 & 1.25 & 1.24 \\ 
-  28 & THieF\_12wk-4root & 2270.6 & 2039.9 & 0.34 & 0.66 & 1.78 & 1.02 \\ 
+1 & sarima-untrained\_ensemble & 1104.9 & 1778.1 & 0.30 & 0.86 & 0.87 & 0.89 & * \\ 
+  2 & THieF\_6wk-noTransform & 1116.4 & 1756.0 & 0.36 & 0.91 & 0.88 & 0.88 & * \\ 
+  3 & THieF\_ensemble-train3 & 1139.8 & 1808.6 & 0.34 & 0.91 & 0.89 & 0.91 & * \\ 
+  4 & THieF\_ensemble-train1 & 1144.9 & 1814.9 & 0.35 & 0.90 & 0.90 & 0.91 &  \\ 
+  5 & THieF\_ensemble-train6.5 & 1146.6 & 1817.4 & 0.34 & 0.91 & 0.90 & 0.91 &  \\ 
+  6 & THieF\_6wk-4root & 1152.4 & 1765.8 & 0.33 & 0.76 & 0.90 & 0.88 &  \\ 
+  7 & THieF\_ensemble-train10 & 1159.2 & 1834.0 & 0.33 & 0.91 & 0.91 & 0.92 &  \\ 
+  8 & THieF\_ensemble-train15 & 1180.2 & 1866.3 & 0.33 & 0.90 & 0.92 & 0.94 &  \\ 
+  9 & THieF\_ensemble-train20 & 1199.4 & 1897.5 & 0.32 & 0.90 & 0.94 & 0.95 &  \\ 
+  10 & THieF\_ensemble-mean & 1212.7 & 1822.3 & 0.35 & 0.90 & 0.95 & 0.91 & * \\ 
+  11 & THieF\_ensemble-train25 & 1214.3 & 1919.3 & 0.32 & 0.89 & 0.95 & 0.96 &  \\ 
+  12 & THieF\_1wk-noTransform & 1218.5 & 1856.4 & 0.46 & 0.87 & 0.95 & 0.93 &  \\ 
+  13 & THieF\_2wk-4root & 1234.7 & 1941.8 & 0.25 & 0.85 & 0.97 & 0.97 &  \\ 
+  14 & THieF\_1wk-4root & 1252.2 & 1993.1 & 0.30 & 0.85 & 0.98 & 1.00 &  \\ 
+  15 & COVIDhub-baseline & 1276.5 & 1995.9 & 0.64 & 0.99 & 1.00 & 1.00 &  \\ 
+  16 & THieF\_8wk-noTransform & 1277.0 & 1968.9 & 0.38 & 0.85 & 1.00 & 0.99 &  \\ 
+  17 & THieF\_8wk-4root & 1303.6 & 1963.8 & 0.26 & 0.70 & 1.02 & 0.98 &  \\ 
+  18 & THieF\_2wk-noTransform & 1343.1 & 1985.2 & 0.40 & 0.82 & 1.05 & 0.99 &  \\ 
+  19 & THieF\_4wk-4root & 1383.4 & 2058.0 & 0.28 & 0.70 & 1.08 & 1.03 &  \\ 
+  20 & THieF\_3wk-noTransform & 1392.9 & 2008.6 & 0.38 & 0.78 & 1.09 & 1.01 &  \\ 
+  21 & THieF\_4wk-noTransform & 1397.4 & 2038.4 & 0.35 & 0.77 & 1.09 & 1.02 &  \\ 
+  22 & THieF\_3wk-4root & 1401.7 & 2164.8 & 0.26 & 0.80 & 1.10 & 1.08 &  \\ 
+  23 & arima\_s1-noTransform & 1477.9 & 2162.0 & 0.37 & 0.79 & 1.16 & 1.08 & * \\ 
+  24 & sarima\_s7-noTransform & 1483.2 & 2200.6 & 0.39 & 0.81 & 1.16 & 1.10 & * \\ 
+  25 & arima\_s1-4root & 1530.2 & 2227.1 & 0.26 & 0.75 & 1.20 & 1.12 &  \\ 
+  26 & THieF\_12wk-noTransform & 1553.5 & 2357.8 & 0.32 & 0.76 & 1.22 & 1.18 &  \\ 
+  27 & sarima\_s7-4root & 1601.5 & 2467.2 & 0.22 & 0.76 & 1.25 & 1.24 &  \\ 
+  28 & THieF\_12wk-4root & 2270.6 & 2039.9 & 0.34 & 0.66 & 1.78 & 1.02 &  \\ 
    \hline
 \end{tabular}\end{center}
 \end{table}
@@ -409,7 +388,7 @@ Model rankings were generally consistent between the averaged states and U.S. na
 \caption{Summary of overall model performance during the testing phase for averaged states, ordered by ascending WIS}
 \label{tab:table_overall_states}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:11:06 2025
+% Wed Jun 25 16:37:33 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -437,7 +416,7 @@ Model rankings were generally consistent between the averaged states and U.S. na
 \caption{Summary of overall model performance during the testing phase for the entire U.S., ordered by ascending WIS}
 \label{tab:table_overall_us}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:11:06 2025
+% Wed Jun 25 16:37:33 2025
 \begin{tabular}{rlrrrrrr}
   \hline
  & Model & WIS & MAE & Cov50 & Cov95 & rWIS & rMAE \\ 
@@ -555,10 +534,31 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 \includegraphics[width=0.95\textwidth]{../honors_thesis/thief_all}
 \end{figure}
 
+\begin{table}[h]
+\begin{center}
+\caption{Summary of best subset models passed on from the validation phase to the testing phase, including explanation of model choice if not strictly based on lowest WIS. Note that THieF\_ensemble-train3 was chosen based on cross-validation selection rule of the simplest and not substantially worse model.}
+\label{tab:table_best_subset}
+\begin{tabular}{ p{7.5cm} p{2.5cm} p{5cm} }
+\hline
+Criteria & Geo Scale & Model \\
+\hline
+Best original THieF & states & THieF\_6wk-4root \\
+ & US & THieF\_6wk-noTransform \\
+Best (weighted) THieF ensemble & both & THieF\_ensemble-train3* \\
+Best ARIMA/SARIMA & states & sarima\_s7-noTransform \\
+ & US & arima\_s1-noTransform \\
+ARIMA/SARIMA ensemble & NA & sarima\_unweighted-mean \\
+Untrained THieF ensemble & NA & THieF\_ensemble-mean \\
+Best original THieF during last 17 weeks & both & THieF\_12wk-4root \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
 \newpage
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:11:11 2025
+% Wed Jun 25 16:37:49 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{llrrrrrr}
 \caption{Summary of model performance during the last 17 weeks of the validation phase for averaged states, ordered by ascending WIS} \\ 
@@ -610,7 +610,7 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 \newpage
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:11:11 2025
+% Wed Jun 25 16:37:49 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{llrrrrrr}
 \caption{Summary of model performance during the last 17 weeks of the validation phase for U.S. national, ordered by ascending WIS} \\ 
@@ -663,7 +663,7 @@ We demonstrated the utility and success of THieF and ensembles of THieF models w
 
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:11:11 2025
+% Wed Jun 25 16:37:49 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by horizon week for averaged states, ordered by ascending WIS} \\ 
@@ -741,7 +741,7 @@ COVIDhub-4\_week\_ensemble & 1 & 16.70 & 25.11 & 0.65 & 0.96 & 0.70 & 0.79 \\
 \newpage
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:11:11 2025
+% Wed Jun 25 16:37:49 2025
 \begingroup\renewcommand{\arraystretch}{0.75}
 \begin{longtable}{lrrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by horizon week for U.S. national, ordered by ascending WIS} \\ 
@@ -820,7 +820,7 @@ COVIDhub-4\_week\_ensemble & 1 & 659.80 & 966.80 & 0.68 & 0.94 & 0.69 & 0.77 \\
 
 
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:11:11 2025
+% Wed Jun 25 16:37:50 2025
 \begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
 \begin{longtable}{lrlrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for averaged states, ordered by ascending WIS} \\ 
@@ -955,7 +955,7 @@ COVIDhub-4\_week\_ensemble & 1 & BA.4/BA.5 & 8.91 & 13.43 & 0.72 & 0.99 & 0.61 &
 
 %\captionsetup{width=6cm}
 % latex table generated in R 4.4.1 by xtable 1.8-4 package
-% Wed Jun 25 13:11:11 2025
+% Wed Jun 25 16:37:50 2025
 \begingroup\renewcommand{\arraystretch}{0.75} \setlength{\tabcolsep}{3pt}
 \begin{longtable}{lrlrrrrrr}
 \caption{Summary of model performance during the testing phase stratified by pandemic wave and horizon week for U.S. national, ordered by ascending WIS} \\ 
