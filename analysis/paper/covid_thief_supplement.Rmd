@@ -1,7 +1,4 @@
 ---
-title: "Forecasting COVID-19 with Temporal Hierarchies and Ensemble Methods"
-author: "Li Shandross"
-date: "`r Sys.Date()`"
 geometry: "left=1.25cm,right=0.75cm,top=1.5cm,bottom=1.5cm"
 output: 
   pdf_document: 
@@ -9,6 +6,8 @@ output:
     fig_height: 21
 classoption: landscape
 ---
+
+## Supplemental forecast plots
 
 Additional plots of 1- to 28-day ahead forecasts for daily incident COVID-19 hospitalizations for all fourteen models compared during the testing phase are provided in this supplemental document. Only five locations are shown: the entire U.S., the two locations with the highest cumulative hospitalization counts during the period of analysis (Texas and Florida), and the two locations with the lowest cumulative hospitalizations during the period of analysis (Alaska and Vermont). Note that we only plot forecasts made every four weeks, starting on the week of November 1, 2021 (the first day of the testing face) for readability. This means that only 25\% of all forecasts made and evaluated during the testing phase are shown. Forecasts are represented by a (median) point forecast, 50\% and 90\% prediction intervals.
 
@@ -42,8 +41,7 @@ date_limits <- c(as.Date("2021-09-01"), as.Date("2022-10-01"))
 fc_dates <- c(as.Date("2021-10-31") + weeks(4 * (0:11)),
               as.Date("2021-11-01") + weeks(4 * (0:11)),
               unique(best_subset_testing_forecasts$forecast_date))
-# locs <- unique(best_subset_testing_forecasts$location)
-locs <- c("US", "45", "11", "02", "47") # US, TX, FL, AL, VT
+locs <- unique(best_subset_testing_forecasts$location)[c(1, 45, 11, 3, 47)] # US, TX, FL, AL, VT
 
 fc_ver <- baseline_testing_forecasts %>%
   rbind(ensemble_testing_forecasts, operational_testing_forecasts, sarima_ensemble_testing_forecasts, best_subset_testing_forecasts) %>% 
