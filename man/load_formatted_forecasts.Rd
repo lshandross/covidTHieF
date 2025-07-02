@@ -16,5 +16,6 @@ a data frame containing the forecasts from a single model during the
 corresponding dates to the specified date indices
 }
 \description{
-Load available forecasts from local directory (optimized for parallelization)
+Adapted from thief package example
+Source: \url{}
 }

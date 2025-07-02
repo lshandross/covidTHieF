@@ -17,5 +17,6 @@ specified quantiles.}
 An object of class \code{forecast}.
 }
 \description{
-Compute temporal hierarchical (base) forecasts
+Adapted from thief package example
+Source: \url{https://github.com/robjhyndman/thief/blob/master/R/NHSdata.R}
 }

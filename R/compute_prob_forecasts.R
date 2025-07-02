@@ -1,5 +1,8 @@
 #' Compute temporal hierarchical probabilistic forecasts
 #'
+#' Adapted from FoReco package example vignette
+#' Source: \url{https://github.com/danigiro/FoReco/blob/master/vignettes/articles/Temporal-forecast-reconciliation.qmd}
+#'
 #' @param temporal_hierarchy List of (hierarchical) time series.
 #' @param nsim Numeric of bootstrap samples used to generate probabilistic
 #'   forecasts. Defaults to 10000.
@@ -38,7 +41,7 @@ compute_prob_forecasts <-
     )
 
     base_mean <- sapply(forecast_obj, function(x) x$mean)
-    res <- Reduce("c", sapply(forecast_obj, residuals, type = "response"))
+    res <- Reduce("c", sapply(forecast_obj, stats::residuals, type = "response"))
     # in-sample residuals (one-step)
 
     # Multi-step residuals (approx base forecast error to inform reco weights)

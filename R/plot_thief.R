@@ -57,6 +57,9 @@ get_ts_dates <-
 
 #' Plot base and reconciled temporal hierarchical forecasts.
 #'
+#' Adapted from thief package example
+#' Source: \url{https://github.com/robjhyndman/thief/blob/master/R/NHSdata.R}
+#'
 #' @param base_forecasts A \code{forecast} object containing the original
 #'   (unreconciled) base forecasts.
 #' @param reconciled_forecasts A \code{forecast} object containing reconciled

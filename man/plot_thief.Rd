@@ -37,5 +37,6 @@ forecasts. The user may provide extended truth data to plot against the
 forecasts for an accuracy comparison.
 }
 \description{
-Plot base and reconciled temporal hierarchical forecasts.
+Adapted from thief package example
+Source: \url{https://github.com/robjhyndman/thief/blob/master/R/NHSdata.R}
 }

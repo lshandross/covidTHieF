@@ -59,5 +59,6 @@ a data frame of forecasts for the ensemble in the hub format for the
 input forecast date
 }
 \description{
-Create a weighted quantile ensemble of composite models
+Adapted from hubEnsembles package
+Source: \url{https://github.com/reichlab/hubEnsembles/blob/main/R/build_quantile_ensemble.R}
 }

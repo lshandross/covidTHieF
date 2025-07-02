@@ -13,7 +13,7 @@ The R Weave source document `covid_thief.Rmd` (as well as a fully rendered versi
 
 The data used in this analysis can be found within the [:file_folder: data](/data) directory. Predictions are stored both as R data objects and individual CSV files for the THieF and ARIMA models in named directories.
 
-Functions used to generate the forecasts can be found in the [:file_folder: R](/R) directory. The code for most of these functions is adapted those from the [THieF package](https://github.com/robjhyndman/thief).
+Functions used to generate the forecasts can be found in the [:file_folder: R](/R) directory.
 
 ## Setup
 

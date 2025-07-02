@@ -1,4 +1,7 @@
 ###################################################################################################
+#' All functions in script adapted from Cramer, et al
+#' Source: \url{https://github.com/reichlab/covid19-forecast-evals/blob/main/code/figure-wis_by_location.R}
+
 # Helper functions
 
 # helper function

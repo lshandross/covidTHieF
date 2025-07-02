@@ -1,5 +1,8 @@
 #' Compute temporal hierarchical (base) forecasts
 #'
+#' Adapted from thief package example
+#' Source: \url{https://github.com/robjhyndman/thief/blob/master/R/NHSdata.R}
+#'
 #' @param temporal_hierarchy A list of (hierarchical) time series.
 #' @param pi_levels A vector of prediction interval levels to calculate.
 #'   Defaults to the levels that correspond to the 23 US Forecast Hub-

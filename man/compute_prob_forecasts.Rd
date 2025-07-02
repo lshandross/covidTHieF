@@ -35,5 +35,6 @@ forecasts represented by samples. A single matrix has columns representing
 each element in the provided hierarchy, with one sample per row.
 }
 \description{
-Compute temporal hierarchical probabilistic forecasts
+Adapted from FoReco package example vignette
+Source: \url{https://github.com/danigiro/FoReco/blob/master/vignettes/articles/Temporal-forecast-reconciliation.qmd}
 }

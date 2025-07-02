@@ -1,5 +1,8 @@
 #' Create a weighted quantile ensemble of composite models
 #'
+#' Adapted from hubEnsembles package
+#' Source: \url{https://github.com/reichlab/hubEnsembles/blob/main/R/build_quantile_ensemble.R}
+#'
 #' @param forecast_df A data frame of forecasts to build the ensemble.
 #'   Defaults to NULL, in which the function looks for .csv files with the proper
 #'   naming convention and organizational structure are searched for locally to
@@ -69,15 +72,15 @@ build_composite_ensemble <- function(forecast_df = NULL, composite_models, score
   rolling_metrics_states <- scores_df %>%
     dplyr::group_by("model") %>%
     dplyr::filter(.data[["forecast_date"]] >= rolling_start_date, .data[["forecast_date"]] <= rolling_end_date) %>%
-    dplyr::summarize(wis = mean(wis), mae = mean(abs_error))
+    dplyr::summarize(wis = mean(.data[["wis"]]), mae = mean(.data[["abs_error"]]))
   model_weights <- rolling_metrics_states %>%
     dplyr::mutate(
-      rwis = wis / dplyr::pull(dplyr::filter(rolling_metrics_states, model == "COVIDhub-baseline"), 2),
-      rmae = mae / dplyr::pull(dplyr::filter(rolling_metrics_states, model == "COVIDhub-baseline"), 3),
+      rwis = .data[["wis"]] / dplyr::pull(dplyr::filter(rolling_metrics_states, model == "COVIDhub-baseline"), 2),
+      rmae = .data[["mae"]] / dplyr::pull(dplyr::filter(rolling_metrics_states, model == "COVIDhub-baseline"), 3),
     ) %>%
-    dplyr::filter(model != "COVIDhub-baseline", model %in% composite_models) %>%
-    dplyr::mutate(weight = exp(-theta * rwis) / sum(exp(-theta * rwis))) %>%
-    dplyr::select(model, weight)
+    dplyr::filter(.data[["model"]] != "COVIDhub-baseline", .data[["model"]] %in% composite_models) %>%
+    dplyr::mutate(weight = exp(-.data[["theta"]] * .data[["rwis"]]) / sum(exp(-.data[["theta"]] * .data[["rwis"]]))) %>%
+    dplyr::select("model", "weight")
 
   # Build ensemble
   ensemble_forecasts <- forecast_df %>%
@@ -86,8 +89,8 @@ build_composite_ensemble <- function(forecast_df = NULL, composite_models, score
       dplyr::case_when(date_index == 1 ~ (1 / length(composite_models)) * value,
                        date_index != 1 ~ weight * value)
     ) %>%
-    dplyr::group_by(forecast_date, location, horizon, temporal_resolution, target_variable, target_end_date, type, quantile) %>%
-    dplyr::summarize(value = sum(ensemble_contribution)) %>%
+    dplyr::group_by(dplyr::all_of(c("forecast_date", "location", "horizon", "temporal_resolution", "target_variable", "target_end_date", "type", "quantile"))) %>%
+    dplyr::summarize(value = sum(.data[["ensemble_contribution"]])) %>%
     dplyr::mutate(model = ensemble_name, .before = forecast_date) %>%
     dplyr::left_join(covidHubUtils::hub_locations, by = c("location" = "fips"))
 
