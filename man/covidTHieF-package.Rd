@@ -11,7 +11,7 @@ Repository containing the code and paper on forecasting COVID-19 hospitalization
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/hubverse-org/hubEnsemblesManuscript}
+  \item \url{https://github.com/lshandross/covidTHieF}
 }
 
 }

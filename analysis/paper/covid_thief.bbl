@@ -85,6 +85,11 @@ McGowan, Craig~J., Biggerstaff, Matthew, Johansson, Michael, Apfeldorf, Karyn~M.
 \newblock {\em Scientific Reports 9}, 1 (01 2019), 683.
 \newblock Number: 1 Publisher: Nature Publishing Group.
 
+\bibitem{RSoftware}
+{R Core Team}.
+\newblock {\em R: A Language and Environment for Statistical Computing}.
+\newblock R Foundation for Statistical Computing, Vienna, Austria, 2024.
+
 \bibitem{ensemble_methods}
 Ray, Evan~L., Brooks, Logan~C., Bien, Jacob, Biggerstaff, Matthew, Bosse, Nikos~I., Bracher, Johannes, Cramer, Estee~Y., Funk, Sebastian, Gerding, Aaron, Johansson, Michael~A., Rumack, Aaron, Wang, Yijin, Zorn, Martha, Tibshirani, Ryan~J., and Reich, Nicholas~G.
 \newblock Comparing trained and untrained probabilistic ensemble forecasts of covid-19 cases and deaths in the united states.

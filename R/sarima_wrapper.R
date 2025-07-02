@@ -61,7 +61,7 @@ get_truth_ts <-
       dplyr::filter(.data[["target_end_date"]] >= start_date,
                     .data[["target_end_date"]] <= most_recent_date,
                     .data[["location"]] == fips_code) %>%
-      dplyr::arrange(target_end_date)
+      dplyr::arrange(.data[["target_end_date"]])
 
     # Construct time series
     time_period <- as.numeric(most_recent_date - start_date) + 1
@@ -69,9 +69,9 @@ get_truth_ts <-
     remainder <- time_period - (periods * frequency)
 
     if (transform.4root == TRUE) {
-      hosp_values <- dplyr::pull(hosp_truth, .data[["ts_col"]])^0.25
+      hosp_values <- dplyr::pull(hosp_truth, .data[[ts_col]])^0.25
     } else {
-      hosp_values <- dplyr::pull(hosp_truth, .data[["ts_col"]])
+      hosp_values <- dplyr::pull(hosp_truth, .data[[ts_col]])
     }
     ht_day_ts_ <- stats::ts(hosp_values,
                             start = c(1, 1), end = c(periods + 1, remainder),
@@ -113,7 +113,7 @@ get_truth_ts <-
 
 sarima_wrapper <-
   function(df = NULL, ts_col = "value", start_date, end_date, fips_code, frequency = 1, pi_levels, plot.forecasts = TRUE, transform.4root = FALSE) {
-    if (fips_code %in% dplyr::pull(hub_locations, fips)) { 
+    if (fips_code %in% dplyr::pull(covidHubUtils::hub_locations, .data[["fips"]])) { 
       fips_code <- fips_code
     } else {
       stop("Please provide a US location fips code.")

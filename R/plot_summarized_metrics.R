@@ -17,12 +17,12 @@ plot_summarized_metrics <-
     data_to_plot <- summarized_metrics %>%
       dplyr::mutate(
         specification = gsub(".*_(.+)-.*", "\\1", Model),
-        transform =
-          dplyr::case_when(
-            Model == "COVIDhub-baseline" ~ "noTransform",
-            stringr::str_detect(Model, "ensemble") ~ "noTransform",
-            .default = sub(".*-", "", Model)
-          ),
+        transform = ifelse(stringr::str_detect(Model, "ensemble"), "noTransform", sub(".*-", "", Model)),
+        transform = ifelse(stringr::str_detect(Model, "baseline"), "noTransform", sub(".*-", "", Model)),
+#        transform = dplyr::case_when(
+#          stringr::str_detect(Model, "ensemble") || stringr::str_detect(Model, "baseline") ~ "noTransform",
+#          .default = sub(".*-", "", Model)
+#        ),
         type = ifelse(stringr::str_detect(Model, "ensemble"), "ensemble", sub("_.*", "", Model))
       )
 
@@ -92,12 +92,8 @@ plot_forecast_date_metrics <-
       dplyr::filter(horizon_wk == horizon_week) %>%
       dplyr::mutate(
         specification = gsub(".*_(.+)-.*", "\\1", Model),
-        transform =
-          dplyr::case_when(
-            Model == "COVIDhub-baseline" ~ "noTransform",
-            stringr::str_detect(Model, "ensemble") ~ "noTransform",
-            !(stringr::str_detect(Model, "ensemble") && stringr::str_detect(Model, "baseline")) ~ sub(".*-", "", Model)
-          ),
+        transform = ifelse(stringr::str_detect(Model, "ensemble"), "noTransform", sub(".*-", "", Model)),
+        transform = ifelse(stringr::str_detect(Model, "baseline"), "noTransform", sub(".*-", "", Model)),
         type = ifelse(stringr::str_detect(Model, "ensemble"), "ensemble", sub("_.*", "", Model))
       )
 

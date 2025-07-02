@@ -39,7 +39,7 @@ plot_thief_full <-
     }
 
     # Reconcile forecasts
-    reconciled_forecasts <- reconcilethief(base_forecasts, aggregatelist = aggregation_list)
+    reconciled_forecasts <- thief::reconcilethief(base_forecasts, aggregatelist = aggregation_list)
 
 
     # Truth data
@@ -59,6 +59,7 @@ plot_thief_full <-
 
     truth_df <- 
       dplyr::tibble(date, value, level) %>%
+      dplyr::add_row(value = 0, level = c("2-weekly", "1-weekly", "1-daily")) %>%
       dplyr::mutate(
         date = start_date + date - 1,
         level = factor(level, levels = unique(level), ordered = TRUE)
@@ -91,6 +92,9 @@ plot_thief_full <-
     }
 
     base_df <- dplyr::tibble(date, q025, q25, q50, q75, q975, level) %>%
+      dplyr::add_row(date = 336, q975 = max(truth_df$value[truth_df$level == "2-weekly"]), level = "2-weekly") %>%
+      dplyr::add_row(date = 336, q975 = truth_df$value[truth_df$level == "1-weekly"], level = "1-weekly") %>%
+      dplyr::add_row(date = 336, q975 = truth_df$value[truth_df$level == "1-daily"], level = "1-daily") %>%
       dplyr::mutate(
         date = start_date + date - 1,
         level = factor(level, levels = unique(level), ordered = TRUE),
@@ -129,6 +133,10 @@ plot_thief_full <-
     }
 
     reconciled_df <- dplyr::tibble(date, q025, q25, q50, q75, q975, level) %>%
+      # force same y-axis limits across all rows
+      dplyr::add_row(date = 336, q975 = max(truth_df$value[truth_df$level == "2-weekly"]), level = "2-weekly") %>%
+      dplyr::add_row(date = 336, q975 = truth_df$value[truth_df$level == "1-weekly"], level = "1-weekly") %>%
+      dplyr::add_row(date = 336, q975 = truth_df$value[truth_df$level == "1-daily"], level = "1-daily") %>%
       dplyr::mutate(
         date = start_date + date - 1,
         level = factor(level, levels = unique(level), ordered = TRUE),

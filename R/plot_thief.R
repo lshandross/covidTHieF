@@ -29,6 +29,7 @@ extended_truth_data <-
     aggregate_thief_df(df, ts_col, start_date, end_date + lubridate::days(extra_days), fips_code, aggregate_levels, frequency)
   }
 
+#' Get a vector of the actual dates for plotting
 #'
 #' @param start_date A date from which the data begins. Used to calculate the
 #'   actual dates of the time series.

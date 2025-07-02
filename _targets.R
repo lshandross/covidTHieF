@@ -40,27 +40,29 @@ list(
   tar_target(testing_forecast_range, c(as.Date("2021-11-01"), as.Date("2022-10-02"))),
 
   # model names
-  tar_target(all_thief, sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep=""))[c(3:14, 1:2)]),
-  tar_target(thief_new, sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep=""))),
-  tar_target(thief_old, sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep=""))),
-  tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep=""))),
-  tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 7), c(1, 3, 6.5, 10, 15, 20, 25), sep="")), sep="")),
-  tar_target(validation_models, c(all_thief, sarima_models, thief_ensembles)),
-  tar_target(testing_models, c("sarima_s7-noTransform", "arima_s1-noTransform", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_ensemble-train3", "THieF_ensemble-mean")),
+  tar_target(all_thief, sort(paste("THieF_", c(1:4, 6, 8, 12), "wk-", c(rep("4root", 7), rep("noTransform", 7)), sep = ""))[c(3:14, 1:2)]),
+  tar_target(thief_new, sort(paste("THieF_", c(1:3, 6), "wk-", c(rep("4root", 4), rep("noTransform", 4)), sep = ""))),
+  tar_target(thief_old, sort(paste("THieF_", c(4, 8, 12), "wk-", c(rep("4root", 3), rep("noTransform", 3)), sep = ""))),
+  tar_target(sarima_models, sort(paste("sarima_s", c(1, 7), c(rep("-4root", 2), rep("-noTransform", 2)), sep = ""))),
+  tar_target(thief_ensembles, paste("THieF_ensemble-", c("mean", paste(rep("train", 7), c(1, 3, 6.5, 10, 15, 20, 25), sep = "")), sep = "")),
+  tar_target(operational_models, c("JHUAPL-Bucky", "USC-SI_kJalpha", "CU-select", "GT-DeepCOVID")),
+  tar_target(validation_models, c(all_thief, sarima_models, thief_ensembles, "sarima-untrained_ensemble")),
+  tar_target(testing_models, c("sarima_s7-noTransform", "arima_s1-noTransform", "sarima-untrained_ensemble", "THieF_6wk-4root", "THieF_6wk-noTransform", "THieF_12wk-4root", "THieF_ensemble-train3", "THieF_ensemble-mean")),
 
   tar_target(validation_model_names, c("COVIDhub-baseline", validation_models)),
   tar_target(
     validation_model_colors,
     c(
       "black",
-      rep(c("red", "orange", "yellow", "green", "blue", "purple", "magenta", "#b9865f", "#644e3d"), each = 2), 
+      rep(c("red", "orange", "yellow", "green", "cyan", "blue", "purple", "magenta", "#b9865f", "#644e3d"), each = 2), 
       "#dfdfdf", "#cacaca", "#a8a8a8", "#878787", "#6d6d6d", "#5f5f5f", "#4a4a4a", "#3d3d3d"
     )
   ),
-  tar_target(testing_model_names, c("COVIDhub-baseline", "COVIDhub-4_week_ensemble", testing_models)),
+  tar_target(testing_model_names, c("COVIDhub-4_week_ensemble", operational_models, "COVIDhub-baseline", testing_models)),
   tar_target(
     testing_model_colors,
-    c("black", "darkgrey", "red", "orange", "yellow", "green", "blue", "magenta", "purple")
+    c("#000000", "#525252", "#737373", "#969696", "#BDBDBD", "#D9D9D9",
+      "red", "orange", "yellow", "green", "cyan", "blue", "magenta", "purple")
   ),
 
   # ADD FILEPATHS TO DATA
@@ -70,13 +72,17 @@ list(
   tar_target(scores_thief_new_validation_path, "data/validation_scv_thief_new.rds", format = "file"),
   tar_target(scores_thief_old_validation_path, "data/validation_scv_thief_old.rds", format = "file"),
   tar_target(scores_sarima_validation_path, "data/validation_scv_sarima.rds", format = "file"),
+  tar_target(scores_sarima_ensemble_validation_path, "data/validation_scv_sarima_ensemble.rds", format = "file"),
 
   tar_target(sunday_validation_truth_path, "data/validation_truth_sunday.rds", format = "file"),
   tar_target(monday_validation_truth_path, "data/validation_truth_monday.rds", format = "file"),
 
   tar_target(forecasts_baseline_testing_path, "data/testing_fcv_baseline.rds", format = "file"),
   tar_target(forecasts_ensemble_testing_path, "data/testing_fcv_ensemble.rds", format = "file"),
+  tar_target(forecasts_sarima_ensemble_testing_path, "data/testing_fcv_sarima_ensemble.rds", format = "file"),
   tar_target(forecasts_models_small_testing_path, "data/testing_fcv_models_small.rds", format = "file"),
+  tar_target(scores_sarima_ensemble_testing_path, "data/testing_scv_sarima_ensemble.rds", format = "file"),
+  tar_target(scores_operational_testing_path, "data/testing_scv_operational.rds", format = "file"),
   tar_target(scores_baseline_testing_path, "data/testing_scv_baseline.rds", format = "file"),
   tar_target(scores_ensemble_testing_path, "data/testing_scv_ensemble.rds", format = "file"),
   tar_target(scores_models_testing_path, "data/testing_scv_models.rds", format = "file"),
@@ -85,12 +91,12 @@ list(
   tar_target(monday_testing_truth_path, "data/testing_truth_monday.rds", format = "file"),
 
   # READ IN DATA
-#  tar_target(list_data, map_dfr(all_data, read_csv, col_types=cols())),
   tar_target(scores_baseline_validation, read_rds(scores_baseline_validation_path)),
   tar_target(scores_thief_ensemble_validation, read_rds(scores_thief_ensemble_validation_path)),
   tar_target(scores_thief_new_validation, read_rds(scores_thief_new_validation_path)),
   tar_target(scores_thief_old_validation, read_rds(scores_thief_old_validation_path)),
   tar_target(scores_sarima_validation, read_rds(scores_sarima_validation_path)),
+  tar_target(scores_sarima_ensemble_validation, read_rds(scores_sarima_ensemble_validation_path)),
 
   tar_target(sunday_validation_truth_list, read_rds(sunday_validation_truth_path)),
   tar_target(monday_validation_truth_list, read_rds(monday_validation_truth_path)),
@@ -98,9 +104,12 @@ list(
   tar_target(forecasts_baseline_testing, read_rds(forecasts_baseline_testing_path)),
   tar_target(forecasts_ensemble_testing, read_rds(forecasts_ensemble_testing_path)),
   tar_target(forecasts_models_small_testing, read_rds(forecasts_models_small_testing_path)),
+  tar_target(forecasts_sarima_ensemble_testing, read_rds(forecasts_sarima_ensemble_testing_path)),
   tar_target(scores_baseline_testing, read_rds(scores_baseline_testing_path)),
   tar_target(scores_ensemble_testing, read_rds(scores_ensemble_testing_path)),
+  tar_target(scores_operational_testing, read_rds(scores_operational_testing_path)),
   tar_target(scores_models_testing, read_rds(scores_models_testing_path)),
+  tar_target(scores_sarima_ensemble_testing, read_rds(scores_sarima_ensemble_testing_path)),
 
   tar_target(sunday_testing_truth_list, read_rds(sunday_testing_truth_path)),
   tar_target(monday_testing_truth_list, read_rds(monday_testing_truth_path)),
@@ -111,23 +120,24 @@ list(
   ),
 #  tar_target(
 #    validation_dates_to_plot,
-#    c(as.Date("2020-12-07") + weeks(4*(0:11)), actual_validation_dates[1+4*(0:11)])
+#    c(as.Date("2020-12-07") + weeks(4 * (0:11)), actual_validation_dates[1 + 4 * (0:11)])
 # ),
  tar_target(
    testing_dates_to_plot,
-   c(as.Date("2021-11-01") + weeks(4*(0:11)), actual_testing_dates[1+4*(0:11)])
+   c(as.Date("2021-11-01") + weeks(4 * (0:11)), actual_testing_dates[1 + 4 * (0:11)])
  ),
   # mon_dates_df <- tibble(forecast_date = actual_fc_dates, mon_fc_dates)
   tar_target(
     testing_forecasts_to_plot, #fc_plot (bind small fc and baseline together)
-    rbind(forecasts_models_small_testing, forecasts_baseline_testing, forecasts_ensemble_testing)
+    rbind(forecasts_models_small_testing, forecasts_sarima_ensemble_testing, forecasts_baseline_testing, forecasts_ensemble_testing)
   ),
 
   tar_target(
     validation_scores, #scores(bind not baseline scores together, create horizon_wk)
     scores_baseline_validation %>%
       rbind(scores_thief_ensemble_validation, scores_thief_new_validation,
-            scores_thief_old_validation, scores_sarima_validation) %>%
+            scores_thief_old_validation, scores_sarima_validation,
+            scores_sarima_ensemble_validation) %>%
       mutate(
         mon_fc_date =
           floor_date(
@@ -135,7 +145,7 @@ list(
             unit = "weeks", 
             week_start = getOption("lubricate.week.start", 1)
           ) + weeks(1),
-        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
+        horizon_wk = ceiling(as.numeric(target_end_date-mon_fc_date) / 7),
         forecast_date = mon_fc_date,
         model = replace(model, model == "sarima_s1-4root", "arima_s1-4root"),
         model = replace(model, model == "sarima_s1-noTransform", "arima_s1-noTransform")
@@ -144,8 +154,10 @@ list(
       filter(horizon_wk %in% 1:4)
   ),
   tar_target(
-    testing_scores, #scores(bind not baseline scores together, create horizon_wk)
-    rbind(scores_models_testing, scores_baseline_testing, scores_ensemble_testing) %>%
+    testing_scores, #scores(bind scores together, create horizon_wk)
+    scores_models_testing %>%
+      rbind(scores_sarima_ensemble_testing, scores_operational_testing,
+            scores_baseline_testing, scores_ensemble_testing) %>%
       mutate(
         mon_fc_date =
           floor_date(
@@ -153,18 +165,20 @@ list(
             unit = "weeks", 
             week_start = getOption("lubricate.week.start", 1)
           ) + weeks(1),
-        horizon_wk=ceiling(as.numeric(target_end_date-mon_fc_date)/7),
+        horizon_wk = ceiling(as.numeric(target_end_date-mon_fc_date) / 7),
         forecast_date = mon_fc_date,
         model = replace(model, model == "sarima_s1-4root", "arima_s1-4root"),
         model = replace(model, model == "sarima_s1-noTransform","arima_s1-noTransform")
       ) %>%
       select(-mon_fc_date) %>%
-      filter(horizon_wk %in% 1:4, model != "THieF_12wk-noTransform")
+      filter(horizon_wk %in% 1:4, model %in% testing_model_names)
   ),
   tar_target(
     full_hosp_truth,
-    load_truth("HealthData", "inc hosp", as_of = as.Date("2022-10-01"),
-               temporal_resolution = "weekly", data_location = "covidData")
+    covidHubUtils::load_truth(
+      "HealthData", "inc hosp", as_of = as.Date("2022-10-01"),
+      temporal_resolution = "weekly", data_location = "covidData"
+    )
   ),
 
   tar_target(
@@ -218,7 +232,7 @@ list(
     plot_thief_full(
       truth = full_hosp_truth,
       start_date = "2020-07-27",
-      end_date="2021-06-06",
+      end_date = "2021-06-06",
       fips = "US",
       frequency = 14,
       aggregation_list = list(14, 7, 1),
@@ -233,14 +247,13 @@ list(
       summarize(cum_value = sum(value)) %>%
       ungroup() %>%
       arrange(desc(cum_value)) %>%
-#      filter(row_number() %in% c(1, 2, 53)) %>% # can change values
       pull(location)
   ),
   tar_target(
     plot_models_1,
     plot_models_one_location(
       forecasts = testing_forecasts_to_plot,
-      models = testing_model_names[c(1:3, 5)],
+      models = testing_model_names[c(6, 1, 7, 10)],
       truth = full_hosp_truth,
       fips = ordered_testing_locations[1],
       fc_dates = testing_dates_to_plot,
@@ -252,7 +265,7 @@ list(
     plot_models_2,
     plot_models_one_location(
       forecasts = testing_forecasts_to_plot,
-      models = testing_model_names[c(1:3, 5)],
+      models = testing_model_names[c(6, 1, 7, 10)],
       truth = full_hosp_truth,
       fips = ordered_testing_locations[2],
       fc_dates = testing_dates_to_plot,
@@ -264,7 +277,7 @@ list(
     plot_models_53,
     plot_models_one_location(
       forecasts = testing_forecasts_to_plot,
-      models = testing_model_names[c(1:3, 5)],
+      models = testing_model_names[c(6, 1, 7, 10)],
       truth = full_hosp_truth,
       fips = ordered_testing_locations[53],
       fc_dates = testing_dates_to_plot,
